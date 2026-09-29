@@ -182,19 +182,229 @@ function navigate(tab) {
   const content = document.getElementById('admin-content');
   if (!content) return;
 
-  // Пока все вкладки — заглушки. В следующих подспринтах заменим.
-  content.innerHTML = `
-    <div class="admin-placeholder">
-      <div class="admin-placeholder__icon">🚧</div>
-      <h2 class="admin-placeholder__title">${tabTitles[tab] || tab}</h2>
-      <p class="admin-placeholder__text">Раздел в разработке — появится в следующих обновлениях</p>
+  // Роутинг по вкладкам
+  switch (tab) {
+    case 'dashboard':
+      renderDashboard(content);
+      break;
+
+    // Остальные вкладки — заглушки (заменим в следующих спринтах)
+    default:
+      content.innerHTML = `
+        <div class="admin-placeholder">
+          <div class="admin-placeholder__icon">🚧</div>
+          <h2 class="admin-placeholder__title">${tabTitles[tab] || tab}</h2>
+          <p class="admin-placeholder__text">Раздел в разработке — появится в следующих обновлениях</p>
+        </div>
+      `;
+  }
+}
+
+// ============================================
+// 3.5. ДАШБОРД
+// ============================================
+async function renderDashboard(container) {
+  container.innerHTML = `
+    <div class="admin-loading" style="min-height:200px">
+      <div class="admin-loading__spinner"></div>
+      <span>Считаем цифры...</span>
     </div>
   `;
 
-  // Обновляем бейдж с новыми заказами
-  if (tab === 'dashboard') {
-    updateOrdersBadge();
+  try {
+    const res = await fetch('/api/admin/stats', {
+      headers: { Authorization: `Bearer ${state.token}` }
+    });
+
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    const stats = await res.json();
+
+    container.innerHTML = `
+      <!-- ВИДЖЕТЫ -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--orders">📦</div>
+          <div class="stat-card__label">Всего заказов</div>
+          <div class="stat-card__value">${stats.totalOrders}</div>
+          <div class="stat-card__hint">за всё время</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--new">🔔</div>
+          <div class="stat-card__label">Новых заказов</div>
+          <div class="stat-card__value">${stats.newOrders}</div>
+          <div class="stat-card__hint">требуют обработки</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--revenue">💰</div>
+          <div class="stat-card__label">Выручка</div>
+          <div class="stat-card__value">${formatMoney(stats.totalRevenue)}</div>
+          <div class="stat-card__hint">без отменённых</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--users">👥</div>
+          <div class="stat-card__label">Покупателей</div>
+          <div class="stat-card__value">${stats.totalUsers}</div>
+          <div class="stat-card__hint">в базе</div>
+        </div>
+      </div>
+
+      <!-- ГРАФИК + ТОП -->
+      <div class="dashboard-row">
+        <div class="dashboard-panel">
+          <div class="dashboard-panel__header">
+            <h3 class="dashboard-panel__title">📈 Продажи за 7 дней</h3>
+          </div>
+          ${renderChart(stats.salesByDay)}
+        </div>
+
+        <div class="dashboard-panel">
+          <div class="dashboard-panel__header">
+            <h3 class="dashboard-panel__title">🏆 Топ товаров</h3>
+          </div>
+          ${renderTopProducts(stats.topProducts)}
+        </div>
+      </div>
+
+      <!-- ПОСЛЕДНИЕ ЗАКАЗЫ -->
+      <div class="dashboard-panel">
+        <div class="dashboard-panel__header">
+          <h3 class="dashboard-panel__title">📋 Последние заказы</h3>
+          <a href="#" class="dashboard-panel__link" id="go-orders">Все заказы →</a>
+        </div>
+        ${renderRecentOrders(stats.recentOrders)}
+      </div>
+    `;
+
+    // Ссылка «Все заказы»
+    document.getElementById('go-orders')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate('orders');
+    });
+
+    // Клик по заказу — переход в раздел заказов
+    document.querySelectorAll('.recent-order').forEach(el => {
+      el.addEventListener('click', () => navigate('orders'));
+    });
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `
+      <div class="admin-placeholder">
+        <div class="admin-placeholder__icon">😕</div>
+        <h2 class="admin-placeholder__title">Не удалось загрузить статистику</h2>
+        <p class="admin-placeholder__text">Обновите страницу или попробуйте позже</p>
+      </div>
+    `;
   }
+}
+
+// ============================================
+// 3.6. ГРАФИК ПРОДАЖ
+// ============================================
+function renderChart(salesByDay) {
+  if (!salesByDay || salesByDay.length === 0) {
+    return `<div class="chart__empty">Пока нет продаж 📉</div>`;
+  }
+
+  // Заполняем все 7 дней (даже пустые)
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const found = salesByDay.find(s => s.day === key);
+    days.push({
+      day: key,
+      label: d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+      revenue: found ? found.revenue : 0,
+      orders: found ? found.orders : 0
+    });
+  }
+
+  const maxRevenue = Math.max(...days.map(d => d.revenue), 1);
+
+  return `
+    <div class="chart">
+      ${days.map(d => {
+        const height = d.revenue === 0 ? 4 : Math.max(8, (d.revenue / maxRevenue) * 100);
+        return `
+          <div class="chart__bar-wrap">
+            <div class="chart__bar" style="height:${height}%">
+              <span class="chart__bar-value">${formatMoney(d.revenue)} ₽</span>
+            </div>
+            <span class="chart__label">${d.label}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ============================================
+// 3.7. ТОП ТОВАРОВ
+// ============================================
+function renderTopProducts(products) {
+  if (!products || products.length === 0) {
+    return `<div class="top-list__empty">Пока нет продаж</div>`;
+  }
+
+  return `
+    <div class="top-list">
+      ${products.map((p, i) => `
+        <div class="top-item">
+          <div class="top-item__rank">${i + 1}</div>
+          <div class="top-item__info">
+            <div class="top-item__name">${p.product_name}</div>
+            <div class="top-item__meta">Продано: ${p.sold} шт</div>
+          </div>
+          <div class="top-item__revenue">${formatMoney(p.revenue)} ₽</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ============================================
+// 3.8. ПОСЛЕДНИЕ ЗАКАЗЫ
+// ============================================
+function renderRecentOrders(orders) {
+  if (!orders || orders.length === 0) {
+    return `<div class="recent-orders__empty">Заказов пока нет 📭</div>`;
+  }
+
+  const statusLabels = {
+    new: 'Новый',
+    confirmed: 'Подтверждён',
+    baking: 'Готовится',
+    delivering: 'В доставке',
+    done: 'Выполнен',
+    cancelled: 'Отменён'
+  };
+
+  return `
+    <div class="recent-orders">
+      ${orders.map(o => `
+        <div class="recent-order">
+          <div class="recent-order__id">№${o.id}</div>
+          <div>
+            <div class="recent-order__customer">${o.customer_name}</div>
+            <div class="recent-order__phone">${o.phone || ''}</div>
+          </div>
+          <span class="order-badge order-badge--${o.status}">${statusLabels[o.status] || o.status}</span>
+          <div class="recent-order__total">${formatMoney(o.total)} ₽</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ============================================
+// 3.9. ВСПОМОГАТЕЛЬНОЕ
+// ============================================
+function formatMoney(n) {
+  return Math.round(n).toLocaleString('ru-RU');
 }
 
 // ============================================
