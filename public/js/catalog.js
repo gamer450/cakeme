@@ -1,0 +1,342 @@
+/* ============================================
+   КАТАЛОГ — Фильтры, сортировка, поиск
+   ============================================ */
+
+// Состояние
+const state = {
+  allProducts: [],
+  categories: [],
+  activeCategory: 'all',       // id категории или 'all'
+  activeType: null,            // 'cake' | 'coffee' | null
+  search: '',
+  sort: 'new'
+};
+
+// ============================================
+// 1. Загрузка данных
+// ============================================
+async function loadData() {
+  const grid = document.getElementById('products-grid');
+
+  try {
+    // Параллельно грузим товары и категории
+    const [productsRes, categoriesRes] = await Promise.all([
+      fetch('/api/products'),
+      fetch('/api/categories')
+    ]);
+
+    state.allProducts = await productsRes.json();
+    state.categories = await categoriesRes.json();
+
+    renderCategoryFilters();
+    applyUrlParams();
+    applyFilters();
+  } catch (err) {
+    console.error('Ошибка загрузки:', err);
+    if (grid) {
+      grid.innerHTML = '<p class="text-center">Не удалось загрузить товары. Обновите страницу.</p>';
+    }
+  }
+}
+
+// ============================================
+// 2. Параметры из URL (?type=cake, ?category=1)
+// ============================================
+function applyUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+
+  const type = params.get('type');
+  if (type) {
+    state.activeType = type;
+    state.activeCategory = 'all';
+
+    // Меняем заголовок страницы
+    const title = document.getElementById('page-title');
+    const desc = document.getElementById('page-desc');
+    const breadcrumb = document.getElementById('breadcrumb-current');
+
+    if (type === 'cake') {
+      if (title) title.textContent = 'Торты и пирожные';
+      if (desc) desc.textContent = 'Домашние торты и пирожные на заказ. Готовим вручную из натуральных ингредиентов.';
+      if (breadcrumb) breadcrumb.textContent = 'Торты и пирожные';
+    } else if (type === 'coffee') {
+      if (title) title.textContent = 'Кофе и чай';
+      if (desc) desc.textContent = 'Свежеобжаренный кофе и отборный чай. Обжариваем небольшими партиями.';
+      if (breadcrumb) breadcrumb.textContent = 'Кофе и чай';
+    }
+
+    // Обновляем активную кнопку категории
+    document.querySelectorAll('.filter-cat').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.type === type);
+    });
+  }
+
+  const categoryId = params.get('category');
+  if (categoryId) {
+    state.activeCategory = categoryId;
+    document.querySelectorAll('.filter-cat').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.cat === categoryId);
+    });
+  }
+
+  const searchParam = params.get('search');
+  if (searchParam) {
+    state.search = searchParam;
+    const input = document.getElementById('search-input');
+    if (input) input.value = searchParam;
+  }
+}
+
+// ============================================
+// 3. Рендер кнопок категорий
+// ============================================
+function renderCategoryFilters() {
+  const container = document.getElementById('filters-cats');
+  if (!container) return;
+
+  // Оставляем кнопку "Все", добавляем категории из БД
+  const buttons = state.categories.map(cat => `
+    <button class="filter-cat" data-cat="${cat.id}" data-type="${cat.type}">
+      ${cat.name}
+    </button>
+  `).join('');
+
+  container.innerHTML = `
+    <button class="filter-cat is-active" data-cat="all">Все</button>
+    ${buttons}
+  `;
+
+  // Обработчик кликов
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-cat');
+    if (!btn) return;
+
+    container.querySelectorAll('.filter-cat').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+
+    state.activeCategory = btn.dataset.cat;
+    state.activeType = null;
+    applyFilters();
+  });
+}
+
+// ============================================
+// 4. Основная логика фильтрации + сортировки
+// ============================================
+function applyFilters() {
+  let result = [...state.allProducts];
+
+  // Фильтр по категории (id)
+  if (state.activeCategory && state.activeCategory !== 'all') {
+    result = result.filter(p => String(p.category_id) === String(state.activeCategory));
+  }
+
+  // Фильтр по типу (cake / coffee)
+  if (state.activeType) {
+    result = result.filter(p => p.category_type === state.activeType);
+  }
+
+  // Поиск
+  if (state.search.trim()) {
+    const q = state.search.trim().toLowerCase();
+    result = result.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.description && p.description.toLowerCase().includes(q))
+    );
+  }
+
+  // Сортировка
+  switch (state.sort) {
+    case 'price-asc':
+      result.sort((a, b) => a.price - b.price);
+      break;
+    case 'price-desc':
+      result.sort((a, b) => b.price - a.price);
+      break;
+    case 'name':
+      result.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+      break;
+    case 'new':
+    default:
+      result.sort((a, b) => b.id - a.id);
+  }
+
+  renderProducts(result);
+  updateCount(result.length);
+  updateResetButton();
+}
+
+// ============================================
+// 5. Отрисовка товаров
+// ============================================
+function renderProducts(products) {
+  const grid = document.getElementById('products-grid');
+  if (!grid) return;
+
+  if (products.length === 0) {
+    grid.className = '';
+    grid.innerHTML = `
+      <div class="empty">
+        <div class="empty__icon">🔍</div>
+        <h3 class="empty__title">Ничего не найдено</h3>
+        <p class="empty__text">Попробуйте изменить фильтры или сбросить поиск</p>
+        <button class="btn btn-primary" id="empty-reset">Сбросить фильтры</button>
+      </div>
+    `;
+    document.getElementById('empty-reset')?.addEventListener('click', resetFilters);
+    return;
+  }
+
+  grid.className = 'grid grid--4';
+  grid.innerHTML = products.map((p, i) => {
+    const isCoffee = p.category_type === 'coffee';
+    return `
+      <a href="/product.html?id=${p.id}" class="product-card ${isCoffee ? 'product-card--coffee' : ''} reveal" data-delay="${Math.min(i + 1, 6)}">
+        <div class="product-card__image">
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:4rem;">
+            ${isCoffee ? '☕' : '🎂'}
+          </div>
+        </div>
+        <div class="product-card__body">
+          <span class="product-card__category">${p.category_name}</span>
+          <h3 class="product-card__title">${p.name}</h3>
+          <p class="product-card__desc">${p.description || ''}</p>
+          <div class="product-card__footer">
+            <div>
+              <div class="product-card__price">${p.price} ₽</div>
+              <div class="product-card__weight">${p.weight || ''}</div>
+            </div>
+            <button class="product-card__btn" data-add-to-cart="${p.id}" aria-label="В корзину">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+
+  // Анимация появления
+  requestAnimationFrame(() => {
+    grid.querySelectorAll('.reveal').forEach(el => {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.05 });
+      obs.observe(el);
+    });
+  });
+}
+
+// ============================================
+// 6. Счётчик и кнопка сброса
+// ============================================
+function updateCount(count) {
+  const el = document.getElementById('catalog-count');
+  if (!el) return;
+
+  const word = declOfNum(count, ['товар', 'товара', 'товаров']);
+  el.innerHTML = `Найдено: <strong>${count}</strong> ${word}`;
+}
+
+function updateResetButton() {
+  const btn = document.getElementById('reset-btn');
+  if (!btn) return;
+
+  const hasFilters =
+    state.activeCategory !== 'all' ||
+    state.activeType !== null ||
+    state.search.trim() !== '';
+
+  btn.classList.toggle('hidden', !hasFilters);
+}
+
+function declOfNum(n, titles) {
+  const cases = [2, 0, 1, 1, 1, 2];
+  return titles[
+    (n % 100 > 4 && n % 100 < 20) ? 2 : cases[(n % 10 < 5) ? n % 10 : 5]
+  ];
+}
+
+// ============================================
+// 7. События
+// ============================================
+
+// Поиск (с задержкой 300мс, чтобы не дёргать на каждый символ)
+let searchTimer;
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'search-input') return;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    state.search = e.target.value;
+    applyFilters();
+  }, 300);
+});
+
+// Сортировка
+document.addEventListener('change', (e) => {
+  if (e.target.id !== 'sort-select') return;
+  state.sort = e.target.value;
+  applyFilters();
+});
+
+// Кнопка сброса
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'reset-btn') {
+    resetFilters();
+  }
+});
+
+function resetFilters() {
+  state.activeCategory = 'all';
+  state.activeType = null;
+  state.search = '';
+  state.sort = 'new';
+
+  const input = document.getElementById('search-input');
+  if (input) input.value = '';
+
+  const sort = document.getElementById('sort-select');
+  if (sort) sort.value = 'new';
+
+  document.querySelectorAll('.filter-cat').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.cat === 'all');
+  });
+
+  // Очищаем URL
+  window.history.replaceState({}, '', '/catalog.html');
+
+  // Сброс заголовка
+  const title = document.getElementById('page-title');
+  const desc = document.getElementById('page-desc');
+  const breadcrumb = document.getElementById('breadcrumb-current');
+  if (title) title.textContent = 'Каталог';
+  if (desc) desc.textContent = 'Все наши торты, пирожные и свежеобжаренный кофе в одном месте';
+  if (breadcrumb) breadcrumb.textContent = 'Каталог';
+
+  applyFilters();
+}
+
+// ============================================
+// 8. Скролл — стики-эффект фильтров
+// ============================================
+(function initFiltersSticky() {
+  const filters = document.getElementById('filters');
+  if (!filters) return;
+
+  window.addEventListener('scroll', () => {
+    const rect = filters.getBoundingClientRect();
+    filters.classList.toggle('is-stuck', rect.top <= 80 && rect.bottom > 0);
+  }, { passive: true });
+})();
+
+// ============================================
+// 9. СТАРТ
+// ============================================
+document.addEventListener('DOMContentLoaded', loadData);

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Товар — Сладкий Дом</title>
+  <meta name="description" content="Подробное описание товара, состав и цена. Заказ с доставкой." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+  <link rel="stylesheet" href="/css/header-footer.css" />
+  <link rel="stylesheet" href="/css/product.css" />
+</head>
+<body>
+
+  <!-- ============ ШАПКА ============ -->
+  <header class="header" id="header">
+    <div class="container">
+      <div class="header__inner">
+        <a href="/" class="logo">
+          <span class="logo__icon">🍰</span>
+          <span class="logo__text">
+            <span class="logo__name">Сладкий Дом</span>
+            <span class="logo__tagline">торты &amp; кофе</span>
+          </span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <a href="/" class="nav__link">Главная</a>
+          <a href="/catalog.html?type=cake" class="nav__link">Торты</a>
+          <a href="/catalog.html?type=coffee" class="nav__link">Кофе</a>
+          <a href="/#about" class="nav__link">О нас</a>
+          <a href="/#contacts" class="nav__link">Контакты</a>
+        </nav>
+
+        <div class="header__actions">
+          <button class="icon-btn" aria-label="Поиск">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+          </button>
+
+          <a href="/cart.html" class="icon-btn" aria-label="Корзина">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"></circle>
+              <circle cx="19" cy="21" r="1"></circle>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+            </svg>
+            <span class="icon-btn__badge" id="cart-badge" style="display:none">0</span>
+          </a>
+
+          <a href="/login.html" class="icon-btn" aria-label="Войти">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </a>
+
+          <button class="burger" id="burger" aria-label="Меню">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ КАРТОЧКА ТОВАРА ============ -->
+  <main class="product-page">
+    <div class="container" id="product-container">
+      <div class="loading">
+        <div class="loading__spinner"></div>
+        Загружаем товар...
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ ПОДВАЛ ============ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__col">
+          <div class="footer__logo">
+            <span>🍰</span>
+            <span>Сладкий Дом</span>
+          </div>
+          <p>Домашние торты и свежеобжаренный кофе с доставкой. Готовим с 2019 года.</p>
+          <div class="footer__socials">
+            <a href="#" class="footer__social" aria-label="Instagram">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+            <a href="#" class="footer__social" aria-label="Telegram">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m22 2-7 20-4-9-9-4Z"></path>
+                <path d="M22 2 11 13"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer__col">
+          <h4>Каталог</h4>
+          <a href="/catalog.html?type=cake">Торты</a><br />
+          <a href="/catalog.html?type=cake">Пирожные</a><br />
+          <a href="/catalog.html?type=coffee">Кофе</a><br />
+          <a href="/catalog.html?type=coffee">Чай</a>
+        </div>
+
+        <div class="footer__col">
+          <h4>Покупателям</h4>
+          <a href="/#how">Как заказать</a><br />
+          <a href="/#contacts">Доставка и оплата</a><br />
+          <a href="#">Гарантии</a><br />
+          <a href="#">Отзывы</a>
+        </div>
+
+        <div class="footer__col">
+          <h4>Контакты</h4>
+          <p>+7 900 000-00-00</p>
+          <p>hello@cake.ru</p>
+          <p>г. Москва, ул. Сладкая, 1</p>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span>© 2026 Сладкий Дом. Все права защищены.</span>
+        <a href="#">Политика конфиденциальности</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/product.js"></script>
+</body>
+</html>

@@ -35,6 +35,21 @@ app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
+// API: один товар по ID
+app.get('/api/products/:id', (req, res) => {
+  const product = db.prepare(`
+    SELECT p.*, c.name AS category_name, c.type AS category_type
+    FROM products p
+    JOIN categories c ON c.id = p.category_id
+    WHERE p.id = ? AND p.is_active = 1
+  `).get(req.params.id);
+
+  if (!product) {
+    return res.status(404).json({ error: 'Товар не найден' });
+  }
+  res.json(product);
+});
+
 // API: настройки сайта
 app.get('/api/settings', (req, res) => {
   const rows = db.prepare('SELECT key, value FROM settings').all();
