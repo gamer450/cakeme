@@ -1,0 +1,315 @@
+/* ============================================
+   АДМИН: КАТЕГОРИИ
+   ============================================ */
+
+.cats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.cats-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.cats-header__title small {
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  margin-left: 8px;
+}
+
+/* ============ ТАБЛИЦА ============ */
+
+.cats-table-wrap {
+  background: var(--admin-card);
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  overflow: hidden;
+}
+
+.cats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.cats-table thead {
+  background: var(--admin-bg);
+}
+
+.cats-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.cats-table td {
+  padding: 14px 16px;
+  border-top: 1px solid var(--admin-border);
+  vertical-align: middle;
+}
+
+.cats-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.cats-table tbody tr:hover {
+  background: var(--admin-bg);
+}
+
+.cats-table__name {
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.cats-table__slug {
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  background: var(--admin-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.cats-table__type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.cats-table__count {
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.cats-table__actions {
+  text-align: right;
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.cats-table__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.cats-table__btn:hover {
+  background: var(--admin-sidebar);
+  color: #fff;
+  border-color: var(--admin-sidebar);
+  transform: translateY(-1px);
+}
+
+.cats-table__btn--danger:hover {
+  background: var(--admin-danger);
+  border-color: var(--admin-danger);
+}
+
+/* Статус активна/скрыта */
+.cat-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cat-status--active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.cat-status--hidden {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+/* ============ КНОПКА «ДОБАВИТЬ» ============ */
+
+.btn-add {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(214, 51, 108, 0.25);
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(214, 51, 108, 0.35);
+}
+
+/* ============ ФОРМА (в модалке) ============ */
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.admin-form__label .req {
+  color: var(--admin-danger);
+}
+
+.admin-form__hint {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-form__input,
+.admin-form__textarea,
+.admin-form__select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--admin-text);
+  background: var(--admin-bg);
+  transition: all 0.2s ease;
+}
+
+.admin-form__input:focus,
+.admin-form__textarea:focus,
+.admin-form__select:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  background: var(--admin-card);
+  box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.15);
+}
+
+.admin-form__textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.admin-form__error {
+  display: none;
+  padding: 12px 16px;
+  background: #fee2e2;
+  border-left: 4px solid var(--admin-danger);
+  border-radius: 10px;
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+.admin-form__error.is-visible {
+  display: block;
+}
+
+.admin-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.btn-admin {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  border: 2px solid transparent;
+}
+
+.btn-admin--primary {
+  background: var(--admin-sidebar);
+  color: #fff;
+}
+
+.btn-admin--primary:hover {
+  background: #2f3555;
+  transform: translateY(-1px);
+}
+
+.btn-admin--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-admin--ghost {
+  background: transparent;
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+.btn-admin--ghost:hover {
+  background: var(--admin-bg);
+}
+
+/* Чекбокс */
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--admin-text);
+  user-select: none;
+}
+
+.admin-checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--admin-accent-2);
+  cursor: pointer;
+}

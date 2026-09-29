@@ -192,6 +192,10 @@ function navigate(tab) {
       renderOrders(content);
       break;
 
+    case 'categories':
+      renderCategories(content);
+      break;
+
     // Остальные вкладки — заглушки (заменим в следующих спринтах)
     default:
       content.innerHTML = `

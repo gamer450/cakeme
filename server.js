@@ -277,6 +277,127 @@ app.patch('/api/admin/orders/:id/status', authRequired, requireRole('admin', 'ma
 });
 
 // ============================================
+// АДМИН: КАТЕГОРИИ
+// ============================================
+
+// GET /api/admin/categories — все категории (включая скрытые)
+app.get('/api/admin/categories', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const categories = db.prepare(`
+      SELECT
+        c.*,
+        (SELECT COUNT(*) FROM products WHERE category_id = c.id) as products_count
+      FROM categories c
+      ORDER BY c.sort_order ASC, c.id ASC
+    `).all();
+    res.json(categories);
+  } catch (err) {
+    console.error('Ошибка категорий:', err);
+    res.status(500).json({ error: 'Не удалось загрузить категории' });
+  }
+});
+
+// POST /api/admin/categories — создать категорию
+app.post('/api/admin/categories', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const { name, slug, type, sort_order } = req.body;
+
+    if (!name || !slug || !type) {
+      return res.status(400).json({ error: 'Заполните название, slug и тип' });
+    }
+
+    if (!['cake', 'coffee', 'other'].includes(type)) {
+      return res.status(400).json({ error: 'Недопустимый тип категории' });
+    }
+
+    // Проверка уникальности slug
+    const existing = db.prepare('SELECT id FROM categories WHERE slug = ?').get(slug.trim());
+    if (existing) {
+      return res.status(409).json({ error: 'Категория с таким slug уже существует' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO categories (name, slug, type, sort_order)
+      VALUES (?, ?, ?, ?)
+    `).run(
+      name.trim(),
+      slug.trim().toLowerCase(),
+      type,
+      parseInt(sort_order, 10) || 0
+    );
+
+    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json({ success: true, category });
+  } catch (err) {
+    console.error('Ошибка создания категории:', err);
+    res.status(500).json({ error: 'Не удалось создать категорию' });
+  }
+});
+
+// PATCH /api/admin/categories/:id — обновить категорию
+app.patch('/api/admin/categories/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const { name, slug, type, sort_order, is_active } = req.body;
+
+    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+    if (!category) {
+      return res.status(404).json({ error: 'Категория не найдена' });
+    }
+
+    // Проверка slug на уникальность (кроме самого себя)
+    if (slug && slug !== category.slug) {
+      const existing = db.prepare('SELECT id FROM categories WHERE slug = ? AND id != ?').get(slug.trim(), req.params.id);
+      if (existing) {
+        return res.status(409).json({ error: 'Категория с таким slug уже существует' });
+      }
+    }
+
+    db.prepare(`
+      UPDATE categories
+      SET name = ?, slug = ?, type = ?, sort_order = ?, is_active = ?
+      WHERE id = ?
+    `).run(
+      name !== undefined ? name.trim() : category.name,
+      slug !== undefined ? slug.trim().toLowerCase() : category.slug,
+      type !== undefined ? type : category.type,
+      sort_order !== undefined ? parseInt(sort_order, 10) : category.sort_order,
+      is_active !== undefined ? (is_active ? 1 : 0) : category.is_active,
+      req.params.id
+    );
+
+    const updated = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+    res.json({ success: true, category: updated });
+  } catch (err) {
+    console.error('Ошибка обновления категории:', err);
+    res.status(500).json({ error: 'Не удалось обновить категорию' });
+  }
+});
+
+// DELETE /api/admin/categories/:id — удалить категорию
+app.delete('/api/admin/categories/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+    if (!category) {
+      return res.status(404).json({ error: 'Категория не найдена' });
+    }
+
+    // Проверка: есть ли товары в категории
+    const productsCount = db.prepare('SELECT COUNT(*) as c FROM products WHERE category_id = ?').get(req.params.id).c;
+    if (productsCount > 0) {
+      return res.status(400).json({
+        error: `В категории ${productsCount} товаров. Сначала перенесите или удалите их.`
+      });
+    }
+
+    db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка удаления категории:', err);
+    res.status(500).json({ error: 'Не удалось удалить категорию' });
+  }
+});
+
+// ============================================
 // АВТОРИЗАЦИЯ
 // ============================================
 
