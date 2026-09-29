@@ -1,0 +1,188 @@
+/* ============================================
+   АНИМАЦИИ — для вау-эффекта
+   ============================================ */
+
+/* ============ ПОЯВЛЕНИЕ ПРИ СКРОЛЛЕ ============ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Задержки для каскадного появления */
+.reveal[data-delay="1"] { transition-delay: 0.1s; }
+.reveal[data-delay="2"] { transition-delay: 0.2s; }
+.reveal[data-delay="3"] { transition-delay: 0.3s; }
+.reveal[data-delay="4"] { transition-delay: 0.4s; }
+.reveal[data-delay="5"] { transition-delay: 0.5s; }
+.reveal[data-delay="6"] { transition-delay: 0.6s; }
+
+/* Варианты появления */
+.reveal--left {
+  transform: translateX(-40px);
+}
+.reveal--left.is-visible {
+  transform: translateX(0);
+}
+
+.reveal--right {
+  transform: translateX(40px);
+}
+.reveal--right.is-visible {
+  transform: translateX(0);
+}
+
+.reveal--scale {
+  transform: scale(0.9);
+}
+.reveal--scale.is-visible {
+  transform: scale(1);
+}
+
+.reveal--fade {
+  transform: none;
+}
+
+/* ============ FLOATING (лёгкое покачивание) ============ */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.float--slow {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ============ PULSE (пульсация) ============ */
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ============ GRADIENT SHIFT (перелив градиента) ============ */
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.gradient-animate {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+/* ============ BOUNCE IN (для бейджей) ============ */
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.bounce-in {
+  animation: bounceIn 0.6s var(--ease-bounce) both;
+}
+
+/* ============ FADE IN UP (для текстов hero) ============ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.9s var(--ease) both;
+}
+
+.fade-in-up--delay-1 { animation-delay: 0.15s; }
+.fade-in-up--delay-2 { animation-delay: 0.3s; }
+.fade-in-up--delay-3 { animation-delay: 0.45s; }
+.fade-in-up--delay-4 { animation-delay: 0.6s; }
+
+/* ============ КАРТОЧКИ: ЛЁГКОЕ УВЕЛИЧЕНИЕ ПРИ HOVER ============ */
+
+.hover-lift {
+  transition: transform var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease);
+}
+
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============ МАГНИТНЫЕ КНОПКИ ============ */
+/* Класс-обёртка: JS будет двигать элемент за курсором */
+
+.magnetic {
+  transition: transform 0.3s var(--ease);
+  will-change: transform;
+}
+
+/* ============ ЗАГРУЗКА ИЗОБРАЖЕНИЙ (shimmer) ============ */
+
+.img-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.img-loading::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  z-index: 1;
+}
+
+/* ============ ВОЛНА SVG ВНИЗУ СЕКЦИИ ============ */
+
+.wave-divider {
+  position: relative;
+  height: 80px;
+  margin-top: -1px;
+}
+
+.wave-divider svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ============ УМЕНЬШЕНИЕ АНИМАЦИЙ ДЛЯ ACCESSIBILITY ============ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

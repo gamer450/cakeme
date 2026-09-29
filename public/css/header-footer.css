@@ -1,0 +1,352 @@
+/* ============================================
+   ШАПКА И ПОДВАЛ САЙТА
+   ============================================ */
+
+/* ============ ШАПКА ============ */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 245, 238, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid transparent;
+  transition: all var(--t-med) var(--ease);
+}
+
+.header.is-scrolled {
+  background: rgba(255, 245, 238, 0.95);
+  box-shadow: var(--shadow-sm);
+  border-bottom-color: var(--border);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 80px;
+}
+
+/* Логотип */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--choco);
+  transition: transform var(--t-fast) var(--ease);
+}
+
+.logo:hover {
+  transform: scale(1.03);
+}
+
+.logo__icon {
+  font-size: 1.75rem;
+  transition: transform var(--t-med) var(--ease-bounce);
+}
+
+.logo:hover .logo__icon {
+  transform: rotate(-12deg) scale(1.15);
+}
+
+.logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.logo__name {
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.logo__tagline {
+  font-family: var(--font-accent);
+  font-size: 0.9rem;
+  color: var(--pink-hover);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Навигация */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav__link {
+  position: relative;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--choco);
+  border-radius: var(--r-full);
+  transition: all var(--t-fast) var(--ease);
+}
+
+.nav__link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--pink-hover);
+  transition: all var(--t-med) var(--ease);
+  transform: translateX(-50%);
+}
+
+.nav__link:hover {
+  color: var(--pink-hover);
+}
+
+.nav__link:hover::after,
+.nav__link.is-active::after {
+  width: 60%;
+}
+
+.nav__link.is-active {
+  color: var(--pink-hover);
+}
+
+/* Действия (поиск, корзина, вход) */
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--choco);
+  transition: all var(--t-fast) var(--ease);
+  background: transparent;
+}
+
+.icon-btn:hover {
+  background: var(--peach);
+  color: var(--pink-hover);
+  transform: scale(1.08);
+}
+
+.icon-btn__badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--pink-hover);
+  color: var(--white);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: var(--r-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounceIn 0.4s var(--ease-bounce) both;
+}
+
+/* Мобильное меню — гамбургер */
+.burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  border-radius: 50%;
+  transition: background var(--t-fast) var(--ease);
+}
+
+.burger:hover {
+  background: var(--peach);
+}
+
+.burger span {
+  width: 22px;
+  height: 2px;
+  background: var(--choco);
+  border-radius: 2px;
+  transition: all var(--t-med) var(--ease);
+}
+
+.burger.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.burger.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.burger.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ============ ПОДВАЛ ============ */
+
+.footer {
+  background: var(--choco);
+  color: var(--cream-on-dark);
+  padding: 80px 0 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.footer__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+  margin-bottom: 60px;
+}
+
+.footer__col h4 {
+  font-family: var(--font-display);
+  color: var(--cream-on-dark);
+  font-size: 1.15rem;
+  margin-bottom: 20px;
+}
+
+.footer__col p,
+.footer__col a {
+  color: rgba(245, 230, 211, 0.75);
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.footer__col a:hover {
+  color: var(--gold);
+}
+
+.footer__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--cream-on-dark);
+}
+
+.footer__socials {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.footer__social {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(245, 230, 211, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream-on-dark);
+  transition: all var(--t-fast) var(--ease);
+}
+
+.footer__social:hover {
+  background: var(--gold);
+  color: var(--coffee-dark);
+  transform: translateY(-3px);
+}
+
+.footer__bottom {
+  padding-top: 24px;
+  border-top: 1px solid rgba(245, 230, 211, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: rgba(245, 230, 211, 0.5);
+}
+
+/* ============ МОБИЛЬНАЯ АДАПТАЦИЯ ============ */
+
+@media (max-width: 900px) {
+  .nav {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    background: var(--cream);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+    gap: 4px;
+    transform: translateY(-120%);
+    transition: transform var(--t-med) var(--ease);
+    box-shadow: var(--shadow-md);
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .nav.is-open {
+    transform: translateY(0);
+  }
+
+  .nav__link {
+    padding: 14px 16px;
+    font-size: 1.05rem;
+  }
+
+  .nav__link::after {
+    display: none;
+  }
+
+  .burger {
+    display: flex;
+  }
+
+  .footer__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 560px) {
+  .header__inner {
+    height: 68px;
+  }
+
+  .logo__tagline {
+    display: none;
+  }
+
+  .footer {
+    padding: 60px 0 20px;
+  }
+
+  .footer__grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+}
