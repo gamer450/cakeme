@@ -197,8 +197,10 @@ function initTabs() {
 // ============================================
 function initLogout() {
   document.getElementById('logout-btn')?.addEventListener('click', () => {
+    if (!confirm('Выйти из аккаунта? Корзина будет очищена.')) return;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('cart'); // ← чистим корзину
     window.location.href = '/';
   });
 }

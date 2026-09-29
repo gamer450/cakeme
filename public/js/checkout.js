@@ -213,6 +213,7 @@ function renderCheckout() {
   // Обработчики
   initPaymentOptions();
   initDateMin();
+  prefillFromUser(); // ← добавили
   initFormSubmit(total);
 }
 
@@ -238,6 +239,24 @@ function initDateMin() {
   const today = new Date().toISOString().split('T')[0];
   dateInput.min = today;
   dateInput.value = today;
+}
+
+// ============================================
+// 4.5. Предзаполнение формы из профиля
+// ============================================
+function prefillFromUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return;
+
+    const nameInput = document.getElementById('f-name');
+    const phoneInput = document.getElementById('f-phone');
+    const emailInput = document.getElementById('f-email');
+
+    if (nameInput && !nameInput.value) nameInput.value = user.name || '';
+    if (phoneInput && !phoneInput.value) phoneInput.value = user.phone || '';
+    if (emailInput && !emailInput.value) emailInput.value = user.email || '';
+  } catch {}
 }
 
 // ============================================
@@ -281,9 +300,13 @@ function initFormSubmit(total) {
     submitBtn.disabled = true;
 
     try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           customer_name: name,
           phone,
