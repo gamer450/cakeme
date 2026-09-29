@@ -216,6 +216,66 @@ app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req,
   }
 });
 
+// GET /api/admin/orders — все заказы (для админки)
+app.get('/api/admin/orders', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const { status, search } = req.query;
+
+    let sql = 'SELECT * FROM orders WHERE 1=1';
+    const params = [];
+
+    if (status && status !== 'all') {
+      sql += ' AND status = ?';
+      params.push(status);
+    }
+
+    if (search && search.trim()) {
+      sql += ' AND (customer_name LIKE ? OR phone LIKE ? OR id = ?)';
+      const q = `%${search.trim()}%`;
+      params.push(q, q, parseInt(search, 10) || 0);
+    }
+
+    sql += ' ORDER BY id DESC LIMIT 200';
+
+    const orders = db.prepare(sql).all(...params);
+
+    // Прикрепляем позиции к каждому заказу
+    const withItems = orders.map(o => ({
+      ...o,
+      items: db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(o.id)
+    }));
+
+    res.json(withItems);
+  } catch (err) {
+    console.error('Ошибка списка заказов:', err);
+    res.status(500).json({ error: 'Не удалось загрузить заказы' });
+  }
+});
+
+// PATCH /api/admin/orders/:id/status — смена статуса заказа
+app.patch('/api/admin/orders/:id/status', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowed = ['new', 'confirmed', 'baking', 'delivering', 'done', 'cancelled'];
+
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ error: 'Недопустимый статус' });
+    }
+
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+
+    db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
+
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error('Ошибка смены статуса:', err);
+    res.status(500).json({ error: 'Не удалось обновить статус' });
+  }
+});
+
 // ============================================
 // АВТОРИЗАЦИЯ
 // ============================================

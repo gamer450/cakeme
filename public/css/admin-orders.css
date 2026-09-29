@@ -1,0 +1,463 @@
+/* ============================================
+   УПРАВЛЕНИЕ ЗАКАЗАМИ
+   ============================================ */
+
+/* ============ ПАНЕЛЬ ФИЛЬТРОВ ============ */
+
+.orders-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.orders-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--admin-card);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+}
+
+.orders-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.orders-tab:hover {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+.orders-tab.is-active {
+  background: var(--admin-sidebar);
+  color: #fff;
+}
+
+.orders-tab__count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.orders-tab:not(.is-active) .orders-tab__count {
+  background: var(--admin-border);
+  color: var(--admin-text-muted);
+}
+
+.orders-search {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+
+.orders-search input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--admin-card);
+  transition: all 0.2s ease;
+  color: var(--admin-text);
+}
+
+.orders-search input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.15);
+}
+
+.orders-search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+/* ============ ТАБЛИЦА ============ */
+
+.orders-table-wrap {
+  background: var(--admin-card);
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  overflow: hidden;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.orders-table thead {
+  background: var(--admin-bg);
+}
+
+.orders-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.orders-table td {
+  padding: 14px 16px;
+  border-top: 1px solid var(--admin-border);
+  vertical-align: middle;
+}
+
+.orders-table tbody tr {
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.orders-table tbody tr:hover {
+  background: var(--admin-bg);
+}
+
+.orders-table__id {
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.orders-table__customer {
+  font-weight: 600;
+  color: var(--admin-text);
+  line-height: 1.3;
+}
+
+.orders-table__phone {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  font-weight: 400;
+}
+
+.orders-table__total {
+  font-weight: 800;
+  color: var(--admin-text);
+  white-space: nowrap;
+}
+
+.orders-table__date {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+}
+
+.orders-table__actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.orders-table__btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.orders-table__btn:hover {
+  background: var(--admin-sidebar);
+  color: #fff;
+  border-color: var(--admin-sidebar);
+}
+
+/* Пустой список */
+.orders-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--admin-text-muted);
+}
+
+.orders-empty__icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.orders-empty__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  margin-bottom: 6px;
+}
+
+/* ============ МОДАЛКА ============ */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 26, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal__inner {
+  background: var(--admin-card);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(20px) scale(0.98);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal.is-open .modal__inner {
+  transform: translateY(0) scale(1);
+}
+
+.modal__header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--admin-card);
+  z-index: 1;
+}
+
+.modal__title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.modal__close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--admin-bg);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-muted);
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.modal__close:hover {
+  background: #fee2e2;
+  color: var(--admin-danger);
+  transform: rotate(90deg);
+}
+
+.modal__body {
+  padding: 24px 28px;
+}
+
+.modal__section {
+  margin-bottom: 24px;
+}
+
+.modal__section:last-child {
+  margin-bottom: 0;
+}
+
+.modal__section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.modal__info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal__info-item {
+  padding: 12px 14px;
+  background: var(--admin-bg);
+  border-radius: 10px;
+}
+
+.modal__info-label {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.modal__info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  word-break: break-word;
+}
+
+/* Список позиций */
+.modal-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--admin-bg);
+  border-radius: 12px;
+}
+
+.modal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--admin-border);
+}
+
+.modal-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.modal-item__name {
+  font-weight: 600;
+  color: var(--admin-text);
+  font-size: 0.9rem;
+}
+
+.modal-item__qty {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  margin-left: 4px;
+}
+
+.modal-item__price {
+  font-weight: 700;
+  color: var(--admin-text);
+  white-space: nowrap;
+}
+
+.modal-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 16px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: #fff;
+  border-radius: 12px;
+}
+
+.modal-total__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.modal-total__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* Смена статуса */
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-btn:hover {
+  transform: translateY(-2px);
+}
+
+.status-btn.is-current {
+  pointer-events: none;
+}
+
+.status-btn--new:hover { border-color: #f59e0b; }
+.status-btn--confirmed:hover { border-color: #3b82f6; }
+.status-btn--baking:hover { border-color: #f97316; }
+.status-btn--delivering:hover { border-color: #0891b2; }
+.status-btn--done:hover { border-color: #22a06b; }
+.status-btn--cancelled:hover { border-color: #ef4444; }
+
+.status-btn.is-current.status-btn--new { background: #fff3cd; color: #856404; }
+.status-btn.is-current.status-btn--confirmed { background: #cfe2ff; color: #084298; }
+.status-btn.is-current.status-btn--baking { background: #ffe5cc; color: #cc5c00; }
+.status-btn.is-current.status-btn--delivering { background: #d1ecf1; color: #0c5460; }
+.status-btn.is-current.status-btn--done { background: #d4edda; color: #155724; }
+.status-btn.is-current.status-btn--cancelled { background: #f8d7da; color: #721c24; }
+
+/* Адаптив */
+@media (max-width: 700px) {
+  .modal__info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-table th:nth-child(3),
+  .orders-table td:nth-child(3),
+  .orders-table th:nth-child(5),
+  .orders-table td:nth-child(5) {
+    display: none;
+  }
+}

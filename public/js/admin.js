@@ -188,6 +188,10 @@ function navigate(tab) {
       renderDashboard(content);
       break;
 
+    case 'orders':
+      renderOrders(content);
+      break;
+
     // Остальные вкладки — заглушки (заменим в следующих спринтах)
     default:
       content.innerHTML = `
