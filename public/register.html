@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Регистрация — Сладкий Дом</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+  <link rel="stylesheet" href="/css/header-footer.css" />
+  <link rel="stylesheet" href="/css/auth.css" />
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container">
+      <div class="header__inner">
+        <a href="/" class="logo">
+          <span class="logo__icon">🍰</span>
+          <span class="logo__text">
+            <span class="logo__name">Сладкий Дом</span>
+            <span class="logo__tagline">торты &amp; кофе</span>
+          </span>
+        </a>
+        <div class="header__actions">
+          <a href="/" class="btn btn-ghost btn-sm">← На главную</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card__icon">✨</div>
+      <h1 class="auth-card__title">Создать аккаунт</h1>
+      <p class="auth-card__subtitle">Быстрая регистрация — 30 секунд</p>
+
+      <form class="auth-form" id="register-form" novalidate>
+        <div class="auth-form__error" id="form-error"></div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label" for="name">Имя</label>
+          <input type="text" id="name" class="auth-form__input" placeholder="Как к вам обращаться?" required autocomplete="name" />
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label" for="email">Email</label>
+          <input type="email" id="email" class="auth-form__input" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label" for="phone">Телефон</label>
+          <input type="tel" id="phone" class="auth-form__input" placeholder="+7 900 000-00-00" autocomplete="tel" />
+        </div>
+
+        <div class="auth-form__field">
+          <label class="auth-form__label" for="password">Пароль</label>
+          <div class="auth-form__password-wrap">
+            <input type="password" id="password" class="auth-form__input" placeholder="Минимум 6 символов" required autocomplete="new-password" />
+            <button type="button" class="auth-form__toggle" id="toggle-password" aria-label="Показать пароль">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg auth-form__btn" id="submit-btn">
+          Зарегистрироваться
+        </button>
+      </form>
+
+      <div class="auth-card__footer">
+        Уже есть аккаунт? <a href="/login.html">Войти</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/register.js"></script>
+</body>
+</html>

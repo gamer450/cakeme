@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const { signToken, authRequired, authOptional } = require('./src/middleware/auth');
+const bcrypt = require('bcryptjs');
 const express = require('express');
 const path = require('path');
 const db = require('./src/db');
@@ -63,7 +65,7 @@ app.get('/api/settings', (req, res) => {
 // ============================================
 
 // API: создать заказ
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', authOptional, (req, res) => {
   try {
     const { customer_name, phone, email, address, comment, items } = req.body;
 
@@ -101,7 +103,7 @@ app.post('/api/orders', (req, res) => {
       `);
 
       const result = orderStmt.run(
-        null, // user_id — пока null, добавим при авторизации
+        req.user?.id || null, // user_id — если вошёл, привязываем
         customer_name.trim(),
         phone.trim(),
         (email || '').trim(),
@@ -149,6 +151,124 @@ app.get('/api/orders/:id', (req, res) => {
   const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id);
 
   res.json({ ...order, items });
+});
+
+// ============================================
+// АВТОРИЗАЦИЯ
+// ============================================
+
+// POST /api/auth/register — регистрация
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    // Валидация
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Заполните имя, email и пароль' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Некорректный email' });
+    }
+
+    // Проверка: email уже занят?
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase());
+    if (existing) {
+      return res.status(409).json({ error: 'Пользователь с таким email уже зарегистрирован' });
+    }
+
+    // Хешируем пароль
+    const password_hash = bcrypt.hashSync(password, 10);
+
+    // Создаём
+    const result = db.prepare(`
+      INSERT INTO users (name, email, phone, password_hash, role)
+      VALUES (?, ?, ?, ?, 'client')
+    `).run(
+      name.trim(),
+      email.trim().toLowerCase(),
+      (phone || '').trim(),
+      password_hash
+    );
+
+    const user = db.prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?').get(result.lastInsertRowid);
+    const token = signToken(user);
+
+    res.status(201).json({
+      success: true,
+      token,
+      user,
+      message: 'Добро пожаловать!'
+    });
+  } catch (err) {
+    console.error('Ошибка регистрации:', err);
+    res.status(500).json({ error: 'Не удалось зарегистрироваться' });
+  }
+});
+
+// POST /api/auth/login — вход
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Укажите email и пароль' });
+    }
+
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase());
+
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный email или пароль' });
+    }
+
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Аккаунт заблокирован' });
+    }
+
+    const ok = bcrypt.compareSync(password, user.password_hash);
+    if (!ok) {
+      return res.status(401).json({ error: 'Неверный email или пароль' });
+    }
+
+    const { password_hash, ...safeUser } = user;
+    const token = signToken(safeUser);
+
+    res.json({
+      success: true,
+      token,
+      user: safeUser,
+      message: 'С возвращением!'
+    });
+  } catch (err) {
+    console.error('Ошибка входа:', err);
+    res.status(500).json({ error: 'Не удалось войти' });
+  }
+});
+
+// GET /api/auth/me — текущий пользователь
+app.get('/api/auth/me', authRequired, (req, res) => {
+  res.json({ user: req.user });
+});
+
+// GET /api/auth/my-orders — мои заказы (для личного кабинета)
+app.get('/api/auth/my-orders', authRequired, (req, res) => {
+  const orders = db.prepare(`
+    SELECT * FROM orders
+    WHERE user_id = ? OR phone = ?
+    ORDER BY id DESC
+  `).all(req.user.id, req.user.phone || '');
+
+  // Добавляем позиции к каждому заказу
+  const withItems = orders.map(order => ({
+    ...order,
+    items: db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id)
+  }));
+
+  res.json(withItems);
 });
 
 app.listen(PORT, () => {
