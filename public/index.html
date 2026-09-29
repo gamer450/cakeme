@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Сладкий Дом — тест</title>
+  <style>
+    body { font-family: sans-serif; background: #fff8f3; padding: 20px; }
+    h1 { color: #d6336c; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .card h3 { color: #d6336c; margin-bottom: 8px; }
+    .price { font-weight: bold; font-size: 1.2rem; margin-top: 8px; }
+    .cat { font-size: 0.85rem; color: #999; }
+    .status { padding: 8px 12px; border-radius: 6px; display: inline-block; }
+    .ok { background: #d4edda; color: #155724; }
+    .err { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h1>🍰 Сладкий Дом — тест</h1>
+  <div id="status" class="status">Загрузка...</div>
+  <div id="cakes" class="grid"></div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const gridEl = document.getElementById('cakes');
+
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(products => {
+        statusEl.textContent = '✅ Загружено товаров: ' + products.length;
+        statusEl.className = 'status ok';
+        gridEl.innerHTML = products.map(p => `
+          <div class="card">
+            <div class="cat">${p.category_name}</div>
+            <h3>${p.name}</h3>
+            <p>${p.description || ''}</p>
+            <div class="price">${p.price} ₽</div>
+            <div class="cat">${p.weight || ''}</div>
+          </div>
+        `).join('');
+      })
+      .catch(e => {
+        statusEl.textContent = '❌ Ошибка: ' + e.message;
+        statusEl.className = 'status err';
+      });
+  </script>
+</body>
+</html>
