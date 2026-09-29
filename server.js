@@ -1,9 +1,9 @@
 require('dotenv').config();
 
-const { signToken, authRequired, authOptional } = require('./src/middleware/auth');
-const bcrypt = require('bcryptjs');
+const { signToken, authRequired, authOptional, requireRole } = require('./src/middleware/auth');
 const express = require('express');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const db = require('./src/db');
 
 const app = express();
@@ -151,6 +151,69 @@ app.get('/api/orders/:id', (req, res) => {
   const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id);
 
   res.json({ ...order, items });
+});
+
+// ============================================
+// АДМИН-ПАНЕЛЬ
+// ============================================
+
+// GET /api/admin/stats — статистика для дашборда
+app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const totalOrders = db.prepare('SELECT COUNT(*) as c FROM orders').get().c;
+    const newOrders = db.prepare("SELECT COUNT(*) as c FROM orders WHERE status = 'new'").get().c;
+    const totalRevenue = db.prepare("SELECT COALESCE(SUM(total), 0) as s FROM orders WHERE status != 'cancelled'").get().s;
+    const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
+    const totalProducts = db.prepare('SELECT COUNT(*) as c FROM products WHERE is_active = 1').get().c;
+
+    // Продажи по дням (последние 7 дней)
+    const salesByDay = db.prepare(`
+      SELECT
+        date(created_at) as day,
+        COUNT(*) as orders,
+        COALESCE(SUM(total), 0) as revenue
+      FROM orders
+      WHERE created_at >= date('now', '-7 days') AND status != 'cancelled'
+      GROUP BY date(created_at)
+      ORDER BY day ASC
+    `).all();
+
+    // Последние 5 заказов
+    const recentOrders = db.prepare(`
+      SELECT id, customer_name, phone, total, status, created_at
+      FROM orders
+      ORDER BY id DESC
+      LIMIT 5
+    `).all();
+
+    // Топ-5 товаров
+    const topProducts = db.prepare(`
+      SELECT
+        oi.product_name,
+        SUM(oi.quantity) as sold,
+        SUM(oi.quantity * oi.price) as revenue
+      FROM order_items oi
+      JOIN orders o ON o.id = oi.order_id
+      WHERE o.status != 'cancelled'
+      GROUP BY oi.product_name
+      ORDER BY sold DESC
+      LIMIT 5
+    `).all();
+
+    res.json({
+      totalOrders,
+      newOrders,
+      totalRevenue,
+      totalUsers,
+      totalProducts,
+      salesByDay,
+      recentOrders,
+      topProducts
+    });
+  } catch (err) {
+    console.error('Ошибка статистики:', err);
+    res.status(500).json({ error: 'Не удалось загрузить статистику' });
+  }
 });
 
 // ============================================
