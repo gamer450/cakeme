@@ -398,6 +398,140 @@ app.delete('/api/admin/categories/:id', authRequired, requireRole('admin'), (req
 });
 
 // ============================================
+// АДМИН: ТОВАРЫ
+// ============================================
+
+// GET /api/admin/products — все товары (включая скрытые)
+app.get('/api/admin/products', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const products = db.prepare(`
+      SELECT
+        p.*,
+        c.name AS category_name,
+        c.type AS category_type
+      FROM products p
+      JOIN categories c ON c.id = p.category_id
+      ORDER BY p.id DESC
+    `).all();
+    res.json(products);
+  } catch (err) {
+    console.error('Ошибка товаров:', err);
+    res.status(500).json({ error: 'Не удалось загрузить товары' });
+  }
+});
+
+// POST /api/admin/products — создать товар
+app.post('/api/admin/products', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const { category_id, name, description, price, weight, image, stock } = req.body;
+
+    if (!category_id || !name || price === undefined) {
+      return res.status(400).json({ error: 'Заполните категорию, название и цену' });
+    }
+
+    if (isNaN(price) || price < 0) {
+      return res.status(400).json({ error: 'Цена должна быть положительным числом' });
+    }
+
+    // Проверка категории
+    const category = db.prepare('SELECT id FROM categories WHERE id = ?').get(category_id);
+    if (!category) {
+      return res.status(400).json({ error: 'Категория не найдена' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO products (category_id, name, description, price, weight, image, stock)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      category_id,
+      name.trim(),
+      (description || '').trim(),
+      parseFloat(price),
+      (weight || '').trim(),
+      (image || '/images/default.jpg').trim(),
+      parseInt(stock, 10) || 0
+    );
+
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json({ success: true, product });
+  } catch (err) {
+    console.error('Ошибка создания товара:', err);
+    res.status(500).json({ error: 'Не удалось создать товар' });
+  }
+});
+
+// PATCH /api/admin/products/:id — обновить товар
+app.patch('/api/admin/products/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: 'Товар не найден' });
+    }
+
+    const {
+      category_id, name, description, price, weight, image, stock, is_active
+    } = req.body;
+
+    db.prepare(`
+      UPDATE products
+      SET category_id = ?,
+          name = ?,
+          description = ?,
+          price = ?,
+          weight = ?,
+          image = ?,
+          stock = ?,
+          is_active = ?
+      WHERE id = ?
+    `).run(
+      category_id !== undefined ? category_id : product.category_id,
+      name !== undefined ? name.trim() : product.name,
+      description !== undefined ? description.trim() : product.description,
+      price !== undefined ? parseFloat(price) : product.price,
+      weight !== undefined ? weight.trim() : product.weight,
+      image !== undefined ? image.trim() : product.image,
+      stock !== undefined ? parseInt(stock, 10) : product.stock,
+      is_active !== undefined ? (is_active ? 1 : 0) : product.is_active,
+      req.params.id
+    );
+
+    const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    res.json({ success: true, product: updated });
+  } catch (err) {
+    console.error('Ошибка обновления товара:', err);
+    res.status(500).json({ error: 'Не удалось обновить товар' });
+  }
+});
+
+// DELETE /api/admin/products/:id — удалить товар
+app.delete('/api/admin/products/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: 'Товар не найден' });
+    }
+
+    // Проверка: есть ли товар в заказах
+    const inOrders = db.prepare('SELECT COUNT(*) as c FROM order_items WHERE product_id = ?').get(req.params.id).c;
+    if (inOrders > 0) {
+      // Не удаляем, а скрываем
+      db.prepare('UPDATE products SET is_active = 0 WHERE id = ?').run(req.params.id);
+      return res.json({
+        success: true,
+        softDeleted: true,
+        message: `Товар встречается в ${inOrders} заказах. Мы его скрыли, но не удалили.`
+      });
+    }
+
+    db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка удаления товара:', err);
+    res.status(500).json({ error: 'Не удалось удалить товар' });
+  }
+});
+
+// ============================================
 // АВТОРИЗАЦИЯ
 // ============================================
 

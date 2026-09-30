@@ -196,6 +196,10 @@ function navigate(tab) {
       renderCategories(content);
       break;
 
+    case 'products':
+      renderProducts(content);
+      break;
+
     // Остальные вкладки — заглушки (заменим в следующих спринтах)
     default:
       content.innerHTML = `

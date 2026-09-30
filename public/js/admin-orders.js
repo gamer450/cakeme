@@ -50,13 +50,13 @@ async function renderOrders(container) {
 
   initOrdersTabs();
   initOrdersSearch();
-  await loadOrders();
+  await ordersLoad();
 }
 
 // ============================================
 // 2. Загрузка заказов
 // ============================================
-async function loadOrders() {
+async function ordersLoad() {
   try {
     const res = await fetch('/api/admin/orders', {
       headers: { Authorization: `Bearer ${state.token}` }
@@ -65,8 +65,8 @@ async function loadOrders() {
     if (!res.ok) throw new Error('Ошибка загрузки');
     ordersState.all = await res.json();
 
-    updateCounts();
-    renderTable();
+    ordersUpdateCounts();
+    ordersRenderTable();
   } catch (err) {
     console.error(err);
     document.getElementById('orders-table-wrap').innerHTML = `
@@ -81,7 +81,7 @@ async function loadOrders() {
 // ============================================
 // 3. Обновление счётчиков
 // ============================================
-function updateCounts() {
+function ordersUpdateCounts() {
   const counts = { all: ordersState.all.length };
   ['new', 'confirmed', 'baking', 'delivering', 'done', 'cancelled'].forEach(s => {
     counts[s] = ordersState.all.filter(o => o.status === s).length;
@@ -118,7 +118,7 @@ function getFiltered() {
 // ============================================
 // 5. Рендер таблицы
 // ============================================
-function renderTable() {
+function ordersRenderTable() {
   const list = getFiltered();
   const wrap = document.getElementById('orders-table-wrap');
 
@@ -157,7 +157,7 @@ function renderTable() {
               <span class="orders-table__phone">${o.phone || '—'}</span>
             </td>
             <td><span class="orders-table__total">${o.total.toLocaleString('ru-RU')} ₽</span></td>
-            <td><span class="orders-table__date">${formatDate(o.created_at)}</span></td>
+            <td><span class="orders-table__date">${ordersFormatDate(o.created_at)}</span></td>
             <td><span class="order-badge order-badge--${o.status}">${statusLabels[o.status] || o.status}</span></td>
             <td class="orders-table__actions">
               <button class="orders-table__btn" data-open="${o.id}">Открыть</button>
@@ -183,7 +183,7 @@ function initOrdersTabs() {
       document.querySelectorAll('.orders-tab').forEach(t => t.classList.remove('is-active'));
       tab.classList.add('is-active');
       ordersState.filter = tab.dataset.status;
-      renderTable();
+      ordersRenderTable();
     });
   });
 }
@@ -197,7 +197,7 @@ function initOrdersSearch() {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
       ordersState.search = e.target.value;
-      renderTable();
+      ordersRenderTable();
     }, 250);
   });
 }
@@ -241,7 +241,7 @@ function openOrder(id) {
             ` : ''}
             <div class="modal__info-item">
               <div class="modal__info-label">Дата</div>
-              <div class="modal__info-value">${formatDate(order.created_at)}</div>
+              <div class="modal__info-value">${ordersFormatDate(order.created_at)}</div>
             </div>
             ${order.address ? `
               <div class="modal__info-item" style="grid-column: 1 / -1;">
@@ -341,8 +341,8 @@ function openOrder(id) {
           b.classList.toggle('is-current', b.dataset.status === newStatus);
         });
 
-        updateCounts();
-        renderTable();
+        ordersUpdateCounts();
+        ordersRenderTable();
 
         showAdminToast(`Статус изменён: ${statusLabels[newStatus]}`);
       } catch (err) {
@@ -378,7 +378,7 @@ function renderStatusButtons(current) {
 // ============================================
 // 10. Хелперы
 // ============================================
-function formatDate(str) {
+function ordersFormatDate(str) {
   try {
     const d = new Date(str.replace(' ', 'T'));
     return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
