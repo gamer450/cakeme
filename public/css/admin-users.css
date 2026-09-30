@@ -1,0 +1,301 @@
+/* ============================================
+   АДМИН: ПОЛЬЗОВАТЕЛИ
+   ============================================ */
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.users-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.users-header__title small {
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  margin-left: 8px;
+}
+
+/* ============ ФИЛЬТРЫ ============ */
+
+.users-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.users-search {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+
+.users-search input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--admin-card);
+  color: var(--admin-text);
+  transition: all 0.2s ease;
+}
+
+.users-search input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.15);
+}
+
+.users-search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--admin-text-muted);
+  pointer-events: none;
+}
+
+.users-roles {
+  display: flex;
+  gap: 4px;
+  background: var(--admin-card);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+}
+
+.users-role {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.users-role:hover {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+.users-role.is-active {
+  background: var(--admin-sidebar);
+  color: #fff;
+}
+
+/* ============ ТАБЛИЦА ============ */
+
+.users-table-wrap {
+  background: var(--admin-card);
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  overflow: hidden;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.users-table thead {
+  background: var(--admin-bg);
+}
+
+.users-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: 14px 16px;
+  border-top: 1px solid var(--admin-border);
+  vertical-align: middle;
+}
+
+.users-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.users-table tbody tr:hover {
+  background: var(--admin-bg);
+}
+
+.users-table tbody tr.is-inactive {
+  opacity: 0.55;
+}
+
+.users-table__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.users-table__avatar--admin { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.users-table__avatar--manager { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+.users-table__avatar--client { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
+
+.users-table__name {
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.users-table__email {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  margin-top: 2px;
+}
+
+.users-table__phone {
+  font-size: 0.85rem;
+  color: var(--admin-text);
+}
+
+/* Бейдж роли */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge--admin { background: #fef3c7; color: #92400e; }
+.role-badge--manager { background: #dbeafe; color: #1e40af; }
+.role-badge--client { background: #ede9fe; color: #5b21b6; }
+
+/* Бейдж статуса */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge--active { background: #d4edda; color: #155724; }
+.status-badge--blocked { background: #f8d7da; color: #721c24; }
+
+.users-table__actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.users-table__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.users-table__btn:hover {
+  background: var(--admin-sidebar);
+  color: #fff;
+  border-color: var(--admin-sidebar);
+  transform: translateY(-1px);
+}
+
+.users-table__btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.users-table__btn--danger:hover {
+  background: var(--admin-danger);
+  border-color: var(--admin-danger);
+}
+
+/* Роль select */
+.role-options {
+  display: grid;
+  gap: 8px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--admin-border);
+  background: var(--admin-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.role-option:hover {
+  border-color: var(--admin-peach, #ffe4d6);
+  background: var(--admin-card);
+}
+
+.role-option.is-selected {
+  border-color: var(--admin-accent);
+  background: #fff5f0;
+}
+
+.role-option__icon {
+  font-size: 1.5rem;
+}
+
+.role-option__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.role-option__title {
+  font-weight: 700;
+  color: var(--admin-text);
+  font-size: 0.95rem;
+}
+
+.role-option__desc {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}

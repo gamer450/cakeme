@@ -184,21 +184,11 @@ function navigate(tab) {
 
   // Роутинг по вкладкам
   switch (tab) {
-    case 'dashboard':
-      renderDashboard(content);
-      break;
-
-    case 'orders':
-      renderOrders(content);
-      break;
-
-    case 'categories':
-      renderCategories(content);
-      break;
-
-    case 'products':
-      renderProducts(content);
-      break;
+    case 'dashboard': renderDashboard(content); break;
+    case 'orders': renderOrders(content); break;
+    case 'categories': renderCategories(content); break;
+    case 'products': renderProducts(content); break;
+    case 'users': renderUsers(content); break;   // ← НОВОЕ
 
     // Остальные вкладки — заглушки (заменим в следующих спринтах)
     default:

@@ -532,6 +532,111 @@ app.delete('/api/admin/products/:id', authRequired, requireRole('admin'), (req, 
 });
 
 // ============================================
+// АДМИН: ПОЛЬЗОВАТЕЛИ
+// ============================================
+
+// GET /api/admin/users — все пользователи (только для admin)
+app.get('/api/admin/users', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const { role, search } = req.query;
+
+    let sql = `
+      SELECT
+        id, name, email, phone, role, is_active, created_at,
+        (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as orders_count
+      FROM users
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (role && role !== 'all') {
+      sql += ' AND role = ?';
+      params.push(role);
+    }
+
+    if (search && search.trim()) {
+      sql += ' AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)';
+      const q = `%${search.trim()}%`;
+      params.push(q, q, q);
+    }
+
+    sql += ' ORDER BY id ASC';
+
+    const users = db.prepare(sql).all(...params);
+    res.json(users);
+  } catch (err) {
+    console.error('Ошибка списка пользователей:', err);
+    res.status(500).json({ error: 'Не удалось загрузить пользователей' });
+  }
+});
+
+// PATCH /api/admin/users/:id — обновить пользователя (роль, статус, имя, телефон)
+app.patch('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    const { name, phone, role, is_active } = req.body;
+
+    // Проверка роли
+    if (role && !['client', 'manager', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Недопустимая роль' });
+    }
+
+    // Нельзя лишить себя прав админа
+    if (String(user.id) === String(req.user.id)) {
+      if (role && role !== 'admin') {
+        return res.status(400).json({ error: 'Нельзя изменить свою роль' });
+      }
+      if (is_active !== undefined && !is_active) {
+        return res.status(400).json({ error: 'Нельзя заблокировать себя' });
+      }
+    }
+
+    db.prepare(`
+      UPDATE users
+      SET name = ?, phone = ?, role = ?, is_active = ?
+      WHERE id = ?
+    `).run(
+      name !== undefined ? name.trim() : user.name,
+      phone !== undefined ? phone.trim() : user.phone,
+      role !== undefined ? role : user.role,
+      is_active !== undefined ? (is_active ? 1 : 0) : user.is_active,
+      req.params.id
+    );
+
+    const updated = db.prepare('SELECT id, name, email, phone, role, is_active, created_at FROM users WHERE id = ?').get(req.params.id);
+    res.json({ success: true, user: updated });
+  } catch (err) {
+    console.error('Ошибка обновления пользователя:', err);
+    res.status(500).json({ error: 'Не удалось обновить пользователя' });
+  }
+});
+
+// DELETE /api/admin/users/:id — удалить пользователя
+app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    // Нельзя удалить себя
+    if (String(user.id) === String(req.user.id)) {
+      return res.status(400).json({ error: 'Нельзя удалить себя' });
+    }
+
+    db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка удаления пользователя:', err);
+    res.status(500).json({ error: 'Не удалось удалить пользователя' });
+  }
+});
+
+// ============================================
 // АВТОРИЗАЦИЯ
 // ============================================
 
