@@ -1,0 +1,223 @@
+/* ============================================
+   АДМИН: НАСТРОЙКИ САЙТА
+   ============================================ */
+
+.settings-page {
+  max-width: 900px;
+}
+
+/* ============ СЕКЦИЯ ============ */
+
+.settings-section {
+  background: var(--admin-card);
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.settings-section__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.settings-section__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--admin-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.settings-section__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.settings-section__desc {
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+  margin-top: 2px;
+}
+
+/* ============ ПОЛЯ ============ */
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-field--full {
+  grid-column: 1 / -1;
+}
+
+.settings-field__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.settings-field__hint {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.settings-field__input,
+.settings-field__textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--admin-text);
+  background: var(--admin-bg);
+  transition: all 0.2s ease;
+}
+
+.settings-field__input:focus,
+.settings-field__textarea:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  background: var(--admin-card);
+  box-shadow: 0 0 0 3px rgba(255, 155, 133, 0.15);
+}
+
+.settings-field__textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+/* Поле с префиксом/суффиксом */
+.settings-field__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.settings-field__suffix {
+  position: absolute;
+  right: 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  pointer-events: none;
+}
+
+/* ============ ФУТЕР ============ */
+
+.settings-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--admin-card);
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  padding: 20px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04);
+  margin-top: 20px;
+}
+
+.settings-footer__status {
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+}
+
+.settings-footer__status.is-saved {
+  color: var(--admin-success);
+  font-weight: 600;
+}
+
+.settings-footer__actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* ============ ОПАСНАЯ ЗОНА ============ */
+
+.danger-zone {
+  border: 2px dashed #fca5a5;
+  background: #fff5f5;
+}
+
+.danger-zone .settings-section__icon {
+  background: #fee2e2;
+}
+
+.danger-zone .settings-section__title {
+  color: #991b1b;
+}
+
+.danger-zone__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.danger-zone__text {
+  font-size: 0.9rem;
+  color: #7f1d1d;
+  max-width: 500px;
+}
+
+.btn-danger {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* ============ АДАПТАЦИЯ ============ */
+
+@media (max-width: 700px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-section {
+    padding: 20px;
+  }
+
+  .settings-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .danger-zone__content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

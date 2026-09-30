@@ -188,7 +188,8 @@ function navigate(tab) {
     case 'orders': renderOrders(content); break;
     case 'categories': renderCategories(content); break;
     case 'products': renderProducts(content); break;
-    case 'users': renderUsers(content); break;   // ← НОВОЕ
+    case 'users': renderUsers(content); break;
+    case 'settings': renderSettings(content); break;   // ← НОВОЕ
 
     // Остальные вкладки — заглушки (заменим в следующих спринтах)
     default:

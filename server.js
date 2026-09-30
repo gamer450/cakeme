@@ -637,6 +637,79 @@ app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res
 });
 
 // ============================================
+// АДМИН: НАСТРОЙКИ САЙТА
+// ============================================
+
+// GET /api/admin/settings — все настройки
+app.get('/api/admin/settings', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const rows = db.prepare('SELECT key, value FROM settings').all();
+    const settings = {};
+    rows.forEach(r => settings[r.key] = r.value);
+    res.json(settings);
+  } catch (err) {
+    console.error('Ошибка настроек:', err);
+    res.status(500).json({ error: 'Не удалось загрузить настройки' });
+  }
+});
+
+// PATCH /api/admin/settings — обновить настройки
+app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const updates = req.body;
+
+    if (!updates || typeof updates !== 'object' || Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'Нет данных для обновления' });
+    }
+
+    // Разрешённые ключи (защита от подмены)
+    const allowedKeys = [
+      'site_name', 'site_description',
+      'phone', 'email', 'address',
+      'instagram', 'telegram',
+      'delivery_price', 'free_delivery_from'
+    ];
+
+    const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+
+    const save = db.transaction(() => {
+      for (const [key, value] of Object.entries(updates)) {
+        if (allowedKeys.includes(key)) {
+          stmt.run(key, String(value ?? ''));
+        }
+      }
+    });
+
+    save();
+
+    // Возвращаем обновлённые настройки
+    const rows = db.prepare('SELECT key, value FROM settings').all();
+    const settings = {};
+    rows.forEach(r => settings[r.key] = r.value);
+
+    res.json({ success: true, settings });
+  } catch (err) {
+    console.error('Ошибка сохранения настроек:', err);
+    res.status(500).json({ error: 'Не удалось сохранить настройки' });
+  }
+});
+
+// POST /api/admin/settings/reset-demo — сброс к демо-данным (ОПАСНАЯ ЗОНА)
+app.post('/api/admin/settings/reset-demo', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    // Только для владельца — сбрасываем заказы, но НЕ товары и НЕ пользователей
+    db.prepare('DELETE FROM order_items').run();
+    db.prepare('DELETE FROM orders').run();
+    db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')").run();
+
+    res.json({ success: true, message: 'Заказы удалены. Товары и пользователи сохранены.' });
+  } catch (err) {
+    console.error('Ошибка сброса:', err);
+    res.status(500).json({ error: 'Не удалось сбросить данные' });
+  }
+});
+
+// ============================================
 // АВТОРИЗАЦИЯ
 // ============================================
 
