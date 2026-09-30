@@ -3,8 +3,35 @@
    ============================================ */
 
 // Константы
-const DELIVERY_PRICE = 300;
-const FREE_DELIVERY_FROM = 3000;
+// Константы доставки (обновляются из настроек сайта)
+let DELIVERY_PRICE = 300;
+let FREE_DELIVERY_FROM = 3000;
+
+// Обновляем из настроек, если загружены
+function updateDeliveryFromSettings() {
+  if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
+    DELIVERY_PRICE = parseInt(window.SITE_SETTINGS.delivery_price, 10) || 300;
+    FREE_DELIVERY_FROM = parseInt(window.SITE_SETTINGS.free_delivery_from, 10) || 3000;
+  }
+}
+
+// Ждём загрузки настроек
+function waitForSettings() {
+  return new Promise((resolve) => {
+    if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
+      resolve();
+      return;
+    }
+    let checks = 0;
+    const interval = setInterval(() => {
+      checks++;
+      if ((window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) || checks > 30) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+  });
+}
 
 // Состояние
 const state = {
@@ -19,6 +46,11 @@ const state = {
 async function init() {
   // Читаем корзину из localStorage
   try {
+    state.cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  } catch {
+    state.cart = [];
+  }
+    try {
     state.cart = JSON.parse(localStorage.getItem('cart') || '[]');
   } catch {
     state.cart = [];

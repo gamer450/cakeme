@@ -2,8 +2,37 @@
    ОФОРМЛЕНИЕ ЗАКАЗА
    ============================================ */
 
-const DELIVERY_PRICE = 300;
-const FREE_DELIVERY_FROM = 3000;
+/* ============================================
+   ОФОРМЛЕНИЕ ЗАКАЗА
+   ============================================ */
+
+// Константы доставки (обновляются из настроек сайта)
+let DELIVERY_PRICE = 300;
+let FREE_DELIVERY_FROM = 3000;
+
+function updateDeliveryFromSettings() {
+  if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
+    DELIVERY_PRICE = parseInt(window.SITE_SETTINGS.delivery_price, 10) || 300;
+    FREE_DELIVERY_FROM = parseInt(window.SITE_SETTINGS.free_delivery_from, 10) || 3000;
+  }
+}
+
+function waitForSettings() {
+  return new Promise((resolve) => {
+    if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
+      resolve();
+      return;
+    }
+    let checks = 0;
+    const interval = setInterval(() => {
+      checks++;
+      if ((window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) || checks > 30) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+  });
+}
 
 const state = {
   cart: [],
@@ -15,6 +44,8 @@ const state = {
 // 1. Загрузка
 // ============================================
 async function init() {
+  await waitForSettings();
+  updateDeliveryFromSettings();
   // Читаем корзину
   try {
     state.cart = JSON.parse(localStorage.getItem('cart') || '[]');

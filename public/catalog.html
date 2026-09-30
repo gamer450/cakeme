@@ -24,8 +24,8 @@
         <a href="/" class="logo">
           <span class="logo__icon">🍰</span>
           <span class="logo__text">
-            <span class="logo__name">Сладкий Дом</span>
-            <span class="logo__tagline">торты &amp; кофе</span>
+          <span class="logo__name" data-setting="site_name">Сладкий Дом</span>
+          <span class="logo__tagline">торты &amp; кофе</span>
           </span>
         </a>
 
@@ -150,7 +150,7 @@
         <div class="footer__col">
           <div class="footer__logo">
             <span>🍰</span>
-            <span>Сладкий Дом</span>
+            <span data-setting="site_name">Сладкий Дом</span>
           </div>
           <p>Домашние торты и свежеобжаренный кофе с доставкой. Готовим с 2019 года.</p>
           <div class="footer__socials">
@@ -185,12 +185,11 @@
           <a href="#">Гарантии</a><br />
           <a href="#">Отзывы</a>
         </div>
-
         <div class="footer__col">
           <h4>Контакты</h4>
-          <p>+7 900 000-00-00</p>
-          <p>hello@cake.ru</p>
-          <p>г. Москва, ул. Сладкая, 1</p>
+          <p data-setting="phone">+7 900 000-00-00</p>
+          <p data-setting="email">hello@cake.ru</p>
+          <p data-setting="address">г. Москва, ул. Сладкая, 1</p>
         </div>
       </div>
 
@@ -201,6 +200,7 @@
     </div>
   </footer>
 
+  <script src="/js/settings.js"></script>
   <script src="/js/main.js"></script>
   <script src="/js/catalog.js"></script>
 </body>
