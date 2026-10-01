@@ -34,7 +34,6 @@ async function init() {
     const data = await res.json();
     state.user = data.user;
 
-    // Проверка роли
     if (state.user.role !== 'admin' && state.user.role !== 'manager') {
       document.getElementById('admin-root').innerHTML = `
         <div class="admin-loading">
@@ -67,7 +66,6 @@ function renderShell() {
 
   root.innerHTML = `
     <div class="admin-layout">
-      <!-- SIDEBAR -->
       <aside class="admin-sidebar">
         <div class="admin-sidebar__logo">
           <span class="admin-sidebar__logo-icon">🍰</span>
@@ -107,6 +105,11 @@ function renderShell() {
             <span class="admin-menu__item-icon">🖼️</span>
             Медиа
           </button>
+          <button class="admin-menu__item" data-tab="reviews">
+            <span class="admin-menu__item-icon">⭐</span>
+            Отзывы
+            <span class="admin-menu__item-badge hidden" id="reviews-badge">0</span>
+          </button>
           ${user.role === 'admin' ? `
             <button class="admin-menu__item" data-tab="users">
               <span class="admin-menu__item-icon">👥</span>
@@ -131,7 +134,6 @@ function renderShell() {
         </nav>
       </aside>
 
-      <!-- MAIN -->
       <div class="admin-main">
         <header class="admin-topbar">
           <h1 class="admin-topbar__title" id="tab-title">Дашборд</h1>
@@ -144,9 +146,7 @@ function renderShell() {
           </div>
         </header>
 
-        <div class="admin-content" id="admin-content">
-          <!-- Сюда рендерится контент вкладки -->
-        </div>
+        <div class="admin-content" id="admin-content"></div>
       </div>
     </div>
   `;
@@ -168,6 +168,7 @@ const tabTitles = {
   constructor: 'Конструктор',
   partners: 'Партнёры',
   media: 'Медиа',
+  reviews: 'Отзывы',
   users: 'Пользователи',
   settings: 'Настройки'
 };
@@ -183,20 +184,16 @@ function initTabs() {
 function navigate(tab) {
   state.currentTab = tab;
 
-  // Активная кнопка
   document.querySelectorAll('.admin-menu__item[data-tab]').forEach(i => {
     i.classList.toggle('is-active', i.dataset.tab === tab);
   });
 
-  // Заголовок
   const title = document.getElementById('tab-title');
   if (title) title.textContent = tabTitles[tab] || tab;
 
-  // Контент
   const content = document.getElementById('admin-content');
   if (!content) return;
 
-  // Роутинг
   switch (tab) {
     case 'dashboard':
       renderDashboard(content);
@@ -226,6 +223,10 @@ function navigate(tab) {
       renderMedia(content);
       break;
 
+    case 'reviews':
+      renderReviews(content);
+      break;
+
     case 'users':
       renderUsers(content);
       break;
@@ -244,14 +245,14 @@ function navigate(tab) {
       `;
   }
 
-  // Обновляем бейдж новых заказов
   if (tab === 'dashboard') {
     updateOrdersBadge();
+    updateReviewsBadge();
   }
 }
 
 // ============================================================
-// 4. Бейдж новых заказов
+// 4. Бейджи
 // ============================================================
 async function updateOrdersBadge() {
   try {
@@ -266,6 +267,26 @@ async function updateOrdersBadge() {
 
     if (stats.newOrders > 0) {
       badge.textContent = stats.newOrders;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch {}
+}
+
+async function updateReviewsBadge() {
+  try {
+    const res = await fetch('/api/admin/reviews?filter=pending', {
+      headers: { Authorization: `Bearer ${state.token}` }
+    });
+    if (!res.ok) return;
+
+    const pending = await res.json();
+    const badge = document.getElementById('reviews-badge');
+    if (!badge) return;
+
+    if (pending.length > 0) {
+      badge.textContent = pending.length;
       badge.classList.remove('hidden');
     } else {
       badge.classList.add('hidden');
@@ -381,7 +402,6 @@ async function renderDashboard(container) {
   }
 }
 
-// График продаж
 function renderChart(salesByDay) {
   if (!salesByDay || salesByDay.length === 0) {
     return `<div class="chart__empty">Пока нет продаж 📉</div>`;
@@ -420,7 +440,6 @@ function renderChart(salesByDay) {
   `;
 }
 
-// Топ товаров
 function renderTopProducts(products) {
   if (!products || products.length === 0) {
     return `<div class="top-list__empty">Пока нет продаж</div>`;
@@ -442,7 +461,6 @@ function renderTopProducts(products) {
   `;
 }
 
-// Последние заказы
 function renderRecentOrders(orders) {
   if (!orders || orders.length === 0) {
     return `<div class="recent-orders__empty">Заказов пока нет 📭</div>`;
@@ -474,7 +492,6 @@ function renderRecentOrders(orders) {
   `;
 }
 
-// Вспомогательное
 function formatMoney(n) {
   return Math.round(n).toLocaleString('ru-RU');
 }
