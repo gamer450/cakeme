@@ -2,12 +2,10 @@
    КОРЗИНА
    ============================================ */
 
-// Константы
-// Константы доставки (обновляются из настроек сайта)
+// Значения доставки (обновляются из настроек)
 let DELIVERY_PRICE = 300;
 let FREE_DELIVERY_FROM = 3000;
 
-// Обновляем из настроек, если загружены
 function updateDeliveryFromSettings() {
   if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
     DELIVERY_PRICE = parseInt(window.SITE_SETTINGS.delivery_price, 10) || 300;
@@ -15,7 +13,6 @@ function updateDeliveryFromSettings() {
   }
 }
 
-// Ждём загрузки настроек
 function waitForSettings() {
   return new Promise((resolve) => {
     if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
@@ -35,39 +32,33 @@ function waitForSettings() {
 
 // Состояние
 const state = {
-  cart: [],         // [{ productId, quantity }]
-  products: [],     // полные данные товаров
-  items: []         // объединённые данные
+  cart: [],
+  products: [],
+  items: []
 };
 
 // ============================================
-// 1. Загрузка
+// 1. Инициализация
 // ============================================
 async function init() {
-  // Читаем корзину из localStorage
+  await waitForSettings();
+  updateDeliveryFromSettings();
+
   try {
     state.cart = JSON.parse(localStorage.getItem('cart') || '[]');
   } catch {
     state.cart = [];
   }
-    try {
-    state.cart = JSON.parse(localStorage.getItem('cart') || '[]');
-  } catch {
-    state.cart = [];
-  }
 
-  // Пустая корзина
   if (state.cart.length === 0) {
     renderEmpty();
     return;
   }
 
-  // Загружаем все товары
   try {
     const res = await fetch('/api/products');
     state.products = await res.json();
 
-    // Собираем данные для корзины
     state.items = state.cart
       .map(item => {
         const product = state.products.find(p => p.id === item.productId);
@@ -80,7 +71,6 @@ async function init() {
       })
       .filter(Boolean);
 
-    // Если ничего не нашли — значит товары удалены
     if (state.items.length === 0) {
       renderEmpty();
       return;
@@ -91,10 +81,15 @@ async function init() {
     console.error('Ошибка загрузки корзины:', err);
     document.getElementById('cart-container').innerHTML = `
       <div class="cart-empty">
-        <div class="cart-empty__icon">😕</div>
+        <div class="cart-empty__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4M12 16h.01"/>
+          </svg>
+        </div>
         <h2 class="cart-empty__title">Не удалось загрузить корзину</h2>
         <p class="cart-empty__text">Проверьте соединение и обновите страницу</p>
-        <a href="/catalog.html" class="btn btn-primary btn-lg">Перейти в каталог</a>
+        <a href="/catalog.html" class="btn btn-primary btn-lg magnetic">Перейти в каталог</a>
       </div>
     `;
   }
@@ -107,10 +102,16 @@ function renderEmpty() {
   const container = document.getElementById('cart-container');
   container.innerHTML = `
     <div class="cart-empty">
-      <div class="cart-empty__icon">🛒</div>
+      <div class="cart-empty__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+      </div>
       <h2 class="cart-empty__title">Корзина пуста</h2>
-      <p class="cart-empty__text">Загляните в каталог — там много вкусного!</p>
-      <a href="/catalog.html" class="btn btn-primary btn-lg">Перейти в каталог</a>
+      <p class="cart-empty__text">Загляните в каталог — там много вкусного</p>
+      <a href="/catalog.html" class="btn btn-primary btn-lg magnetic">Перейти в каталог</a>
     </div>
   `;
 }
@@ -135,7 +136,7 @@ function renderCart() {
       </div>
 
       <aside class="cart-summary">
-        <h2 class="cart-summary__title">Итого</h2>
+        <h2 class="cart-summary__title">Ваш заказ</h2>
 
         <div class="cart-summary__row cart-summary__row--muted">
           <span>Товаров:</span>
@@ -143,18 +144,16 @@ function renderCart() {
         </div>
 
         <div class="cart-summary__row">
-          <span>Сумма заказа:</span>
-          <span><strong>${subtotal.toLocaleString('ru-RU')} ₽</strong></span>
+          <span>Сумма:</span>
+          <strong>${subtotal.toLocaleString('ru-RU')} ₽</strong>
         </div>
 
         <div class="cart-summary__row">
           <span>Доставка:</span>
-          <span>
-            ${delivery === 0
-              ? '<span class="cart-summary__free">Бесплатно</span>'
-              : `<strong>${delivery} ₽</strong>`
-            }
-          </span>
+          ${delivery === 0
+            ? '<span class="cart-summary__free">Бесплатно</span>'
+            : `<strong>${delivery} ₽</strong>`
+          }
         </div>
 
         ${toFree > 0 ? `
@@ -171,13 +170,13 @@ function renderCart() {
         <div class="cart-summary__divider"></div>
 
         <div class="cart-summary__total">
-          <span class="cart-summary__total-label">К оплате:</span>
+          <span class="cart-summary__total-label">К оплате</span>
           <span class="cart-summary__total-value">${total.toLocaleString('ru-RU')} ₽</span>
         </div>
 
-        <a href="/checkout.html" class="btn btn-primary btn-lg cart-summary__btn">
+        <a href="/checkout.html" class="btn btn-primary btn-lg cart-summary__btn magnetic">
           Оформить заказ
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14"></path>
             <path d="m12 5 7 7-7 7"></path>
           </svg>
@@ -190,25 +189,31 @@ function renderCart() {
     </div>
   `;
 
-  // Обработчики
   bindCartEvents();
 }
 
 // ============================================
-// 4. Один элемент корзины
+// 4. Один элемент
 // ============================================
 function renderCartItem(item) {
   const isCoffee = item.category_type === 'coffee';
-  const emoji = isCoffee ? '☕' : '🎂';
+
+  const svgIcon = isCoffee
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/><path d="M10 15h4M10 18h4"/></svg>`;
+
+  const imageHtml = item.image
+    ? `<img src="${item.image}" alt="${item.name}" />`
+    : svgIcon;
 
   return `
     <div class="cart-item ${isCoffee ? 'is-coffee' : ''}" data-id="${item.id}">
-      <div class="cart-item__image">${emoji}</div>
+      <div class="cart-item__image">${imageHtml}</div>
 
       <div class="cart-item__info">
         <span class="cart-item__category">${item.category_name}</span>
         <a href="/product.html?id=${item.id}" class="cart-item__title">${item.name}</a>
-        <span class="cart-item__weight">${item.weight || ''}</span>
+        <span class="cart-item__meta">${item.weight || ''}</span>
         <span class="cart-item__price">${item.price} ₽ × ${item.quantity} шт</span>
       </div>
 
@@ -222,7 +227,7 @@ function renderCartItem(item) {
         <span class="cart-item__subtotal">${item.subtotal.toLocaleString('ru-RU')} ₽</span>
 
         <button class="cart-item__remove" data-action="remove" aria-label="Удалить">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18"></path>
             <path d="m6 6 12 12"></path>
           </svg>
@@ -253,7 +258,6 @@ function changeQty(productId, delta) {
   item.quantity = Math.max(1, Math.min(20, item.quantity + delta));
   localStorage.setItem('cart', JSON.stringify(cart));
 
-  // Обновляем локально
   const local = state.items.find(i => i.id === productId);
   if (local) {
     local.quantity = item.quantity;

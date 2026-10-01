@@ -2,11 +2,6 @@
    ОФОРМЛЕНИЕ ЗАКАЗА
    ============================================ */
 
-/* ============================================
-   ОФОРМЛЕНИЕ ЗАКАЗА
-   ============================================ */
-
-// Константы доставки (обновляются из настроек сайта)
 let DELIVERY_PRICE = 300;
 let FREE_DELIVERY_FROM = 3000;
 
@@ -46,20 +41,18 @@ const state = {
 async function init() {
   await waitForSettings();
   updateDeliveryFromSettings();
-  // Читаем корзину
+
   try {
     state.cart = JSON.parse(localStorage.getItem('cart') || '[]');
   } catch {
     state.cart = [];
   }
 
-  // Пустая корзина → на страницу корзины
   if (state.cart.length === 0) {
     window.location.href = '/cart.html';
     return;
   }
 
-  // Грузим товары
   try {
     const res = await fetch('/api/products');
     const products = await res.json();
@@ -159,7 +152,13 @@ function renderCheckout() {
           <div class="payment-options">
             <label class="payment-option is-selected" data-payment="cash">
               <input type="radio" name="payment" value="cash" checked />
-              <span class="payment-option__icon">💵</span>
+              <span class="payment-option__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="12" x="2" y="6" rx="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <path d="M6 12h.01M18 12h.01"/>
+                </svg>
+              </span>
               <span class="payment-option__text">
                 <span class="payment-option__title">При получении</span>
                 <span class="payment-option__desc">Наличными или картой курьеру</span>
@@ -168,7 +167,12 @@ function renderCheckout() {
 
             <label class="payment-option" data-payment="card">
               <input type="radio" name="payment" value="card" />
-              <span class="payment-option__icon">💳</span>
+              <span class="payment-option__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/>
+                  <line x1="2" x2="22" y1="10" y2="10"/>
+                </svg>
+              </span>
               <span class="payment-option__text">
                 <span class="payment-option__title">Онлайн</span>
                 <span class="payment-option__desc">Ссылка на оплату придёт после подтверждения</span>
@@ -211,26 +215,24 @@ function renderCheckout() {
         </div>
         <div class="checkout-summary__row">
           <span>Сумма:</span>
-          <span>${subtotal.toLocaleString('ru-RU')} ₽</span>
+          <strong>${subtotal.toLocaleString('ru-RU')} ₽</strong>
         </div>
         <div class="checkout-summary__row">
           <span>Доставка:</span>
-          <span>
-            ${delivery === 0
-              ? '<span class="checkout-summary__free">Бесплатно</span>'
-              : `${delivery} ₽`
-            }
-          </span>
+          ${delivery === 0
+            ? '<span class="checkout-summary__free">Бесплатно</span>'
+            : `<strong>${delivery} ₽</strong>`
+          }
         </div>
 
         <div class="checkout-summary__total">
-          <span class="checkout-summary__total-label">Итого:</span>
+          <span class="checkout-summary__total-label">Итого</span>
           <span class="checkout-summary__total-value">${total.toLocaleString('ru-RU')} ₽</span>
         </div>
 
-        <button type="submit" form="order-form" class="btn btn-primary btn-lg checkout-summary__btn" id="submit-btn">
+        <button type="submit" form="order-form" class="btn btn-primary btn-lg checkout-summary__btn magnetic" id="submit-btn">
           Подтвердить заказ
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14"></path>
             <path d="m12 5 7 7-7 7"></path>
           </svg>
@@ -241,15 +243,14 @@ function renderCheckout() {
     </div>
   `;
 
-  // Обработчики
   initPaymentOptions();
   initDateMin();
-  prefillFromUser(); // ← добавили
+  prefillFromUser();
   initFormSubmit(total);
 }
 
 // ============================================
-// 3. Выбор способа оплаты
+// 3. Оплата
 // ============================================
 function initPaymentOptions() {
   document.querySelectorAll('.payment-option').forEach(opt => {
@@ -262,7 +263,7 @@ function initPaymentOptions() {
 }
 
 // ============================================
-// 4. Минимальная дата — сегодня
+// 4. Дата
 // ============================================
 function initDateMin() {
   const dateInput = document.getElementById('f-date');
@@ -273,7 +274,7 @@ function initDateMin() {
 }
 
 // ============================================
-// 4.5. Предзаполнение формы из профиля
+// 5. Автозаполнение из профиля
 // ============================================
 function prefillFromUser() {
   try {
@@ -291,7 +292,7 @@ function prefillFromUser() {
 }
 
 // ============================================
-// 5. Отправка формы
+// 6. Отправка
 // ============================================
 function initFormSubmit(total) {
   const form = document.getElementById('order-form');
@@ -302,7 +303,6 @@ function initFormSubmit(total) {
     e.preventDefault();
     errorBox.classList.remove('is-visible');
 
-    // Валидация
     const name = document.getElementById('f-name').value.trim();
     const phone = document.getElementById('f-phone').value.trim();
     const email = document.getElementById('f-email').value.trim();
@@ -310,23 +310,13 @@ function initFormSubmit(total) {
     const comment = document.getElementById('f-comment').value.trim();
     const agree = document.getElementById('f-agree').checked;
 
-    // Сброс подсветки
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-    if (!name) {
-      return showError('Укажите имя', 'f-name');
-    }
-    if (!phone || phone.length < 10) {
-      return showError('Укажите корректный телефон', 'f-phone');
-    }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return showError('Некорректный email', 'f-email');
-    }
-    if (!agree) {
-      return showError('Подтвердите согласие с политикой конфиденциальности');
-    }
+    if (!name) return showError('Укажите имя', 'f-name');
+    if (!phone || phone.length < 10) return showError('Укажите корректный телефон', 'f-phone');
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Некорректный email', 'f-email');
+    if (!agree) return showError('Подтвердите согласие с политикой конфиденциальности');
 
-    // Отправка
     submitBtn.classList.add('is-loading');
     submitBtn.disabled = true;
 
@@ -350,12 +340,8 @@ function initFormSubmit(total) {
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Не удалось оформить заказ');
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Не удалось оформить заказ');
-      }
-
-      // Успех — чистим корзину и переходим на thanks
       localStorage.removeItem('cart');
       window.location.href = `/thanks.html?orderId=${data.orderId}`;
     } catch (err) {
@@ -383,6 +369,6 @@ function initFormSubmit(total) {
 }
 
 // ============================================
-// 6. СТАРТ
+// 7. СТАРТ
 // ============================================
 document.addEventListener('DOMContentLoaded', init);
