@@ -1,0 +1,373 @@
+/* ============================================================
+   КОНСТРУКТОР ТОРТА — Premium 2027
+   ============================================================ */
+
+.constructor-page {
+  padding: 60px 0 120px;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.constructor-layout {
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+/* ============================================================
+   ВИЗУАЛИЗАЦИЯ
+   ============================================================ */
+.constructor-preview {
+  position: sticky;
+  top: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.constructor-preview__cake {
+  aspect-ratio: 1 / 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-2xl), var(--shadow-inner);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.constructor-preview__cake::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(201, 169, 97, 0.4) 0%,
+    transparent 50%,
+    rgba(201, 169, 97, 0.2) 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+.constructor-preview__cake::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, rgba(232, 168, 124, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.constructor-preview__svg {
+  width: 80%;
+  height: 80%;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
+  transition: all 0.4s var(--ease-out);
+}
+
+.constructor-preview__svg path,
+.constructor-preview__svg circle,
+.constructor-preview__svg rect {
+  transition: fill 0.4s var(--ease-out), stroke 0.4s var(--ease-out);
+}
+
+/* Итого */
+.constructor-total {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-xl), var(--shadow-glow-gold);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.constructor-total__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.constructor-total__value {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: var(--gold-100);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.constructor-total__value.is-updating {
+  transform: scale(1.05);
+}
+
+.constructor-total__hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.constructor-total__btn {
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ============================================================
+   ОПЦИИ
+   ============================================================ */
+.constructor-options {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.constructor-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md), var(--shadow-inner);
+}
+
+.constructor-group__header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.constructor-group__num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold);
+  color: var(--gold-100);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.constructor-group__title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.constructor-group__hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.constructor-group__body {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+/* Опция */
+.constructor-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.constructor-option:hover {
+  background: var(--bg-elevated);
+}
+
+.constructor-option.is-selected {
+  background: rgba(232, 168, 124, 0.06);
+  border-color: var(--border-peach);
+  box-shadow: 0 0 0 2px var(--peach-glow);
+}
+
+/* Радио/чекбокс */
+.constructor-option__control {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s var(--ease-out);
+}
+
+.constructor-option__control--checkbox {
+  border-radius: var(--radius-xs);
+}
+
+.constructor-option.is-selected .constructor-option__control {
+  border-color: var(--peach-300);
+  background: var(--peach-300);
+}
+
+.constructor-option.is-selected .constructor-option__control::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--text-inverse);
+}
+
+.constructor-option.is-selected .constructor-option__control--checkbox::after {
+  content: '';
+  inset: 2px 5px 5px 2px;
+  border-radius: 0;
+  border-right: 2px solid var(--text-inverse);
+  border-bottom: 2px solid var(--text-inverse);
+  background: transparent;
+  transform: rotate(45deg);
+}
+
+.constructor-option__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.constructor-option__name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: color 0.2s var(--ease-out);
+}
+
+.constructor-option.is-selected .constructor-option__name {
+  color: var(--peach-200);
+}
+
+.constructor-option__desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.constructor-option__price {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gold-100);
+  white-space: nowrap;
+}
+
+.constructor-option__price--free {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ============================================================
+   ЧЕК
+   ============================================================ */
+.constructor-check {
+  margin-top: 8px;
+  padding: 24px 28px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+}
+
+.constructor-check__title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 16px;
+}
+
+.constructor-check__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+.constructor-check__row:last-child {
+  border-bottom: none;
+}
+
+.constructor-check__row strong {
+  color: var(--gold-100);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+/* ============================================================
+   АДАПТАЦИЯ
+   ============================================================ */
+@media (max-width: 1024px) {
+  .constructor-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .constructor-preview {
+    position: static;
+  }
+
+  .constructor-preview__cake {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .constructor-page {
+    padding: 32px 0 80px;
+  }
+
+  .constructor-group__body {
+    grid-template-columns: 1fr;
+  }
+
+  .constructor-total__value {
+    font-size: 2rem;
+  }
+
+  .constructor-preview__cake {
+    max-width: 300px;
+  }
+}
