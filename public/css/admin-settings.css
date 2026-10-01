@@ -1,13 +1,12 @@
-/* ============================================
+/* ============================================================
    АДМИН: НАСТРОЙКИ САЙТА
-   ============================================ */
+   ============================================================ */
 
 .settings-page {
   max-width: 900px;
 }
 
 /* ============ СЕКЦИЯ ============ */
-
 .settings-section {
   background: var(--admin-card);
   border-radius: 16px;
@@ -50,7 +49,6 @@
 }
 
 /* ============ ПОЛЯ ============ */
-
 .settings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -104,7 +102,6 @@
   min-height: 70px;
 }
 
-/* Поле с префиксом/суффиксом */
 .settings-field__wrapper {
   position: relative;
   display: flex;
@@ -120,8 +117,57 @@
   pointer-events: none;
 }
 
-/* ============ ФУТЕР ============ */
+/* ============ МЕДИА-ПОЛЯ ============ */
+.media-field {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
 
+.media-field__preview {
+  width: 160px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-field__preview img,
+.media-field__preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.media-field__placeholder {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+.media-field__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.media-field__actions .btn-admin {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* ============ ФУТЕР ============ */
 .settings-footer {
   position: sticky;
   bottom: 0;
@@ -153,7 +199,6 @@
 }
 
 /* ============ ОПАСНАЯ ЗОНА ============ */
-
 .danger-zone {
   border: 2px dashed #fca5a5;
   background: #fff5f5;
@@ -201,7 +246,6 @@
 }
 
 /* ============ АДАПТАЦИЯ ============ */
-
 @media (max-width: 700px) {
   .settings-grid {
     grid-template-columns: 1fr;
@@ -219,5 +263,14 @@
   .danger-zone__content {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .media-field {
+    flex-direction: column;
+  }
+
+  .media-field__preview {
+    width: 100%;
+    height: 160px;
   }
 }

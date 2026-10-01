@@ -8,10 +8,8 @@ const prodsState = {
   filterCat: 'all',
   search: '',
   editingId: null,
-  selectedEmoji: '🎂'
+  currentImage: ''
 };
-
-const EMOJI_OPTIONS = ['🎂', '☕', '🧁', '🍰', '🍩', '🍪', '🥐', '🍫', '🎁'];
 
 // ============================================
 // 1. Рендер страницы
@@ -43,13 +41,13 @@ async function renderProducts(container) {
 
   document.getElementById('add-prod-btn').addEventListener('click', () => openProductModal(null));
 
-  await Promise.all([loadProducts(), loadCategoriesForFilter()]);
+  await Promise.all([prodsLoad(), prodsLoadCategories()]);
 }
 
 // ============================================
 // 2. Загрузка товаров
 // ============================================
-async function loadProducts() {
+async function prodsLoad() {
   try {
     const res = await fetch('/api/admin/products', {
       headers: { Authorization: `Bearer ${state.token}` }
@@ -73,18 +71,18 @@ async function loadProducts() {
 // ============================================
 // 3. Загрузка категорий для фильтра
 // ============================================
-async function loadCategoriesForFilter() {
+async function prodsLoadCategories() {
   try {
     const res = await fetch('/api/admin/categories', {
       headers: { Authorization: `Bearer ${state.token}` }
     });
     if (!res.ok) return;
     prodsState.categories = await res.json();
-    renderCatFilters();
+    prodsRenderCatFilters();
   } catch {}
 }
 
-function renderCatFilters() {
+function prodsRenderCatFilters() {
   const container = document.getElementById('prods-cats');
   if (!container) return;
 
@@ -108,7 +106,7 @@ function renderCatFilters() {
 // ============================================
 // 4. Фильтрация
 // ============================================
-function getFilteredProducts() {
+function prodsGetFiltered() {
   let list = [...prodsState.all];
 
   if (prodsState.filterCat !== 'all') {
@@ -127,8 +125,9 @@ function getFilteredProducts() {
 // 5. Таблица
 // ============================================
 function prodsRenderTable() {
-  const list = getFilteredProducts();
+  const list = prodsGetFiltered();
   const wrap = document.getElementById('prods-table-wrap');
+  if (!wrap) return;
 
   if (list.length === 0) {
     wrap.innerHTML = `
@@ -156,14 +155,18 @@ function prodsRenderTable() {
       <tbody>
         ${list.map(p => {
           const isCoffee = p.category_type === 'coffee';
-          const emoji = isCoffee ? '☕' : '🎂';
           const stockClass = p.stock === 0 ? 'prods-table__stock--zero'
                             : p.stock < 10 ? 'prods-table__stock--low' : '';
           return `
             <tr class="${p.is_active ? '' : 'is-inactive'}">
               <td>
                 <div class="prods-table__image ${isCoffee ? 'prods-table__image--coffee' : ''}">
-                  ${emoji}
+                  ${p.image
+                    ? `<img src="${p.image}" alt="${p.name}" />`
+                    : (isCoffee
+                      ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>`
+                      : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/></svg>`)
+                  }
                 </div>
               </td>
               <td>
@@ -192,15 +195,14 @@ function prodsRenderTable() {
     </table>
   `;
 
-  // Обработчики
   wrap.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openProductModal(parseInt(btn.dataset.edit, 10)));
   });
   wrap.querySelectorAll('[data-toggle]').forEach(btn => {
-    btn.addEventListener('click', () => toggleProduct(parseInt(btn.dataset.toggle, 10)));
+    btn.addEventListener('click', () => prodsToggle(parseInt(btn.dataset.toggle, 10)));
   });
   wrap.querySelectorAll('[data-delete]').forEach(btn => {
-    btn.addEventListener('click', () => deleteProduct(parseInt(btn.dataset.delete, 10)));
+    btn.addEventListener('click', () => prodsDelete(parseInt(btn.dataset.delete, 10)));
   });
 }
 
@@ -217,7 +219,6 @@ document.addEventListener('input', (e) => {
   }, 250);
 });
 
-
 // ============================================
 // 7. Модалка создания/редактирования
 // ============================================
@@ -225,10 +226,7 @@ function openProductModal(id) {
   prodsState.editingId = id;
   const isEdit = id !== null;
   const p = isEdit ? prodsState.all.find(x => x.id === id) : null;
-
-  prodsState.selectedEmoji = p
-    ? (p.category_type === 'coffee' ? '☕' : '🎂')
-    : '🎂';
+  prodsState.currentImage = p && p.image ? p.image : '';
 
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -288,12 +286,29 @@ function openProductModal(id) {
           </div>
 
           <div class="admin-form__field">
-            <label class="admin-form__label">Иконка</label>
-            <div class="emoji-picker" id="emoji-picker">
-              ${EMOJI_OPTIONS.map(e => `
-                <button type="button" class="emoji-option ${e === prodsState.selectedEmoji ? 'is-selected' : ''}" data-emoji="${e}">${e}</button>
-              `).join('')}
+            <label class="admin-form__label">Фото товара</label>
+            <div class="product-image-upload">
+              <div class="product-image-upload__preview" id="product-image-preview">
+                ${prodsState.currentImage
+                  ? `<img src="${prodsState.currentImage}" alt="preview" />`
+                  : `<span class="product-image-upload__placeholder">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="9" cy="9" r="2"/>
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                      </svg>
+                     </span>`
+                }
+              </div>
+              <div class="product-image-upload__actions">
+                <button type="button" class="btn-admin btn-admin--ghost" id="image-upload-btn">
+                  ${prodsState.currentImage ? 'Заменить фото' : 'Загрузить фото'}
+                </button>
+                ${prodsState.currentImage ? `<button type="button" class="btn-admin btn-admin--ghost" id="image-remove-btn">Удалить</button>` : ''}
+              </div>
+              <input type="file" id="image-file-input" accept="image/*" hidden />
             </div>
+            <span class="admin-form__hint">JPG, PNG, WEBP. До 20 МБ. Если нет — покажем иконку категории</span>
           </div>
 
           ${isEdit ? `
@@ -329,26 +344,78 @@ function openProductModal(id) {
   modal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
   modal.addEventListener('click', (e) => e.target === modal && close());
 
-  // Выбор эмодзи
-  modal.querySelectorAll('.emoji-option').forEach(btn => {
-    btn.addEventListener('click', () => {
-      modal.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('is-selected'));
-      btn.classList.add('is-selected');
-      prodsState.selectedEmoji = btn.dataset.emoji;
-    });
+  // Загрузка фото
+  const fileInput = document.getElementById('image-file-input');
+  const uploadBtn = document.getElementById('image-upload-btn');
+  const preview = document.getElementById('product-image-preview');
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Загрузка...';
+
+    try {
+      const url = await uploadProductImage(file);
+      prodsState.currentImage = url;
+      preview.innerHTML = `<img src="${url}" alt="preview" />`;
+      uploadBtn.textContent = 'Заменить фото';
+
+      if (!document.getElementById('image-remove-btn')) {
+        const actions = modal.querySelector('.product-image-upload__actions');
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'btn-admin btn-admin--ghost';
+        rm.id = 'image-remove-btn';
+        rm.textContent = 'Удалить';
+        rm.addEventListener('click', () => {
+          prodsState.currentImage = '';
+          preview.innerHTML = `<span class="product-image-upload__placeholder">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="9" cy="9" r="2"/>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+          </span>`;
+          rm.remove();
+          uploadBtn.textContent = 'Загрузить фото';
+        });
+        actions.appendChild(rm);
+      }
+    } catch (err) {
+      alert('Ошибка загрузки: ' + err.message);
+    } finally {
+      uploadBtn.disabled = false;
+    }
+  });
+
+  document.getElementById('image-remove-btn')?.addEventListener('click', () => {
+    prodsState.currentImage = '';
+    preview.innerHTML = `<span class="product-image-upload__placeholder">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="9" cy="9" r="2"/>
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+      </svg>
+    </span>`;
+    document.getElementById('image-remove-btn').remove();
+    uploadBtn.textContent = 'Загрузить фото';
   });
 
   // Отправка
   document.getElementById('prod-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    await submitProduct(isEdit, close);
+    await prodsSubmit(isEdit, close);
   });
 }
 
 // ============================================
 // 8. Отправка формы товара
 // ============================================
-async function submitProduct(isEdit, closeFn) {
+async function prodsSubmit(isEdit, closeFn) {
   const errorBox = document.getElementById('prod-error');
   const submitBtn = document.getElementById('prod-submit');
 
@@ -361,7 +428,7 @@ async function submitProduct(isEdit, closeFn) {
     weight: document.getElementById('p-weight').value.trim(),
     stock: parseInt(document.getElementById('p-stock').value, 10) || 0,
     description: document.getElementById('p-desc').value.trim(),
-    image: `/images/${prodsState.selectedEmoji}.jpg`
+    image: prodsState.currentImage || ''
   };
 
   const activeCheckbox = document.getElementById('p-active');
@@ -395,7 +462,7 @@ async function submitProduct(isEdit, closeFn) {
     if (!res.ok) throw new Error(data.error || 'Ошибка сохранения');
 
     closeFn();
-    await loadProducts();
+    await prodsLoad();
     showAdminToast(isEdit ? 'Товар обновлён' : 'Товар создан');
   } catch (err) {
     errorBox.textContent = err.message;
@@ -408,7 +475,7 @@ async function submitProduct(isEdit, closeFn) {
 // ============================================
 // 9. Скрыть/показать
 // ============================================
-async function toggleProduct(id) {
+async function prodsToggle(id) {
   const p = prodsState.all.find(x => x.id === id);
   if (!p) return;
 
@@ -434,7 +501,7 @@ async function toggleProduct(id) {
 // ============================================
 // 10. Удаление
 // ============================================
-async function deleteProduct(id) {
+async function prodsDelete(id) {
   const p = prodsState.all.find(x => x.id === id);
   if (!p) return;
 
@@ -449,9 +516,33 @@ async function deleteProduct(id) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Ошибка удаления');
 
-    await loadProducts();
+    await prodsLoad();
     showAdminToast(data.softDeleted ? data.message : 'Товар удалён');
   } catch (err) {
     showAdminToast(err.message, 'error');
   }
+}
+
+// ============================================
+// 11. Загрузка фото товара
+// ============================================
+async function uploadProductImage(file) {
+  if (file.size > 20 * 1024 * 1024) {
+    throw new Error('Файл больше 20 МБ');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', 'products');
+
+  const res = await fetch('/api/admin/media/upload', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${state.token}` },
+    body: formData
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Ошибка загрузки');
+
+  return data.file.url;
 }

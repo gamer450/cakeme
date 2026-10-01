@@ -1,26 +1,39 @@
+/* ============================================================
+   СЛАДКИЙ ДОМ — Главный сервер
+   Express + SQLite + JWT + Multer (медиа)
+   ============================================================ */
+
 require('dotenv').config();
 
-const { signToken, authRequired, authOptional, requireRole } = require('./src/middleware/auth');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const fs = require('fs');
+
 const db = require('./src/db');
+const {
+  signToken,
+  authRequired,
+  authOptional,
+  requireRole
+} = require('./src/middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+/* ============================================================
+   MIDDLEWARE
+   ============================================================ */
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ============================================
-// ЗАГРУЗКА ФАЙЛОВ (Multer)
-// ============================================
-
+/* ============================================================
+   ЗАГРУЗКА ФАЙЛОВ (Multer)
+   ============================================================ */
 const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
 
-// Убедимся, что папки существуют
+// Создаём папки, если их нет
 ['products', 'hero', 'banners', 'misc'].forEach(dir => {
   const fullPath = path.join(UPLOAD_DIR, dir);
   if (!fs.existsSync(fullPath)) {
@@ -28,13 +41,20 @@ const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
   }
 });
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'];
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/svg+xml',
+  'image/gif'
+];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const folder = req.params.folder || req.body.folder || 'misc';
+    // Папка может прийти из query-параметра (более надёжно для multipart)
+    const folder = req.query.folder || req.body.folder || 'misc';
     const allowed = ['products', 'hero', 'banners', 'misc'];
     const target = allowed.includes(folder) ? folder : 'misc';
     cb(null, path.join(UPLOAD_DIR, target));
@@ -64,12 +84,18 @@ const upload = multer({
   }
 });
 
-// API: проверка что сервер работает
+/* ============================================================
+   HEALTHCHECK
+   ============================================================ */
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// API: категории
+/* ============================================================
+   ПУБЛИЧНЫЕ API
+   ============================================================ */
+
+// Все категории
 app.get('/api/categories', (req, res) => {
   const categories = db.prepare(
     'SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order'
@@ -77,19 +103,35 @@ app.get('/api/categories', (req, res) => {
   res.json(categories);
 });
 
-// API: товары
+// Все товары (с фильтрами)
 app.get('/api/products', (req, res) => {
-  const products = db.prepare(`
-    SELECT p.*, c.name AS category_name, c.type AS category_type
+  const { category_id, search } = req.query;
+
+  let sql = `
+    SELECT p.*, c.name AS category_name, c.slug AS category_slug, c.type AS category_type
     FROM products p
     JOIN categories c ON c.id = p.category_id
     WHERE p.is_active = 1
-    ORDER BY p.id DESC
-  `).all();
+  `;
+  const params = [];
+
+  if (category_id) {
+    sql += ' AND p.category_id = ?';
+    params.push(category_id);
+  }
+
+  if (search) {
+    sql += ' AND (p.name LIKE ? OR p.description LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  sql += ' ORDER BY p.id DESC';
+
+  const products = db.prepare(sql).all(...params);
   res.json(products);
 });
 
-// API: один товар по ID
+// Один товар
 app.get('/api/products/:id', (req, res) => {
   const product = db.prepare(`
     SELECT p.*, c.name AS category_name, c.type AS category_type
@@ -104,7 +146,7 @@ app.get('/api/products/:id', (req, res) => {
   res.json(product);
 });
 
-// API: настройки сайта
+// Настройки сайта (публичные)
 app.get('/api/settings', (req, res) => {
   const rows = db.prepare('SELECT key, value FROM settings').all();
   const settings = {};
@@ -112,21 +154,19 @@ app.get('/api/settings', (req, res) => {
   res.json(settings);
 });
 
-// ============================================
-// ЗАКАЗЫ
-// ============================================
+/* ============================================================
+   ЗАКАЗЫ (публичные)
+   ============================================================ */
 
-// API: создать заказ
+// Создать заказ
 app.post('/api/orders', authOptional, (req, res) => {
   try {
     const { customer_name, phone, email, address, comment, items } = req.body;
 
-    // Валидация
     if (!customer_name || !phone || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Заполните обязательные поля' });
     }
 
-    // Считаем сумму на сервере (не доверяем клиенту!)
     let total = 0;
     const orderItemsData = [];
 
@@ -147,7 +187,6 @@ app.post('/api/orders', authOptional, (req, res) => {
       });
     }
 
-    // Сохраняем заказ в транзакции
     const createOrder = db.transaction(() => {
       const orderStmt = db.prepare(`
         INSERT INTO orders (user_id, customer_name, phone, email, address, comment, total, status)
@@ -155,7 +194,7 @@ app.post('/api/orders', authOptional, (req, res) => {
       `);
 
       const result = orderStmt.run(
-        req.user?.id || null, // user_id — если вошёл, привязываем
+        req.user?.id || null,
         customer_name.trim(),
         phone.trim(),
         (email || '').trim(),
@@ -192,7 +231,7 @@ app.post('/api/orders', authOptional, (req, res) => {
   }
 });
 
-// API: получить заказ по ID
+// Получить заказ по ID
 app.get('/api/orders/:id', (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
 
@@ -205,11 +244,122 @@ app.get('/api/orders/:id', (req, res) => {
   res.json({ ...order, items });
 });
 
-// ============================================
-// АДМИН-ПАНЕЛЬ
-// ============================================
+/* ============================================================
+   АВТОРИЗАЦИЯ
+   ============================================================ */
 
-// GET /api/admin/stats — статистика для дашборда
+// Регистрация
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Заполните имя, email и пароль' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Некорректный email' });
+    }
+
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase());
+    if (existing) {
+      return res.status(409).json({ error: 'Пользователь с таким email уже зарегистрирован' });
+    }
+
+    const password_hash = bcrypt.hashSync(password, 10);
+
+    const result = db.prepare(`
+      INSERT INTO users (name, email, phone, password_hash, role)
+      VALUES (?, ?, ?, ?, 'client')
+    `).run(
+      name.trim(),
+      email.trim().toLowerCase(),
+      (phone || '').trim(),
+      password_hash
+    );
+
+    const user = db.prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?').get(result.lastInsertRowid);
+    const token = signToken(user);
+
+    res.status(201).json({
+      success: true,
+      token,
+      user,
+      message: 'Добро пожаловать!'
+    });
+  } catch (err) {
+    console.error('Ошибка регистрации:', err);
+    res.status(500).json({ error: 'Не удалось зарегистрироваться' });
+  }
+});
+
+// Вход
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Укажите email и пароль' });
+    }
+
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase());
+
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный email или пароль' });
+    }
+
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Аккаунт заблокирован' });
+    }
+
+    const ok = bcrypt.compareSync(password, user.password_hash);
+    if (!ok) {
+      return res.status(401).json({ error: 'Неверный email или пароль' });
+    }
+
+    const { password_hash, ...safeUser } = user;
+    const token = signToken(safeUser);
+
+    res.json({
+      success: true,
+      token,
+      user: safeUser,
+      message: 'С возвращением!'
+    });
+  } catch (err) {
+    console.error('Ошибка входа:', err);
+    res.status(500).json({ error: 'Не удалось войти' });
+  }
+});
+
+// Текущий пользователь
+app.get('/api/auth/me', authRequired, (req, res) => {
+  res.json({ user: req.user });
+});
+
+// Мои заказы
+app.get('/api/auth/my-orders', authRequired, (req, res) => {
+  const orders = db.prepare(`
+    SELECT * FROM orders
+    WHERE user_id = ? OR phone = ?
+    ORDER BY id DESC
+  `).all(req.user.id, req.user.phone || '');
+
+  const withItems = orders.map(order => ({
+    ...order,
+    items: db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id)
+  }));
+
+  res.json(withItems);
+});
+
+/* ============================================================
+   АДМИН — СТАТИСТИКА
+   ============================================================ */
 app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req, res) => {
   try {
     const totalOrders = db.prepare('SELECT COUNT(*) as c FROM orders').get().c;
@@ -218,7 +368,6 @@ app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req,
     const totalUsers = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
     const totalProducts = db.prepare('SELECT COUNT(*) as c FROM products WHERE is_active = 1').get().c;
 
-    // Продажи по дням (последние 7 дней)
     const salesByDay = db.prepare(`
       SELECT
         date(created_at) as day,
@@ -230,7 +379,6 @@ app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req,
       ORDER BY day ASC
     `).all();
 
-    // Последние 5 заказов
     const recentOrders = db.prepare(`
       SELECT id, customer_name, phone, total, status, created_at
       FROM orders
@@ -238,7 +386,6 @@ app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req,
       LIMIT 5
     `).all();
 
-    // Топ-5 товаров
     const topProducts = db.prepare(`
       SELECT
         oi.product_name,
@@ -268,7 +415,10 @@ app.get('/api/admin/stats', authRequired, requireRole('admin', 'manager'), (req,
   }
 });
 
-// GET /api/admin/orders — все заказы (для админки)
+/* ============================================================
+   АДМИН — ЗАКАЗЫ
+   ============================================================ */
+
 app.get('/api/admin/orders', authRequired, requireRole('admin', 'manager'), (req, res) => {
   try {
     const { status, search } = req.query;
@@ -291,7 +441,6 @@ app.get('/api/admin/orders', authRequired, requireRole('admin', 'manager'), (req
 
     const orders = db.prepare(sql).all(...params);
 
-    // Прикрепляем позиции к каждому заказу
     const withItems = orders.map(o => ({
       ...o,
       items: db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(o.id)
@@ -304,7 +453,6 @@ app.get('/api/admin/orders', authRequired, requireRole('admin', 'manager'), (req
   }
 });
 
-// PATCH /api/admin/orders/:id/status — смена статуса заказа
 app.patch('/api/admin/orders/:id/status', authRequired, requireRole('admin', 'manager'), (req, res) => {
   try {
     const { status } = req.body;
@@ -328,11 +476,10 @@ app.patch('/api/admin/orders/:id/status', authRequired, requireRole('admin', 'ma
   }
 });
 
-// ============================================
-// АДМИН: КАТЕГОРИИ
-// ============================================
+/* ============================================================
+   АДМИН — КАТЕГОРИИ
+   ============================================================ */
 
-// GET /api/admin/categories — все категории (включая скрытые)
 app.get('/api/admin/categories', authRequired, requireRole('admin', 'manager'), (req, res) => {
   try {
     const categories = db.prepare(`
@@ -349,7 +496,6 @@ app.get('/api/admin/categories', authRequired, requireRole('admin', 'manager'), 
   }
 });
 
-// POST /api/admin/categories — создать категорию
 app.post('/api/admin/categories', authRequired, requireRole('admin'), (req, res) => {
   try {
     const { name, slug, type, sort_order } = req.body;
@@ -362,7 +508,6 @@ app.post('/api/admin/categories', authRequired, requireRole('admin'), (req, res)
       return res.status(400).json({ error: 'Недопустимый тип категории' });
     }
 
-    // Проверка уникальности slug
     const existing = db.prepare('SELECT id FROM categories WHERE slug = ?').get(slug.trim());
     if (existing) {
       return res.status(409).json({ error: 'Категория с таким slug уже существует' });
@@ -386,7 +531,6 @@ app.post('/api/admin/categories', authRequired, requireRole('admin'), (req, res)
   }
 });
 
-// PATCH /api/admin/categories/:id — обновить категорию
 app.patch('/api/admin/categories/:id', authRequired, requireRole('admin'), (req, res) => {
   try {
     const { name, slug, type, sort_order, is_active } = req.body;
@@ -396,7 +540,6 @@ app.patch('/api/admin/categories/:id', authRequired, requireRole('admin'), (req,
       return res.status(404).json({ error: 'Категория не найдена' });
     }
 
-    // Проверка slug на уникальность (кроме самого себя)
     if (slug && slug !== category.slug) {
       const existing = db.prepare('SELECT id FROM categories WHERE slug = ? AND id != ?').get(slug.trim(), req.params.id);
       if (existing) {
@@ -425,7 +568,6 @@ app.patch('/api/admin/categories/:id', authRequired, requireRole('admin'), (req,
   }
 });
 
-// DELETE /api/admin/categories/:id — удалить категорию
 app.delete('/api/admin/categories/:id', authRequired, requireRole('admin'), (req, res) => {
   try {
     const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
@@ -433,7 +575,6 @@ app.delete('/api/admin/categories/:id', authRequired, requireRole('admin'), (req
       return res.status(404).json({ error: 'Категория не найдена' });
     }
 
-    // Проверка: есть ли товары в категории
     const productsCount = db.prepare('SELECT COUNT(*) as c FROM products WHERE category_id = ?').get(req.params.id).c;
     if (productsCount > 0) {
       return res.status(400).json({
@@ -449,11 +590,10 @@ app.delete('/api/admin/categories/:id', authRequired, requireRole('admin'), (req
   }
 });
 
-// ============================================
-// АДМИН: ТОВАРЫ
-// ============================================
+/* ============================================================
+   АДМИН — ТОВАРЫ
+   ============================================================ */
 
-// GET /api/admin/products — все товары (включая скрытые)
 app.get('/api/admin/products', authRequired, requireRole('admin', 'manager'), (req, res) => {
   try {
     const products = db.prepare(`
@@ -472,7 +612,6 @@ app.get('/api/admin/products', authRequired, requireRole('admin', 'manager'), (r
   }
 });
 
-// POST /api/admin/products — создать товар
 app.post('/api/admin/products', authRequired, requireRole('admin'), (req, res) => {
   try {
     const { category_id, name, description, price, weight, image, stock } = req.body;
@@ -485,7 +624,6 @@ app.post('/api/admin/products', authRequired, requireRole('admin'), (req, res) =
       return res.status(400).json({ error: 'Цена должна быть положительным числом' });
     }
 
-    // Проверка категории
     const category = db.prepare('SELECT id FROM categories WHERE id = ?').get(category_id);
     if (!category) {
       return res.status(400).json({ error: 'Категория не найдена' });
@@ -500,7 +638,7 @@ app.post('/api/admin/products', authRequired, requireRole('admin'), (req, res) =
       (description || '').trim(),
       parseFloat(price),
       (weight || '').trim(),
-      (image || '/images/default.jpg').trim(),
+      (image || '').trim(),
       parseInt(stock, 10) || 0
     );
 
@@ -512,7 +650,6 @@ app.post('/api/admin/products', authRequired, requireRole('admin'), (req, res) =
   }
 });
 
-// PATCH /api/admin/products/:id — обновить товар
 app.patch('/api/admin/products/:id', authRequired, requireRole('admin'), (req, res) => {
   try {
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
@@ -555,7 +692,6 @@ app.patch('/api/admin/products/:id', authRequired, requireRole('admin'), (req, r
   }
 });
 
-// DELETE /api/admin/products/:id — удалить товар
 app.delete('/api/admin/products/:id', authRequired, requireRole('admin'), (req, res) => {
   try {
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
@@ -563,10 +699,8 @@ app.delete('/api/admin/products/:id', authRequired, requireRole('admin'), (req, 
       return res.status(404).json({ error: 'Товар не найден' });
     }
 
-    // Проверка: есть ли товар в заказах
     const inOrders = db.prepare('SELECT COUNT(*) as c FROM order_items WHERE product_id = ?').get(req.params.id).c;
     if (inOrders > 0) {
-      // Не удаляем, а скрываем
       db.prepare('UPDATE products SET is_active = 0 WHERE id = ?').run(req.params.id);
       return res.json({
         success: true,
@@ -583,11 +717,10 @@ app.delete('/api/admin/products/:id', authRequired, requireRole('admin'), (req, 
   }
 });
 
-// ============================================
-// АДМИН: ПОЛЬЗОВАТЕЛИ
-// ============================================
+/* ============================================================
+   АДМИН — ПОЛЬЗОВАТЕЛИ
+   ============================================================ */
 
-// GET /api/admin/users — все пользователи (только для admin)
 app.get('/api/admin/users', authRequired, requireRole('admin'), (req, res) => {
   try {
     const { role, search } = req.query;
@@ -622,7 +755,6 @@ app.get('/api/admin/users', authRequired, requireRole('admin'), (req, res) => {
   }
 });
 
-// PATCH /api/admin/users/:id — обновить пользователя (роль, статус, имя, телефон)
 app.patch('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res) => {
   try {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
@@ -632,12 +764,10 @@ app.patch('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res)
 
     const { name, phone, role, is_active } = req.body;
 
-    // Проверка роли
     if (role && !['client', 'manager', 'admin'].includes(role)) {
       return res.status(400).json({ error: 'Недопустимая роль' });
     }
 
-    // Нельзя лишить себя прав админа
     if (String(user.id) === String(req.user.id)) {
       if (role && role !== 'admin') {
         return res.status(400).json({ error: 'Нельзя изменить свою роль' });
@@ -667,7 +797,6 @@ app.patch('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res)
   }
 });
 
-// DELETE /api/admin/users/:id — удалить пользователя
 app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res) => {
   try {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
@@ -675,7 +804,6 @@ app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
 
-    // Нельзя удалить себя
     if (String(user.id) === String(req.user.id)) {
       return res.status(400).json({ error: 'Нельзя удалить себя' });
     }
@@ -688,11 +816,10 @@ app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res
   }
 });
 
-// ============================================
-// АДМИН: НАСТРОЙКИ САЙТА
-// ============================================
+/* ============================================================
+   АДМИН — НАСТРОЙКИ САЙТА
+   ============================================================ */
 
-// GET /api/admin/settings — все настройки
 app.get('/api/admin/settings', authRequired, requireRole('admin'), (req, res) => {
   try {
     const rows = db.prepare('SELECT key, value FROM settings').all();
@@ -705,7 +832,6 @@ app.get('/api/admin/settings', authRequired, requireRole('admin'), (req, res) =>
   }
 });
 
-// PATCH /api/admin/settings — обновить настройки
 app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) => {
   try {
     const updates = req.body;
@@ -714,12 +840,17 @@ app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) 
       return res.status(400).json({ error: 'Нет данных для обновления' });
     }
 
-    // Разрешённые ключи (защита от подмены)
     const allowedKeys = [
       'site_name', 'site_description',
       'phone', 'email', 'address',
       'instagram', 'telegram',
-      'delivery_price', 'free_delivery_from'
+      'delivery_price', 'free_delivery_from',
+      'logo',
+      'hero_video',
+      'hero_poster',
+      'banner_1',
+      'banner_2',
+      'banner_3'
     ];
 
     const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
@@ -734,7 +865,6 @@ app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) 
 
     save();
 
-    // Возвращаем обновлённые настройки
     const rows = db.prepare('SELECT key, value FROM settings').all();
     const settings = {};
     rows.forEach(r => settings[r.key] = r.value);
@@ -746,10 +876,8 @@ app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) 
   }
 });
 
-// POST /api/admin/settings/reset-demo — сброс к демо-данным (ОПАСНАЯ ЗОНА)
 app.post('/api/admin/settings/reset-demo', authRequired, requireRole('admin'), (req, res) => {
   try {
-    // Только для владельца — сбрасываем заказы, но НЕ товары и НЕ пользователей
     db.prepare('DELETE FROM order_items').run();
     db.prepare('DELETE FROM orders').run();
     db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')").run();
@@ -761,129 +889,10 @@ app.post('/api/admin/settings/reset-demo', authRequired, requireRole('admin'), (
   }
 });
 
-// ============================================
-// АВТОРИЗАЦИЯ
-// ============================================
+/* ============================================================
+   АДМИН — МЕДИА-БИБЛИОТЕКА
+   ============================================================ */
 
-// POST /api/auth/register — регистрация
-app.post('/api/auth/register', (req, res) => {
-  try {
-    const { name, email, phone, password } = req.body;
-
-    // Валидация
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Заполните имя, email и пароль' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Некорректный email' });
-    }
-
-    // Проверка: email уже занят?
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase());
-    if (existing) {
-      return res.status(409).json({ error: 'Пользователь с таким email уже зарегистрирован' });
-    }
-
-    // Хешируем пароль
-    const password_hash = bcrypt.hashSync(password, 10);
-
-    // Создаём
-    const result = db.prepare(`
-      INSERT INTO users (name, email, phone, password_hash, role)
-      VALUES (?, ?, ?, ?, 'client')
-    `).run(
-      name.trim(),
-      email.trim().toLowerCase(),
-      (phone || '').trim(),
-      password_hash
-    );
-
-    const user = db.prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?').get(result.lastInsertRowid);
-    const token = signToken(user);
-
-    res.status(201).json({
-      success: true,
-      token,
-      user,
-      message: 'Добро пожаловать!'
-    });
-  } catch (err) {
-    console.error('Ошибка регистрации:', err);
-    res.status(500).json({ error: 'Не удалось зарегистрироваться' });
-  }
-});
-
-// POST /api/auth/login — вход
-app.post('/api/auth/login', (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Укажите email и пароль' });
-    }
-
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase());
-
-    if (!user) {
-      return res.status(401).json({ error: 'Неверный email или пароль' });
-    }
-
-    if (!user.is_active) {
-      return res.status(403).json({ error: 'Аккаунт заблокирован' });
-    }
-
-    const ok = bcrypt.compareSync(password, user.password_hash);
-    if (!ok) {
-      return res.status(401).json({ error: 'Неверный email или пароль' });
-    }
-
-    const { password_hash, ...safeUser } = user;
-    const token = signToken(safeUser);
-
-    res.json({
-      success: true,
-      token,
-      user: safeUser,
-      message: 'С возвращением!'
-    });
-  } catch (err) {
-    console.error('Ошибка входа:', err);
-    res.status(500).json({ error: 'Не удалось войти' });
-  }
-});
-
-// GET /api/auth/me — текущий пользователь
-app.get('/api/auth/me', authRequired, (req, res) => {
-  res.json({ user: req.user });
-});
-
-// GET /api/auth/my-orders — мои заказы (для личного кабинета)
-app.get('/api/auth/my-orders', authRequired, (req, res) => {
-  const orders = db.prepare(`
-    SELECT * FROM orders
-    WHERE user_id = ? OR phone = ?
-    ORDER BY id DESC
-  `).all(req.user.id, req.user.phone || '');
-
-  // Добавляем позиции к каждому заказу
-  const withItems = orders.map(order => ({
-    ...order,
-    items: db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id)
-  }));
-
-  res.json(withItems);
-});
-
-// ============================================
-// МЕДИА-БИБЛИОТЕКА
-// ============================================
-
-// GET /api/admin/media — список всех файлов
 app.get('/api/admin/media', authRequired, requireRole('admin', 'manager'), (req, res) => {
   try {
     const folders = ['products', 'hero', 'banners', 'misc'];
@@ -912,7 +921,6 @@ app.get('/api/admin/media', authRequired, requireRole('admin', 'manager'), (req,
       });
     });
 
-    // Сортировка: сначала новые
     files.sort((a, b) => new Date(b.modified) - new Date(a.modified));
 
     res.json(files);
@@ -922,7 +930,6 @@ app.get('/api/admin/media', authRequired, requireRole('admin', 'manager'), (req,
   }
 });
 
-// POST /api/admin/media/upload — загрузка файла
 app.post('/api/admin/media/upload',
   authRequired,
   requireRole('admin', 'manager'),
@@ -952,7 +959,6 @@ app.post('/api/admin/media/upload',
   }
 );
 
-// DELETE /api/admin/media — удалить файл
 app.delete('/api/admin/media', authRequired, requireRole('admin'), (req, res) => {
   try {
     const { folder, filename } = req.query;
@@ -966,7 +972,6 @@ app.delete('/api/admin/media', authRequired, requireRole('admin'), (req, res) =>
       return res.status(400).json({ error: 'Недопустимая папка' });
     }
 
-    // Защита от path traversal
     const safeName = path.basename(filename);
     const filePath = path.join(UPLOAD_DIR, folder, safeName);
 
@@ -982,6 +987,11 @@ app.delete('/api/admin/media', authRequired, requireRole('admin'), (req, res) =>
   }
 });
 
+/* ============================================================
+   START
+   ============================================================ */
 app.listen(PORT, () => {
-  console.log(`\n🍰 Сервер запущен: http://localhost:${PORT}\n`);
+  console.log(`\n🍰 Сервер запущен: http://localhost:${PORT}`);
+  console.log(`📦 База: data/shop.db`);
+  console.log(`🖼️  Медиа: public/uploads/\n`);
 });

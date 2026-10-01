@@ -35,13 +35,13 @@ async function renderCategories(container) {
 
   document.getElementById('add-cat-btn').addEventListener('click', () => openCategoryModal(null));
 
-  await loadCategories();
+  await catsLoad();
 }
 
 // ============================================
 // 2. Загрузка
 // ============================================
-async function loadCategories() {
+async function catsLoad() {
   try {
     const res = await fetch('/api/admin/categories', {
       headers: { Authorization: `Bearer ${state.token}` }
@@ -51,7 +51,7 @@ async function loadCategories() {
     catsState.all = await res.json();
 
     document.getElementById('cats-count').textContent = `(${catsState.all.length})`;
-    renderTable();
+    catsRenderTable();
   } catch (err) {
     console.error(err);
     document.getElementById('cats-table-wrap').innerHTML = `
@@ -66,8 +66,9 @@ async function loadCategories() {
 // ============================================
 // 3. Таблица
 // ============================================
-function renderTable() {
+function catsRenderTable() {
   const wrap = document.getElementById('cats-table-wrap');
+  if (!wrap) return;
 
   if (catsState.all.length === 0) {
     wrap.innerHTML = `
@@ -124,7 +125,7 @@ function renderTable() {
   });
 
   wrap.querySelectorAll('[data-delete]').forEach(btn => {
-    btn.addEventListener('click', () => deleteCategory(parseInt(btn.dataset.delete, 10)));
+    btn.addEventListener('click', () => catsDelete(parseInt(btn.dataset.delete, 10)));
   });
 }
 
@@ -225,21 +226,21 @@ function openCategoryModal(id) {
 
     nameInput.addEventListener('input', () => {
       if (slugTouched) return;
-      slugInput.value = transliterate(nameInput.value);
+      slugInput.value = catsTransliterate(nameInput.value);
     });
   }
 
   // Отправка
   document.getElementById('cat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    await submitCategory(isEdit, close);
+    await catsSubmit(isEdit, close);
   });
 }
 
 // ============================================
 // 5. Отправка формы
 // ============================================
-async function submitCategory(isEdit, closeFn) {
+async function catsSubmit(isEdit, closeFn) {
   const errorBox = document.getElementById('cat-error');
   const submitBtn = document.getElementById('cat-submit');
 
@@ -285,7 +286,7 @@ async function submitCategory(isEdit, closeFn) {
     if (!res.ok) throw new Error(data.error || 'Ошибка сохранения');
 
     closeFn();
-    await loadCategories();
+    await catsLoad();
     showAdminToast(isEdit ? 'Категория обновлена' : 'Категория создана');
   } catch (err) {
     errorBox.textContent = err.message;
@@ -298,7 +299,7 @@ async function submitCategory(isEdit, closeFn) {
 // ============================================
 // 6. Удаление
 // ============================================
-async function deleteCategory(id) {
+async function catsDelete(id) {
   const cat = catsState.all.find(c => c.id === id);
   if (!cat) return;
 
@@ -318,7 +319,7 @@ async function deleteCategory(id) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Ошибка удаления');
 
-    await loadCategories();
+    await catsLoad();
     showAdminToast('Категория удалена');
   } catch (err) {
     showAdminToast(err.message, 'error');
@@ -326,9 +327,9 @@ async function deleteCategory(id) {
 }
 
 // ============================================
-// 7. Транслитерация (для авто-slug)
+// 7. Транслитерация
 // ============================================
-function transliterate(str) {
+function catsTransliterate(str) {
   const map = {
     'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
     'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',

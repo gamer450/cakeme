@@ -3,20 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Личный кабинет — Сладкий Дом</title>
+  <title>Личный кабинет — Cake.Me</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Новый дизайн 2027 -->
   <link rel="stylesheet" href="/css/design-system.css" />
   <link rel="stylesheet" href="/css/premium-effects.css" />
-
-  <!-- Стили проекта -->
   <link rel="stylesheet" href="/css/header-footer.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/animations.css" />
-  <link rel="stylesheet" href="/css/home.css" />
+  <link rel="stylesheet" href="/css/auth.css" />
 </head>
 <body>
 
@@ -24,7 +21,9 @@
     <div class="container">
       <div class="header__inner">
         <a href="/" class="logo">
-          <span class="logo__icon">🍰</span>
+          <span class="logo__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/><path d="M10 15h4M10 18h4"/></svg>
+          </span>
           <span class="logo__text">
             <span class="logo__name" data-setting="site_name">Сладкий Дом</span>
             <span class="logo__tagline">торты &amp; кофе</span>
@@ -39,16 +38,10 @@
 
         <div class="header__actions">
           <a href="/cart.html" class="icon-btn" aria-label="Корзина">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="21" r="1"></circle>
-              <circle cx="19" cy="21" r="1"></circle>
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
             <span class="icon-btn__badge" id="cart-badge" style="display:none">0</span>
           </a>
-          <button class="burger" id="burger" aria-label="Меню">
-            <span></span><span></span><span></span>
-          </button>
+          <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
         </div>
       </div>
     </div>
@@ -80,14 +73,12 @@
   <footer class="footer">
     <div class="container">
       <div class="footer__bottom" style="justify-content: center;">
-        <span>© 2026 Сладкий Дом. Все права защищены.</span>
+        <span>© 2026 Cake.Me. Все права защищены.</span>
       </div>
     </div>
   </footer>
 
   <script src="/js/premium.js"></script>
-  <script src="/js/settings.js"></script>
-  <!-- остальные скрипты как были -->
   <script src="/js/settings.js"></script>
   <script src="/js/main.js"></script>
   <script src="/js/account.js"></script>

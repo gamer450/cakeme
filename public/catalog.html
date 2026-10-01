@@ -3,33 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Каталог — Сладкий Дом</title>
-  <meta name="description" content="Каталог тортов, пирожных и свежеобжаренного кофе. Фильтры, поиск, доставка." />
+  <title>Каталог — Cake.Me</title>
+  <meta name="description" content="Каталог тортов, пирожных и свежеобжаренного кофе." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Новый дизайн 2027 -->
   <link rel="stylesheet" href="/css/design-system.css" />
   <link rel="stylesheet" href="/css/premium-effects.css" />
-
-  <!-- Стили проекта -->
   <link rel="stylesheet" href="/css/header-footer.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/animations.css" />
-  <link rel="stylesheet" href="/css/home.css" />
+  <link rel="stylesheet" href="/css/catalog.css" />
 </head>
 <body>
 
-  <!-- ============ ШАПКА ============ -->
   <header class="header" id="header">
     <div class="container">
       <div class="header__inner">
         <a href="/" class="logo">
-          <span class="logo__icon">🍰</span>
+          <span class="logo__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
+              <path d="M10 15h4M10 18h4"/>
+            </svg>
+          </span>
           <span class="logo__text">
-          <span class="logo__name" data-setting="site_name">Сладкий Дом</span>
-          <span class="logo__tagline">торты &amp; кофе</span>
+            <span class="logo__name" data-setting="site_name">Сладкий Дом</span>
+            <span class="logo__tagline">торты &amp; кофе</span>
           </span>
         </a>
 
@@ -42,40 +43,27 @@
         </nav>
 
         <div class="header__actions">
-          <button class="icon-btn" aria-label="Поиск" title="Поиск">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.3-4.3"></path>
-            </svg>
+          <button class="icon-btn" aria-label="Поиск">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
           </button>
 
-          <a href="/cart.html" class="icon-btn" aria-label="Корзина" title="Корзина">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="21" r="1"></circle>
-              <circle cx="19" cy="21" r="1"></circle>
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-            </svg>
+          <a href="/cart.html" class="icon-btn" aria-label="Корзина">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
             <span class="icon-btn__badge" id="cart-badge" style="display:none">0</span>
           </a>
 
-          <a href="/login.html" class="icon-btn" aria-label="Войти" title="Войти">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+          <a href="/login.html" class="icon-btn" aria-label="Войти">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           </a>
 
           <button class="burger" id="burger" aria-label="Меню">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- ============ ХЕДЕР СТРАНИЦЫ ============ -->
   <section class="page-header">
     <div class="container">
       <div class="page-header__inner">
@@ -92,28 +80,20 @@
     </div>
   </section>
 
-  <!-- ============ ФИЛЬТРЫ ============ -->
   <section class="filters" id="filters">
     <div class="container">
       <div class="filters__inner">
-        <!-- Поиск -->
         <div class="filters__search">
           <span class="filters__search-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.3-4.3"></path>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
           </span>
           <input type="text" id="search-input" placeholder="Поиск по названию..." autocomplete="off" />
         </div>
 
-        <!-- Категории-кнопки -->
         <div class="filters__cats" id="filters-cats">
           <button class="filter-cat is-active" data-cat="all">Все</button>
-          <!-- Остальные категории добавятся из JS -->
         </div>
 
-        <!-- Сортировка -->
         <div class="filters__sort">
           <select id="sort-select">
             <option value="new">Сначала новые</option>
@@ -126,16 +106,11 @@
     </div>
   </section>
 
-  <!-- ============ КАТАЛОГ ============ -->
   <section class="catalog">
     <div class="container">
       <div class="catalog__header">
-        <div class="catalog__count" id="catalog-count">
-          Загрузка...
-        </div>
-        <button class="catalog__reset hidden" id="reset-btn">
-          Сбросить фильтры ✕
-        </button>
+        <div class="catalog__count" id="catalog-count">Загрузка...</div>
+        <button class="catalog__reset hidden" id="reset-btn">Сбросить фильтры ✕</button>
       </div>
 
       <div class="grid grid--4" id="products-grid">
@@ -147,67 +122,39 @@
     </div>
   </section>
 
-  <!-- ============ ПОДВАЛ ============ -->
   <footer class="footer">
     <div class="container">
       <div class="footer__grid">
         <div class="footer__col">
           <div class="footer__logo">
-            <span>🍰</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/></svg>
             <span data-setting="site_name">Сладкий Дом</span>
           </div>
-          <p>Домашние торты и свежеобжаренный кофе с доставкой. Готовим с 2019 года.</p>
-          <div class="footer__socials">
-            <a href="#" class="footer__social" aria-label="Instagram">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </a>
-            <a href="#" class="footer__social" aria-label="Telegram">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m22 2-7 20-4-9-9-4Z"></path>
-                <path d="M22 2 11 13"></path>
-              </svg>
-            </a>
-          </div>
+          <p data-setting="site_description">Торты и кофе на заказ</p>
         </div>
-
         <div class="footer__col">
           <h4>Каталог</h4>
           <a href="/catalog.html?type=cake">Торты</a><br />
-          <a href="/catalog.html?type=cake">Пирожные</a><br />
-          <a href="/catalog.html?type=coffee">Кофе</a><br />
-          <a href="/catalog.html?type=coffee">Чай</a>
+          <a href="/catalog.html?type=coffee">Кофе</a>
         </div>
-
         <div class="footer__col">
           <h4>Покупателям</h4>
           <a href="/#how">Как заказать</a><br />
-          <a href="/#contacts">Доставка и оплата</a><br />
-          <a href="#">Гарантии</a><br />
-          <a href="#">Отзывы</a>
+          <a href="/#contacts">Доставка</a>
         </div>
         <div class="footer__col">
           <h4>Контакты</h4>
           <p data-setting="phone">+7 900 000-00-00</p>
           <p data-setting="email">hello@cake.ru</p>
-          <p data-setting="address">г. Москва, ул. Сладкая, 1</p>
         </div>
       </div>
-
       <div class="footer__bottom">
-        <span>© 2026 Сладкий Дом. Все права защищены.</span>
-        <a href="#">Политика конфиденциальности</a>
+        <span>© 2026 Cake.Me. Все права защищены.</span>
       </div>
     </div>
   </footer>
 
   <script src="/js/premium.js"></script>
-  <script src="/js/settings.js"></script>
-  <!-- остальные скрипты как были -->
-
   <script src="/js/settings.js"></script>
   <script src="/js/main.js"></script>
   <script src="/js/catalog.js"></script>

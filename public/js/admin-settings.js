@@ -77,6 +77,26 @@ function renderForm() {
       </div>
     </div>
 
+    <!-- МЕДИА САЙТА -->
+    <div class="settings-section">
+      <div class="settings-section__header">
+        <div class="settings-section__icon">🖼️</div>
+        <div>
+          <div class="settings-section__title">Медиа сайта</div>
+          <div class="settings-section__desc">Логотип, видео для главной и баннеры</div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        ${renderMediaField('logo', 'Логотип сайта', 'SVG или PNG. Показывается в шапке и подвале', s.logo)}
+        ${renderMediaField('hero_poster', 'Постер Hero', 'Статичное фото. Показывается, пока грузится видео или вместо него', s.hero_poster)}
+        ${renderMediaField('hero_video', 'Видео для главной', 'MP4 или WEBM. Автоплей без звука, зациклено', s.hero_video, 'video')}
+        ${renderMediaField('banner_1', 'Баннер 1', 'Промо-фото для главной', s.banner_1)}
+        ${renderMediaField('banner_2', 'Баннер 2', 'Промо-фото для главной', s.banner_2)}
+        ${renderMediaField('banner_3', 'Баннер 3', 'Промо-фото для главной', s.banner_3)}
+      </div>
+    </div>
+
     <!-- КОНТАКТЫ -->
     <div class="settings-section">
       <div class="settings-section__header">
@@ -167,7 +187,7 @@ function renderForm() {
 
       <div class="danger-zone__content">
         <div class="danger-zone__text">
-          <strong>Очистить все заказы.</strong> Удалит историю заказов и позиций. Товары, категории и пользователи останутся. Полезно при демонстрации сайта покупателю.
+          <strong>Очистить все заказы.</strong> Удалит историю заказов и позиций. Товары, категории и пользователи останутся.
         </div>
         <button class="btn-danger" id="reset-orders-btn">Очистить заказы</button>
       </div>
@@ -184,6 +204,7 @@ function renderForm() {
   `;
 
   initFormHandlers();
+  initMediaUploads();
   initDangerZone();
 }
 
@@ -196,7 +217,6 @@ function initFormHandlers() {
   const reloadBtn = document.getElementById('reload-btn');
   const status = document.getElementById('settings-status');
 
-  // Отслеживаем изменения
   inputs.forEach(input => {
     input.addEventListener('input', () => {
       settingsState.hasChanges = true;
@@ -206,7 +226,6 @@ function initFormHandlers() {
     });
   });
 
-  // Сохранить
   saveBtn.addEventListener('click', async () => {
     const payload = {};
     inputs.forEach(input => {
@@ -252,7 +271,6 @@ function initFormHandlers() {
     }
   });
 
-  // Отменить (перезагрузить)
   reloadBtn.addEventListener('click', async () => {
     if (settingsState.hasChanges && !confirm('Отменить несохранённые изменения?')) return;
     settingsState.hasChanges = false;
@@ -302,7 +320,141 @@ function initDangerZone() {
 }
 
 // ============================================
-// 6. Хелперы
+// 6. Медиа-поля (загрузка с ПРАВИЛЬНОЙ папкой через query)
+// ============================================
+function renderMediaField(key, label, hint, currentValue, type = 'image') {
+  return `
+    <div class="settings-field settings-field--full">
+      <label class="settings-field__label">${label}</label>
+      <div class="media-field" data-key="${key}" data-type="${type}">
+        <div class="media-field__preview">
+          ${currentValue
+            ? (type === 'video'
+                ? `<video src="${currentValue}" muted></video>`
+                : `<img src="${currentValue}" alt="${label}" />`)
+            : `<span class="media-field__placeholder">Нет файла</span>`
+          }
+        </div>
+        <div class="media-field__actions">
+          <button type="button" class="btn-admin btn-admin--ghost media-field__upload">Загрузить</button>
+          ${currentValue ? `<button type="button" class="btn-admin btn-admin--ghost media-field__remove">Удалить</button>` : ''}
+        </div>
+        <input type="file"
+          class="media-field__input"
+          accept="${type === 'video' ? 'video/mp4,video/webm' : 'image/*'}"
+          hidden />
+        <input type="hidden"
+          class="media-field__value"
+          data-setting="${key}"
+          value="${escapeAttr(currentValue || '')}" />
+      </div>
+      <span class="settings-field__hint">${hint}</span>
+    </div>
+  `;
+}
+
+function initMediaUploads() {
+  document.querySelectorAll('.media-field').forEach(field => {
+    const key = field.dataset.key;
+    const type = field.dataset.type;
+    const fileInput = field.querySelector('.media-field__input');
+    const uploadBtn = field.querySelector('.media-field__upload');
+    const removeBtn = field.querySelector('.media-field__remove');
+    const preview = field.querySelector('.media-field__preview');
+    const valueInput = field.querySelector('.media-field__value');
+    const status = document.getElementById('settings-status');
+    const saveBtn = document.getElementById('save-btn');
+
+    uploadBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Загрузка...';
+
+      try {
+        // Определяем папку в зависимости от типа и ключа
+        let folderName = 'banners'; // по умолчанию
+        if (type === 'video' || key === 'hero_video') {
+          folderName = 'hero';
+        } else if (key === 'logo') {
+          folderName = 'banners';
+        } else if (key.startsWith('banner_')) {
+          folderName = 'banners';
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        // ВАЖНО: папка передаётся через query-параметр (надёжнее в multipart)
+        // а НЕ через formData, чтобы Multer успел её прочитать
+
+        const res = await fetch(`/api/admin/media/upload?folder=${folderName}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${state.token}` },
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Ошибка загрузки');
+
+        const url = data.file.url;
+        valueInput.value = url;
+
+        if (type === 'video') {
+          preview.innerHTML = `<video src="${url}" muted></video>`;
+        } else {
+          preview.innerHTML = `<img src="${url}" alt="${key}" />`;
+        }
+
+        uploadBtn.textContent = 'Заменить';
+
+        if (!field.querySelector('.media-field__remove')) {
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'btn-admin btn-admin--ghost media-field__remove';
+          rm.textContent = 'Удалить';
+          rm.addEventListener('click', () => clearMediaField(field));
+          field.querySelector('.media-field__actions').appendChild(rm);
+        }
+
+        status.textContent = 'Есть несохранённые изменения';
+        status.classList.remove('is-saved');
+        saveBtn.disabled = false;
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => clearMediaField(field));
+    }
+  });
+}
+
+function clearMediaField(field) {
+  const preview = field.querySelector('.media-field__preview');
+  const valueInput = field.querySelector('.media-field__value');
+  const uploadBtn = field.querySelector('.media-field__upload');
+  const removeBtn = field.querySelector('.media-field__remove');
+
+  valueInput.value = '';
+  preview.innerHTML = `<span class="media-field__placeholder">Нет файла</span>`;
+  uploadBtn.textContent = 'Загрузить';
+  if (removeBtn) removeBtn.remove();
+
+  const status = document.getElementById('settings-status');
+  const saveBtn = document.getElementById('save-btn');
+  status.textContent = 'Есть несохранённые изменения';
+  status.classList.remove('is-saved');
+  saveBtn.disabled = false;
+}
+
+// ============================================
+// 7. Хелперы
 // ============================================
 function escapeAttr(str) {
   return String(str)

@@ -2,12 +2,11 @@
    КАТАЛОГ — Фильтры, сортировка, поиск
    ============================================ */
 
-// Состояние
 const state = {
   allProducts: [],
   categories: [],
-  activeCategory: 'all',       // id категории или 'all'
-  activeType: null,            // 'cake' | 'coffee' | null
+  activeCategory: 'all',
+  activeType: null,
   search: '',
   sort: 'new'
 };
@@ -19,7 +18,6 @@ async function loadData() {
   const grid = document.getElementById('products-grid');
 
   try {
-    // Параллельно грузим товары и категории
     const [productsRes, categoriesRes] = await Promise.all([
       fetch('/api/products'),
       fetch('/api/categories')
@@ -50,7 +48,6 @@ function applyUrlParams() {
     state.activeType = type;
     state.activeCategory = 'all';
 
-    // Меняем заголовок страницы
     const title = document.getElementById('page-title');
     const desc = document.getElementById('page-desc');
     const breadcrumb = document.getElementById('breadcrumb-current');
@@ -65,7 +62,6 @@ function applyUrlParams() {
       if (breadcrumb) breadcrumb.textContent = 'Кофе и чай';
     }
 
-    // Обновляем активную кнопку категории
     document.querySelectorAll('.filter-cat').forEach(btn => {
       btn.classList.toggle('is-active', btn.dataset.type === type);
     });
@@ -94,7 +90,6 @@ function renderCategoryFilters() {
   const container = document.getElementById('filters-cats');
   if (!container) return;
 
-  // Оставляем кнопку "Все", добавляем категории из БД
   const buttons = state.categories.map(cat => `
     <button class="filter-cat" data-cat="${cat.id}" data-type="${cat.type}">
       ${cat.name}
@@ -106,7 +101,6 @@ function renderCategoryFilters() {
     ${buttons}
   `;
 
-  // Обработчик кликов
   container.addEventListener('click', (e) => {
     const btn = e.target.closest('.filter-cat');
     if (!btn) return;
@@ -126,17 +120,14 @@ function renderCategoryFilters() {
 function applyFilters() {
   let result = [...state.allProducts];
 
-  // Фильтр по категории (id)
   if (state.activeCategory && state.activeCategory !== 'all') {
     result = result.filter(p => String(p.category_id) === String(state.activeCategory));
   }
 
-  // Фильтр по типу (cake / coffee)
   if (state.activeType) {
     result = result.filter(p => p.category_type === state.activeType);
   }
 
-  // Поиск
   if (state.search.trim()) {
     const q = state.search.trim().toLowerCase();
     result = result.filter(p =>
@@ -145,7 +136,6 @@ function applyFilters() {
     );
   }
 
-  // Сортировка
   switch (state.sort) {
     case 'price-asc':
       result.sort((a, b) => a.price - b.price);
@@ -190,12 +180,27 @@ function renderProducts(products) {
   grid.className = 'grid grid--4';
   grid.innerHTML = products.map((p, i) => {
     const isCoffee = p.category_type === 'coffee';
+
+    // Фото или SVG-иконка
+    const imageHtml = p.image
+      ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />`
+      : `<span class="product-card__image-fallback">
+          ${isCoffee
+            ? `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                 <path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/>
+                 <path d="M6 1v3M10 1v3M14 1v3"/>
+               </svg>`
+            : `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                 <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
+                 <path d="M10 15h4M10 18h4"/>
+               </svg>`
+          }
+         </span>`;
+
     return `
       <a href="/product.html?id=${p.id}" class="product-card ${isCoffee ? 'product-card--coffee' : ''} reveal" data-delay="${Math.min(i + 1, 6)}">
         <div class="product-card__image">
-          <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:4rem;">
-            ${isCoffee ? '☕' : '🎂'}
-          </div>
+          ${imageHtml}
         </div>
         <div class="product-card__body">
           <span class="product-card__category">${p.category_name}</span>
