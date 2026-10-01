@@ -72,7 +72,7 @@ function renderShell() {
         <div class="admin-sidebar__logo">
           <span class="admin-sidebar__logo-icon">🍰</span>
           <div class="admin-sidebar__logo-text">
-            <span class="admin-sidebar__logo-name">Сладкий Дом</span>
+            <span class="admin-sidebar__logo-name">Cake.Me</span>
             <span class="admin-sidebar__logo-sub">админ-панель</span>
           </div>
         </div>
@@ -94,6 +94,10 @@ function renderShell() {
           <button class="admin-menu__item" data-tab="categories">
             <span class="admin-menu__item-icon">🏷️</span>
             Категории
+          </button>
+          <button class="admin-menu__item" data-tab="constructor">
+            <span class="admin-menu__item-icon">🧁</span>
+            Конструктор
           </button>
           <button class="admin-menu__item" data-tab="partners">
             <span class="admin-menu__item-icon">🤝</span>
@@ -161,6 +165,7 @@ const tabTitles = {
   orders: 'Заказы',
   products: 'Товары',
   categories: 'Категории',
+  constructor: 'Конструктор',
   partners: 'Партнёры',
   media: 'Медиа',
   users: 'Пользователи',
@@ -207,6 +212,10 @@ function navigate(tab) {
 
     case 'products':
       renderProducts(content);
+      break;
+
+    case 'constructor':
+      renderConstructor(content);
       break;
 
     case 'partners':

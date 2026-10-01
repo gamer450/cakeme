@@ -183,6 +183,219 @@ app.get('/api/partners/:id', (req, res) => {
 });
 
 /* ============================================================
+   КОНСТРУКТОР ТОРТА
+   ============================================================ */
+
+// Публичный: получить все опции, сгруппированные
+app.get('/api/constructor/options', (req, res) => {
+  try {
+    const options = db.prepare(`
+      SELECT * FROM constructor_options
+      WHERE is_active = 1
+      ORDER BY group_key ASC, sort_order ASC
+    `).all();
+
+    // Группируем по group_key
+    const grouped = {
+      shape: [],
+      weight: [],
+      filling: [],
+      decor: []
+    };
+
+    options.forEach(opt => {
+      if (grouped[opt.group_key]) {
+        grouped[opt.group_key].push(opt);
+      }
+    });
+
+    res.json(grouped);
+  } catch (err) {
+    console.error('Ошибка опций конструктора:', err);
+    res.status(500).json({ error: 'Не удалось загрузить опции' });
+  }
+});
+
+// Публичный: рассчитать цену собранного торта
+app.post('/api/constructor/calculate', (req, res) => {
+  try {
+    const { shape_id, weight_id, filling_id, decor_ids = [] } = req.body;
+
+    if (!shape_id || !weight_id || !filling_id) {
+      return res.status(400).json({ error: 'Укажите форму, вес и начинку' });
+    }
+
+    // Получаем опции из БД
+    const shape = db.prepare('SELECT * FROM constructor_options WHERE id = ? AND group_key = ?').get(shape_id, 'shape');
+    const weight = db.prepare('SELECT * FROM constructor_options WHERE id = ? AND group_key = ?').get(weight_id, 'weight');
+    const filling = db.prepare('SELECT * FROM constructor_options WHERE id = ? AND group_key = ?').get(filling_id, 'filling');
+
+    if (!shape || !weight || !filling) {
+      return res.status(400).json({ error: 'Опции не найдены' });
+    }
+
+    // Вес в кг (парсим из name — "2 кг" → 2)
+    const weightKg = parseFloat(weight.name) || 1;
+
+    // Считаем
+    let total = 0;
+    const breakdown = [];
+
+    // Основа: цена за кг × вес
+    const basePrice = weight.price_modifier * weightKg;
+    total += basePrice;
+    breakdown.push({ name: `Основа ${weight.name}`, price: basePrice });
+
+    // Форма (fixed)
+    if (shape.price_modifier > 0) {
+      total += shape.price_modifier;
+      breakdown.push({ name: `Форма: ${shape.name}`, price: shape.price_modifier });
+    }
+
+    // Начинка (fixed)
+    if (filling.price_modifier > 0) {
+      total += filling.price_modifier;
+      breakdown.push({ name: `Начинка: ${filling.name}`, price: filling.price_modifier });
+    }
+
+    // Декор (по ids)
+    if (Array.isArray(decor_ids) && decor_ids.length > 0) {
+      const placeholders = decor_ids.map(() => '?').join(',');
+      const decors = db.prepare(
+        `SELECT * FROM constructor_options WHERE id IN (${placeholders}) AND group_key = 'decor' AND is_active = 1`
+      ).all(...decor_ids);
+
+      decors.forEach(d => {
+        total += d.price_modifier;
+        breakdown.push({ name: `Декор: ${d.name}`, price: d.price_modifier });
+      });
+    }
+
+    res.json({
+      success: true,
+      total,
+      breakdown,
+      weightKg,
+      shape: shape.name,
+      filling: filling.name
+    });
+  } catch (err) {
+    console.error('Ошибка расчёта:', err);
+    res.status(500).json({ error: 'Не удалось рассчитать цену' });
+  }
+});
+
+// Админ: все опции (включая скрытые)
+app.get('/api/admin/constructor/options', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const options = db.prepare(`
+      SELECT * FROM constructor_options
+      ORDER BY group_key ASC, sort_order ASC
+    `).all();
+
+    const grouped = { shape: [], weight: [], filling: [], decor: [] };
+    options.forEach(opt => {
+      if (grouped[opt.group_key]) grouped[opt.group_key].push(opt);
+    });
+
+    res.json(grouped);
+  } catch (err) {
+    console.error('Ошибка:', err);
+    res.status(500).json({ error: 'Не удалось загрузить опции' });
+  }
+});
+
+// Админ: создать опцию
+app.post('/api/admin/constructor/options', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const {
+      group_key, name, description, price_modifier, price_type, sort_order, is_active, is_default
+    } = req.body;
+
+    if (!group_key || !name) {
+      return res.status(400).json({ error: 'Укажите группу и название' });
+    }
+
+    if (!['shape', 'weight', 'filling', 'decor'].includes(group_key)) {
+      return res.status(400).json({ error: 'Недопустимая группа' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO constructor_options
+        (group_key, name, description, price_modifier, price_type, sort_order, is_active, is_default)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      group_key,
+      name.trim(),
+      (description || '').trim(),
+      parseFloat(price_modifier) || 0,
+      price_type || 'fixed',
+      parseInt(sort_order, 10) || 0,
+      is_active !== undefined ? (is_active ? 1 : 0) : 1,
+      is_default ? 1 : 0
+    );
+
+    const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json({ success: true, option: opt });
+  } catch (err) {
+    console.error('Ошибка создания:', err);
+    res.status(500).json({ error: 'Не удалось создать опцию' });
+  }
+});
+
+// Админ: обновить опцию
+app.patch('/api/admin/constructor/options/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
+    if (!opt) {
+      return res.status(404).json({ error: 'Опция не найдена' });
+    }
+
+    const {
+      name, description, price_modifier, price_type, sort_order, is_active, is_default
+    } = req.body;
+
+    db.prepare(`
+      UPDATE constructor_options
+      SET name = ?, description = ?, price_modifier = ?, price_type = ?,
+          sort_order = ?, is_active = ?, is_default = ?
+      WHERE id = ?
+    `).run(
+      name !== undefined ? name.trim() : opt.name,
+      description !== undefined ? description.trim() : opt.description,
+      price_modifier !== undefined ? parseFloat(price_modifier) : opt.price_modifier,
+      price_type !== undefined ? price_type : opt.price_type,
+      sort_order !== undefined ? parseInt(sort_order, 10) : opt.sort_order,
+      is_active !== undefined ? (is_active ? 1 : 0) : opt.is_active,
+      is_default !== undefined ? (is_default ? 1 : 0) : opt.is_default,
+      req.params.id
+    );
+
+    const updated = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
+    res.json({ success: true, option: updated });
+  } catch (err) {
+    console.error('Ошибка обновления:', err);
+    res.status(500).json({ error: 'Не удалось обновить опцию' });
+  }
+});
+
+// Админ: удалить опцию
+app.delete('/api/admin/constructor/options/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
+    if (!opt) {
+      return res.status(404).json({ error: 'Опция не найдена' });
+    }
+
+    db.prepare('DELETE FROM constructor_options WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка удаления:', err);
+    res.status(500).json({ error: 'Не удалось удалить опцию' });
+  }
+});
+
+/* ============================================================
    ЗАКАЗЫ (публичные)
    ============================================================ */
 
@@ -956,6 +1169,8 @@ app.delete('/api/admin/partners/:id', authRequired, requireRole('admin'), (req, 
     res.status(500).json({ error: 'Не удалось удалить партнёра' });
   }
 });
+
+
 
 /* ============================================================
    АДМИН — НАСТРОЙКИ САЙТА

@@ -1,0 +1,212 @@
+/* ============================================================
+   АДМИН: КОНСТРУКТОР ТОРТА
+   ============================================================ */
+
+.constructor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.constructor-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.constructor-header__title small {
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  margin-left: 8px;
+}
+
+/* Группы */
+.constructor-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.constructor-group {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.constructor-group__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: var(--admin-bg);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.constructor-group__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.constructor-group__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.constructor-group__count {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  font-weight: 500;
+}
+
+.constructor-group__body {
+  padding: 8px;
+}
+
+/* Опция */
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.option-item:hover {
+  background: var(--admin-bg);
+}
+
+.option-item.is-inactive {
+  opacity: 0.5;
+}
+
+.option-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-item__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-item__badge {
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: rgba(255, 155, 133, 0.15);
+  color: var(--admin-accent-2);
+}
+
+.option-item__desc {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+.option-item__price {
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  white-space: nowrap;
+}
+
+.option-item__price--zero {
+  color: var(--admin-text-muted);
+  font-weight: 500;
+}
+
+.option-item__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.option-item__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.option-item__btn:hover {
+  background: var(--admin-bg);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+.option-item__btn--danger:hover {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #dc2626;
+}
+
+/* Кнопка добавить группу */
+.btn-add-option {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: var(--admin-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-add-option:hover {
+  background: var(--admin-sidebar);
+  color: #fff;
+  border-color: var(--admin-sidebar);
+}
+
+@media (max-width: 640px) {
+  .option-item {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .option-item__price {
+    order: 3;
+  }
+
+  .option-item__actions {
+    order: 4;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
