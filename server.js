@@ -1,6 +1,6 @@
 /* ============================================================
    Cake.Me — Главный сервер
-   Express + SQLite + JWT + Multer (медиа) + Партнёры
+   Express + SQLite + JWT + Multer + Helmet + Rate limit + Бэкапы
    ============================================================ */
 
 require('dotenv').config();
@@ -19,13 +19,35 @@ const {
   requireRole
 } = require('./src/middleware/auth');
 
+const security = require('./src/middleware/security');
+const logger = require('./src/middleware/logger');
+const backup = require('./src/services/backup');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ============================================================
-   MIDDLEWARE
+   БЕЗОПАСНОСТЬ И MIDDLEWARE
    ============================================================ */
+
+// Helmet — заголовки безопасности
+app.use(security.helmetConfig);
+
+// CORS
+app.use(security.corsConfig);
+
+// Отключаем X-Powered-By
+app.disable('x-powered-by');
+
+// Парсинг JSON с лимитом
 app.use(express.json({ limit: '10mb' }));
+
+// Rate limiting (общий) — 500 запросов / 15 мин
+if (process.env.RATE_LIMIT_ENABLED !== 'false') {
+  app.use('/api/', security.generalLimiter);
+}
+
+// Статика
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ============================================================
@@ -53,7 +75,6 @@ const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Папка может прийти из query-параметра (надёжнее для multipart)
     const folder = req.query.folder || req.body.folder || req.params.folder || 'misc';
     const allowed = ['products', 'hero', 'banners', 'misc'];
     const target = allowed.includes(folder) ? folder : 'misc';
@@ -154,9 +175,9 @@ app.get('/api/settings', (req, res) => {
   res.json(settings);
 });
 
-// ============================================
-// ПАРТНЁРЫ (публичный API)
-// ============================================
+/* ============================================================
+   ПАРТНЁРЫ (публичный API)
+   ============================================================ */
 
 // Все активные партнёры
 app.get('/api/partners', (req, res) => {
@@ -195,7 +216,6 @@ app.get('/api/constructor/options', (req, res) => {
       ORDER BY group_key ASC, sort_order ASC
     `).all();
 
-    // Группируем по group_key
     const grouped = {
       shape: [],
       weight: [],
@@ -216,7 +236,7 @@ app.get('/api/constructor/options', (req, res) => {
   }
 });
 
-// Публичный: рассчитать цену собранного торта
+// Публичный: рассчитать цену
 app.post('/api/constructor/calculate', (req, res) => {
   try {
     const { shape_id, weight_id, filling_id, decor_ids = [] } = req.body;
@@ -225,7 +245,6 @@ app.post('/api/constructor/calculate', (req, res) => {
       return res.status(400).json({ error: 'Укажите форму, вес и начинку' });
     }
 
-    // Получаем опции из БД
     const shape = db.prepare('SELECT * FROM constructor_options WHERE id = ? AND group_key = ?').get(shape_id, 'shape');
     const weight = db.prepare('SELECT * FROM constructor_options WHERE id = ? AND group_key = ?').get(weight_id, 'weight');
     const filling = db.prepare('SELECT * FROM constructor_options WHERE id = ? AND group_key = ?').get(filling_id, 'filling');
@@ -234,31 +253,25 @@ app.post('/api/constructor/calculate', (req, res) => {
       return res.status(400).json({ error: 'Опции не найдены' });
     }
 
-    // Вес в кг (парсим из name — "2 кг" → 2)
     const weightKg = parseFloat(weight.name) || 1;
 
-    // Считаем
     let total = 0;
     const breakdown = [];
 
-    // Основа: цена за кг × вес
     const basePrice = weight.price_modifier * weightKg;
     total += basePrice;
     breakdown.push({ name: `Основа ${weight.name}`, price: basePrice });
 
-    // Форма (fixed)
     if (shape.price_modifier > 0) {
       total += shape.price_modifier;
       breakdown.push({ name: `Форма: ${shape.name}`, price: shape.price_modifier });
     }
 
-    // Начинка (fixed)
     if (filling.price_modifier > 0) {
       total += filling.price_modifier;
       breakdown.push({ name: `Начинка: ${filling.name}`, price: filling.price_modifier });
     }
 
-    // Декор (по ids)
     if (Array.isArray(decor_ids) && decor_ids.length > 0) {
       const placeholders = decor_ids.map(() => '?').join(',');
       const decors = db.prepare(
@@ -285,192 +298,84 @@ app.post('/api/constructor/calculate', (req, res) => {
   }
 });
 
-// Админ: все опции (включая скрытые)
-app.get('/api/admin/constructor/options', authRequired, requireRole('admin', 'manager'), (req, res) => {
-  try {
-    const options = db.prepare(`
-      SELECT * FROM constructor_options
-      ORDER BY group_key ASC, sort_order ASC
-    `).all();
-
-    const grouped = { shape: [], weight: [], filling: [], decor: [] };
-    options.forEach(opt => {
-      if (grouped[opt.group_key]) grouped[opt.group_key].push(opt);
-    });
-
-    res.json(grouped);
-  } catch (err) {
-    console.error('Ошибка:', err);
-    res.status(500).json({ error: 'Не удалось загрузить опции' });
-  }
-});
-
-// Админ: создать опцию
-app.post('/api/admin/constructor/options', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const {
-      group_key, name, description, price_modifier, price_type, sort_order, is_active, is_default
-    } = req.body;
-
-    if (!group_key || !name) {
-      return res.status(400).json({ error: 'Укажите группу и название' });
-    }
-
-    if (!['shape', 'weight', 'filling', 'decor'].includes(group_key)) {
-      return res.status(400).json({ error: 'Недопустимая группа' });
-    }
-
-    const result = db.prepare(`
-      INSERT INTO constructor_options
-        (group_key, name, description, price_modifier, price_type, sort_order, is_active, is_default)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      group_key,
-      name.trim(),
-      (description || '').trim(),
-      parseFloat(price_modifier) || 0,
-      price_type || 'fixed',
-      parseInt(sort_order, 10) || 0,
-      is_active !== undefined ? (is_active ? 1 : 0) : 1,
-      is_default ? 1 : 0
-    );
-
-    const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json({ success: true, option: opt });
-  } catch (err) {
-    console.error('Ошибка создания:', err);
-    res.status(500).json({ error: 'Не удалось создать опцию' });
-  }
-});
-
-// Админ: обновить опцию
-app.patch('/api/admin/constructor/options/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
-    if (!opt) {
-      return res.status(404).json({ error: 'Опция не найдена' });
-    }
-
-    const {
-      name, description, price_modifier, price_type, sort_order, is_active, is_default
-    } = req.body;
-
-    db.prepare(`
-      UPDATE constructor_options
-      SET name = ?, description = ?, price_modifier = ?, price_type = ?,
-          sort_order = ?, is_active = ?, is_default = ?
-      WHERE id = ?
-    `).run(
-      name !== undefined ? name.trim() : opt.name,
-      description !== undefined ? description.trim() : opt.description,
-      price_modifier !== undefined ? parseFloat(price_modifier) : opt.price_modifier,
-      price_type !== undefined ? price_type : opt.price_type,
-      sort_order !== undefined ? parseInt(sort_order, 10) : opt.sort_order,
-      is_active !== undefined ? (is_active ? 1 : 0) : opt.is_active,
-      is_default !== undefined ? (is_default ? 1 : 0) : opt.is_default,
-      req.params.id
-    );
-
-    const updated = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
-    res.json({ success: true, option: updated });
-  } catch (err) {
-    console.error('Ошибка обновления:', err);
-    res.status(500).json({ error: 'Не удалось обновить опцию' });
-  }
-});
-
-// Админ: удалить опцию
-app.delete('/api/admin/constructor/options/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
-    if (!opt) {
-      return res.status(404).json({ error: 'Опция не найдена' });
-    }
-
-    db.prepare('DELETE FROM constructor_options WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка удаления:', err);
-    res.status(500).json({ error: 'Не удалось удалить опцию' });
-  }
-});
-
 /* ============================================================
    ЗАКАЗЫ (публичные)
    ============================================================ */
 
 // Создать заказ
-app.post('/api/orders', authOptional, (req, res) => {
-  try {
-    const { customer_name, phone, email, address, comment, items } = req.body;
+app.post('/api/orders',
+  authOptional,
+  security.orderLimiter,
+  security.validateOrder,
+  security.handleValidationErrors,
+  (req, res) => {
+    try {
+      const { customer_name, phone, email, address, comment, items } = req.body;
 
-    if (!customer_name || !phone || !items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Заполните обязательные поля' });
-    }
+      let total = 0;
+      const orderItemsData = [];
 
-    let total = 0;
-    const orderItemsData = [];
+      for (const item of items) {
+        const product = db.prepare('SELECT * FROM products WHERE id = ? AND is_active = 1').get(item.productId);
+        if (!product) {
+          return res.status(400).json({ error: `Товар с ID ${item.productId} не найден` });
+        }
+        const qty = Math.max(1, Math.min(20, parseInt(item.quantity, 10) || 1));
+        const subtotal = product.price * qty;
+        total += subtotal;
 
-    for (const item of items) {
-      const product = db.prepare('SELECT * FROM products WHERE id = ? AND is_active = 1').get(item.productId);
-      if (!product) {
-        return res.status(400).json({ error: `Товар с ID ${item.productId} не найден` });
+        orderItemsData.push({
+          product_id: product.id,
+          product_name: product.name,
+          quantity: qty,
+          price: product.price
+        });
       }
-      const qty = Math.max(1, Math.min(20, parseInt(item.quantity, 10) || 1));
-      const subtotal = product.price * qty;
-      total += subtotal;
 
-      orderItemsData.push({
-        product_id: product.id,
-        product_name: product.name,
-        quantity: qty,
-        price: product.price
+      const createOrder = db.transaction(() => {
+        const orderStmt = db.prepare(`
+          INSERT INTO orders (user_id, customer_name, phone, email, address, comment, total, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'new')
+        `);
+
+        const result = orderStmt.run(
+          req.user?.id || null,
+          customer_name.trim(),
+          phone.trim(),
+          (email || '').trim(),
+          (address || '').trim(),
+          (comment || '').trim(),
+          total
+        );
+
+        const orderId = result.lastInsertRowid;
+
+        const itemStmt = db.prepare(`
+          INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+
+        for (const item of orderItemsData) {
+          itemStmt.run(orderId, item.product_id, item.product_name, item.quantity, item.price);
+        }
+
+        return orderId;
       });
+
+      const orderId = createOrder();
+
+      res.status(201).json({
+        success: true,
+        orderId,
+        total,
+        message: 'Заказ успешно создан!'
+      });
+    } catch (err) {
+      logger.logError('Ошибка создания заказа', { error: err.message });
+      res.status(500).json({ error: 'Не удалось создать заказ' });
     }
-
-    const createOrder = db.transaction(() => {
-      const orderStmt = db.prepare(`
-        INSERT INTO orders (user_id, customer_name, phone, email, address, comment, total, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'new')
-      `);
-
-      const result = orderStmt.run(
-        req.user?.id || null,
-        customer_name.trim(),
-        phone.trim(),
-        (email || '').trim(),
-        (address || '').trim(),
-        (comment || '').trim(),
-        total
-      );
-
-      const orderId = result.lastInsertRowid;
-
-      const itemStmt = db.prepare(`
-        INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
-        VALUES (?, ?, ?, ?, ?)
-      `);
-
-      for (const item of orderItemsData) {
-        itemStmt.run(orderId, item.product_id, item.product_name, item.quantity, item.price);
-      }
-
-      return orderId;
-    });
-
-    const orderId = createOrder();
-
-    res.status(201).json({
-      success: true,
-      orderId,
-      total,
-      message: 'Заказ успешно создан!'
-    });
-  } catch (err) {
-    console.error('Ошибка создания заказа:', err);
-    res.status(500).json({ error: 'Не удалось создать заказ' });
   }
-});
+);
 
 // Получить заказ по ID
 app.get('/api/orders/:id', (req, res) => {
@@ -490,92 +395,112 @@ app.get('/api/orders/:id', (req, res) => {
    ============================================================ */
 
 // Регистрация
-app.post('/api/auth/register', (req, res) => {
-  try {
-    const { name, email, phone, password } = req.body;
+app.post('/api/auth/register',
+  security.authLimiter,
+  security.validateRegister,
+  security.handleValidationErrors,
+  (req, res) => {
+    try {
+      const { name, email, phone, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Заполните имя, email и пароль' });
+      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase());
+      if (existing) {
+        return res.status(409).json({ error: 'Пользователь с таким email уже зарегистрирован' });
+      }
+
+      const password_hash = bcrypt.hashSync(password, 10);
+
+      const result = db.prepare(`
+        INSERT INTO users (name, email, phone, password_hash, role)
+        VALUES (?, ?, ?, ?, 'client')
+      `).run(
+        name.trim(),
+        email.trim().toLowerCase(),
+        (phone || '').trim(),
+        password_hash
+      );
+
+      const user = db.prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = signToken(user);
+
+      logger.logActivity('Регистрация пользователя', {
+        userId: user.id,
+        email: user.email,
+        ip: req.ip
+      });
+
+      res.status(201).json({
+        success: true,
+        token,
+        user,
+        message: 'Добро пожаловать!'
+      });
+    } catch (err) {
+      logger.logError('Ошибка регистрации', { error: err.message });
+      res.status(500).json({ error: 'Не удалось зарегистрироваться' });
     }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: 'Некорректный email' });
-    }
-
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase());
-    if (existing) {
-      return res.status(409).json({ error: 'Пользователь с таким email уже зарегистрирован' });
-    }
-
-    const password_hash = bcrypt.hashSync(password, 10);
-
-    const result = db.prepare(`
-      INSERT INTO users (name, email, phone, password_hash, role)
-      VALUES (?, ?, ?, ?, 'client')
-    `).run(
-      name.trim(),
-      email.trim().toLowerCase(),
-      (phone || '').trim(),
-      password_hash
-    );
-
-    const user = db.prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?').get(result.lastInsertRowid);
-    const token = signToken(user);
-
-    res.status(201).json({
-      success: true,
-      token,
-      user,
-      message: 'Добро пожаловать!'
-    });
-  } catch (err) {
-    console.error('Ошибка регистрации:', err);
-    res.status(500).json({ error: 'Не удалось зарегистрироваться' });
   }
-});
+);
 
 // Вход
-app.post('/api/auth/login', (req, res) => {
-  try {
-    const { email, password } = req.body;
+app.post('/api/auth/login',
+  security.authLimiter,
+  security.validateLogin,
+  security.handleValidationErrors,
+  (req, res) => {
+    try {
+      const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Укажите email и пароль' });
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase());
+
+      if (!user) {
+        logger.logSecurity('Неудачная попытка входа (несуществующий email)', {
+          email,
+          ip: req.ip
+        });
+        return res.status(401).json({ error: 'Неверный email или пароль' });
+      }
+
+      if (!user.is_active) {
+        logger.logSecurity('Попытка входа в заблокированный аккаунт', {
+          userId: user.id,
+          ip: req.ip
+        });
+        return res.status(403).json({ error: 'Аккаунт заблокирован' });
+      }
+
+      const ok = bcrypt.compareSync(password, user.password_hash);
+      if (!ok) {
+        logger.logSecurity('Неудачная попытка входа (неверный пароль)', {
+          userId: user.id,
+          email: user.email,
+          ip: req.ip
+        });
+        return res.status(401).json({ error: 'Неверный email или пароль' });
+      }
+
+      const { password_hash, ...safeUser } = user;
+      const token = signToken(safeUser);
+
+      logger.logActivity('Успешный вход', {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        ip: req.ip
+      });
+
+      res.json({
+        success: true,
+        token,
+        user: safeUser,
+        message: 'С возвращением!'
+      });
+    } catch (err) {
+      logger.logError('Ошибка входа', { error: err.message });
+      res.status(500).json({ error: 'Не удалось войти' });
     }
-
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase());
-
-    if (!user) {
-      return res.status(401).json({ error: 'Неверный email или пароль' });
-    }
-
-    if (!user.is_active) {
-      return res.status(403).json({ error: 'Аккаунт заблокирован' });
-    }
-
-    const ok = bcrypt.compareSync(password, user.password_hash);
-    if (!ok) {
-      return res.status(401).json({ error: 'Неверный email или пароль' });
-    }
-
-    const { password_hash, ...safeUser } = user;
-    const token = signToken(safeUser);
-
-    res.json({
-      success: true,
-      token,
-      user: safeUser,
-      message: 'С возвращением!'
-    });
-  } catch (err) {
-    console.error('Ошибка входа:', err);
-    res.status(500).json({ error: 'Не удалось войти' });
   }
-});
+);
 
 // Текущий пользователь
 app.get('/api/auth/me', authRequired, (req, res) => {
@@ -694,28 +619,33 @@ app.get('/api/admin/orders', authRequired, requireRole('admin', 'manager'), (req
   }
 });
 
-app.patch('/api/admin/orders/:id/status', authRequired, requireRole('admin', 'manager'), (req, res) => {
-  try {
-    const { status } = req.body;
-    const allowed = ['new', 'confirmed', 'baking', 'delivering', 'done', 'cancelled'];
+app.patch('/api/admin/orders/:id/status',
+  authRequired,
+  requireRole('admin', 'manager'),
+  logger.activityLogger('Смена статуса заказа'),
+  (req, res) => {
+    try {
+      const { status } = req.body;
+      const allowed = ['new', 'confirmed', 'baking', 'delivering', 'done', 'cancelled'];
 
-    if (!allowed.includes(status)) {
-      return res.status(400).json({ error: 'Недопустимый статус' });
+      if (!allowed.includes(status)) {
+        return res.status(400).json({ error: 'Недопустимый статус' });
+      }
+
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: 'Заказ не найден' });
+      }
+
+      db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
+
+      res.json({ success: true, status });
+    } catch (err) {
+      console.error('Ошибка смены статуса:', err);
+      res.status(500).json({ error: 'Не удалось обновить статус' });
     }
-
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
-    if (!order) {
-      return res.status(404).json({ error: 'Заказ не найден' });
-    }
-
-    db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
-
-    res.json({ success: true, status });
-  } catch (err) {
-    console.error('Ошибка смены статуса:', err);
-    res.status(500).json({ error: 'Не удалось обновить статус' });
   }
-});
+);
 
 /* ============================================================
    АДМИН — КАТЕГОРИИ
@@ -737,99 +667,114 @@ app.get('/api/admin/categories', authRequired, requireRole('admin', 'manager'), 
   }
 });
 
-app.post('/api/admin/categories', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const { name, slug, type, sort_order } = req.body;
+app.post('/api/admin/categories',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Создание категории'),
+  (req, res) => {
+    try {
+      const { name, slug, type, sort_order } = req.body;
 
-    if (!name || !slug || !type) {
-      return res.status(400).json({ error: 'Заполните название, slug и тип' });
-    }
+      if (!name || !slug || !type) {
+        return res.status(400).json({ error: 'Заполните название, slug и тип' });
+      }
 
-    if (!['cake', 'coffee', 'other'].includes(type)) {
-      return res.status(400).json({ error: 'Недопустимый тип категории' });
-    }
+      if (!['cake', 'coffee', 'other'].includes(type)) {
+        return res.status(400).json({ error: 'Недопустимый тип категории' });
+      }
 
-    const existing = db.prepare('SELECT id FROM categories WHERE slug = ?').get(slug.trim());
-    if (existing) {
-      return res.status(409).json({ error: 'Категория с таким slug уже существует' });
-    }
-
-    const result = db.prepare(`
-      INSERT INTO categories (name, slug, type, sort_order)
-      VALUES (?, ?, ?, ?)
-    `).run(
-      name.trim(),
-      slug.trim().toLowerCase(),
-      type,
-      parseInt(sort_order, 10) || 0
-    );
-
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json({ success: true, category });
-  } catch (err) {
-    console.error('Ошибка создания категории:', err);
-    res.status(500).json({ error: 'Не удалось создать категорию' });
-  }
-});
-
-app.patch('/api/admin/categories/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const { name, slug, type, sort_order, is_active } = req.body;
-
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
-    if (!category) {
-      return res.status(404).json({ error: 'Категория не найдена' });
-    }
-
-    if (slug && slug !== category.slug) {
-      const existing = db.prepare('SELECT id FROM categories WHERE slug = ? AND id != ?').get(slug.trim(), req.params.id);
+      const existing = db.prepare('SELECT id FROM categories WHERE slug = ?').get(slug.trim());
       if (existing) {
         return res.status(409).json({ error: 'Категория с таким slug уже существует' });
       }
+
+      const result = db.prepare(`
+        INSERT INTO categories (name, slug, type, sort_order)
+        VALUES (?, ?, ?, ?)
+      `).run(
+        name.trim(),
+        slug.trim().toLowerCase(),
+        type,
+        parseInt(sort_order, 10) || 0
+      );
+
+      const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(result.lastInsertRowid);
+      res.status(201).json({ success: true, category });
+    } catch (err) {
+      console.error('Ошибка создания категории:', err);
+      res.status(500).json({ error: 'Не удалось создать категорию' });
     }
-
-    db.prepare(`
-      UPDATE categories
-      SET name = ?, slug = ?, type = ?, sort_order = ?, is_active = ?
-      WHERE id = ?
-    `).run(
-      name !== undefined ? name.trim() : category.name,
-      slug !== undefined ? slug.trim().toLowerCase() : category.slug,
-      type !== undefined ? type : category.type,
-      sort_order !== undefined ? parseInt(sort_order, 10) : category.sort_order,
-      is_active !== undefined ? (is_active ? 1 : 0) : category.is_active,
-      req.params.id
-    );
-
-    const updated = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
-    res.json({ success: true, category: updated });
-  } catch (err) {
-    console.error('Ошибка обновления категории:', err);
-    res.status(500).json({ error: 'Не удалось обновить категорию' });
   }
-});
+);
 
-app.delete('/api/admin/categories/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
-    if (!category) {
-      return res.status(404).json({ error: 'Категория не найдена' });
+app.patch('/api/admin/categories/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Обновление категории'),
+  (req, res) => {
+    try {
+      const { name, slug, type, sort_order, is_active } = req.body;
+
+      const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: 'Категория не найдена' });
+      }
+
+      if (slug && slug !== category.slug) {
+        const existing = db.prepare('SELECT id FROM categories WHERE slug = ? AND id != ?').get(slug.trim(), req.params.id);
+        if (existing) {
+          return res.status(409).json({ error: 'Категория с таким slug уже существует' });
+        }
+      }
+
+      db.prepare(`
+        UPDATE categories
+        SET name = ?, slug = ?, type = ?, sort_order = ?, is_active = ?
+        WHERE id = ?
+      `).run(
+        name !== undefined ? name.trim() : category.name,
+        slug !== undefined ? slug.trim().toLowerCase() : category.slug,
+        type !== undefined ? type : category.type,
+        sort_order !== undefined ? parseInt(sort_order, 10) : category.sort_order,
+        is_active !== undefined ? (is_active ? 1 : 0) : category.is_active,
+        req.params.id
+      );
+
+      const updated = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+      res.json({ success: true, category: updated });
+    } catch (err) {
+      console.error('Ошибка обновления категории:', err);
+      res.status(500).json({ error: 'Не удалось обновить категорию' });
     }
-
-    const productsCount = db.prepare('SELECT COUNT(*) as c FROM products WHERE category_id = ?').get(req.params.id).c;
-    if (productsCount > 0) {
-      return res.status(400).json({
-        error: `В категории ${productsCount} товаров. Сначала перенесите или удалите их.`
-      });
-    }
-
-    db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка удаления категории:', err);
-    res.status(500).json({ error: 'Не удалось удалить категорию' });
   }
-});
+);
+
+app.delete('/api/admin/categories/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление категории'),
+  (req, res) => {
+    try {
+      const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: 'Категория не найдена' });
+      }
+
+      const productsCount = db.prepare('SELECT COUNT(*) as c FROM products WHERE category_id = ?').get(req.params.id).c;
+      if (productsCount > 0) {
+        return res.status(400).json({
+          error: `В категории ${productsCount} товаров. Сначала перенесите или удалите их.`
+        });
+      }
+
+      db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления категории:', err);
+      res.status(500).json({ error: 'Не удалось удалить категорию' });
+    }
+  }
+);
 
 /* ============================================================
    АДМИН — ТОВАРЫ
@@ -853,110 +798,121 @@ app.get('/api/admin/products', authRequired, requireRole('admin', 'manager'), (r
   }
 });
 
-app.post('/api/admin/products', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const { category_id, name, description, price, weight, image, stock } = req.body;
+app.post('/api/admin/products',
+  authRequired,
+  requireRole('admin'),
+  security.validateProduct,
+  security.handleValidationErrors,
+  logger.activityLogger('Создание товара'),
+  (req, res) => {
+    try {
+      const { category_id, name, description, price, weight, image, stock } = req.body;
 
-    if (!category_id || !name || price === undefined) {
-      return res.status(400).json({ error: 'Заполните категорию, название и цену' });
+      const category = db.prepare('SELECT id FROM categories WHERE id = ?').get(category_id);
+      if (!category) {
+        return res.status(400).json({ error: 'Категория не найдена' });
+      }
+
+      const result = db.prepare(`
+        INSERT INTO products (category_id, name, description, price, weight, image, stock)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        category_id,
+        name.trim(),
+        (description || '').trim(),
+        parseFloat(price),
+        (weight || '').trim(),
+        (image || '').trim(),
+        parseInt(stock, 10) || 0
+      );
+
+      const product = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
+      res.status(201).json({ success: true, product });
+    } catch (err) {
+      console.error('Ошибка создания товара:', err);
+      res.status(500).json({ error: 'Не удалось создать товар' });
     }
-
-    if (isNaN(price) || price < 0) {
-      return res.status(400).json({ error: 'Цена должна быть положительным числом' });
-    }
-
-    const category = db.prepare('SELECT id FROM categories WHERE id = ?').get(category_id);
-    if (!category) {
-      return res.status(400).json({ error: 'Категория не найдена' });
-    }
-
-    const result = db.prepare(`
-      INSERT INTO products (category_id, name, description, price, weight, image, stock)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      category_id,
-      name.trim(),
-      (description || '').trim(),
-      parseFloat(price),
-      (weight || '').trim(),
-      (image || '').trim(),
-      parseInt(stock, 10) || 0
-    );
-
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json({ success: true, product });
-  } catch (err) {
-    console.error('Ошибка создания товара:', err);
-    res.status(500).json({ error: 'Не удалось создать товар' });
   }
-});
+);
 
-app.patch('/api/admin/products/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Товар не найден' });
+app.patch('/api/admin/products/:id',
+  authRequired,
+  requireRole('admin'),
+  security.validateId,
+  security.handleValidationErrors,
+  logger.activityLogger('Обновление товара'),
+  (req, res) => {
+    try {
+      const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+      if (!product) {
+        return res.status(404).json({ error: 'Товар не найден' });
+      }
+
+      const {
+        category_id, name, description, price, weight, image, stock, is_active
+      } = req.body;
+
+      db.prepare(`
+        UPDATE products
+        SET category_id = ?,
+            name = ?,
+            description = ?,
+            price = ?,
+            weight = ?,
+            image = ?,
+            stock = ?,
+            is_active = ?
+        WHERE id = ?
+      `).run(
+        category_id !== undefined ? category_id : product.category_id,
+        name !== undefined ? name.trim() : product.name,
+        description !== undefined ? description.trim() : product.description,
+        price !== undefined ? parseFloat(price) : product.price,
+        weight !== undefined ? weight.trim() : product.weight,
+        image !== undefined ? image.trim() : product.image,
+        stock !== undefined ? parseInt(stock, 10) : product.stock,
+        is_active !== undefined ? (is_active ? 1 : 0) : product.is_active,
+        req.params.id
+      );
+
+      const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+      res.json({ success: true, product: updated });
+    } catch (err) {
+      console.error('Ошибка обновления товара:', err);
+      res.status(500).json({ error: 'Не удалось обновить товар' });
     }
-
-    const {
-      category_id, name, description, price, weight, image, stock, is_active
-    } = req.body;
-
-    db.prepare(`
-      UPDATE products
-      SET category_id = ?,
-          name = ?,
-          description = ?,
-          price = ?,
-          weight = ?,
-          image = ?,
-          stock = ?,
-          is_active = ?
-      WHERE id = ?
-    `).run(
-      category_id !== undefined ? category_id : product.category_id,
-      name !== undefined ? name.trim() : product.name,
-      description !== undefined ? description.trim() : product.description,
-      price !== undefined ? parseFloat(price) : product.price,
-      weight !== undefined ? weight.trim() : product.weight,
-      image !== undefined ? image.trim() : product.image,
-      stock !== undefined ? parseInt(stock, 10) : product.stock,
-      is_active !== undefined ? (is_active ? 1 : 0) : product.is_active,
-      req.params.id
-    );
-
-    const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-    res.json({ success: true, product: updated });
-  } catch (err) {
-    console.error('Ошибка обновления товара:', err);
-    res.status(500).json({ error: 'Не удалось обновить товар' });
   }
-});
+);
 
-app.delete('/api/admin/products/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Товар не найден' });
+app.delete('/api/admin/products/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление товара'),
+  (req, res) => {
+    try {
+      const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+      if (!product) {
+        return res.status(404).json({ error: 'Товар не найден' });
+      }
+
+      const inOrders = db.prepare('SELECT COUNT(*) as c FROM order_items WHERE product_id = ?').get(req.params.id).c;
+      if (inOrders > 0) {
+        db.prepare('UPDATE products SET is_active = 0 WHERE id = ?').run(req.params.id);
+        return res.json({
+          success: true,
+          softDeleted: true,
+          message: `Товар встречается в ${inOrders} заказах. Мы его скрыли, но не удалили.`
+        });
+      }
+
+      db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления товара:', err);
+      res.status(500).json({ error: 'Не удалось удалить товар' });
     }
-
-    const inOrders = db.prepare('SELECT COUNT(*) as c FROM order_items WHERE product_id = ?').get(req.params.id).c;
-    if (inOrders > 0) {
-      db.prepare('UPDATE products SET is_active = 0 WHERE id = ?').run(req.params.id);
-      return res.json({
-        success: true,
-        softDeleted: true,
-        message: `Товар встречается в ${inOrders} заказах. Мы его скрыли, но не удалили.`
-      });
-    }
-
-    db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка удаления товара:', err);
-    res.status(500).json({ error: 'Не удалось удалить товар' });
   }
-});
+);
 
 /* ============================================================
    АДМИН — ПОЛЬЗОВАТЕЛИ
@@ -996,69 +952,79 @@ app.get('/api/admin/users', authRequired, requireRole('admin'), (req, res) => {
   }
 });
 
-app.patch('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: 'Пользователь не найден' });
-    }
-
-    const { name, phone, role, is_active } = req.body;
-
-    if (role && !['client', 'manager', 'admin'].includes(role)) {
-      return res.status(400).json({ error: 'Недопустимая роль' });
-    }
-
-    if (String(user.id) === String(req.user.id)) {
-      if (role && role !== 'admin') {
-        return res.status(400).json({ error: 'Нельзя изменить свою роль' });
+app.patch('/api/admin/users/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Изменение пользователя'),
+  (req, res) => {
+    try {
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
       }
-      if (is_active !== undefined && !is_active) {
-        return res.status(400).json({ error: 'Нельзя заблокировать себя' });
+
+      const { name, phone, role, is_active } = req.body;
+
+      if (role && !['client', 'manager', 'admin'].includes(role)) {
+        return res.status(400).json({ error: 'Недопустимая роль' });
       }
+
+      if (String(user.id) === String(req.user.id)) {
+        if (role && role !== 'admin') {
+          return res.status(400).json({ error: 'Нельзя изменить свою роль' });
+        }
+        if (is_active !== undefined && !is_active) {
+          return res.status(400).json({ error: 'Нельзя заблокировать себя' });
+        }
+      }
+
+      db.prepare(`
+        UPDATE users
+        SET name = ?, phone = ?, role = ?, is_active = ?
+        WHERE id = ?
+      `).run(
+        name !== undefined ? name.trim() : user.name,
+        phone !== undefined ? phone.trim() : user.phone,
+        role !== undefined ? role : user.role,
+        is_active !== undefined ? (is_active ? 1 : 0) : user.is_active,
+        req.params.id
+      );
+
+      const updated = db.prepare('SELECT id, name, email, phone, role, is_active, created_at FROM users WHERE id = ?').get(req.params.id);
+      res.json({ success: true, user: updated });
+    } catch (err) {
+      console.error('Ошибка обновления пользователя:', err);
+      res.status(500).json({ error: 'Не удалось обновить пользователя' });
     }
-
-    db.prepare(`
-      UPDATE users
-      SET name = ?, phone = ?, role = ?, is_active = ?
-      WHERE id = ?
-    `).run(
-      name !== undefined ? name.trim() : user.name,
-      phone !== undefined ? phone.trim() : user.phone,
-      role !== undefined ? role : user.role,
-      is_active !== undefined ? (is_active ? 1 : 0) : user.is_active,
-      req.params.id
-    );
-
-    const updated = db.prepare('SELECT id, name, email, phone, role, is_active, created_at FROM users WHERE id = ?').get(req.params.id);
-    res.json({ success: true, user: updated });
-  } catch (err) {
-    console.error('Ошибка обновления пользователя:', err);
-    res.status(500).json({ error: 'Не удалось обновить пользователя' });
   }
-});
+);
 
-app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: 'Пользователь не найден' });
+app.delete('/api/admin/users/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление пользователя'),
+  (req, res) => {
+    try {
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
+      }
+
+      if (String(user.id) === String(req.user.id)) {
+        return res.status(400).json({ error: 'Нельзя удалить себя' });
+      }
+
+      db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления пользователя:', err);
+      res.status(500).json({ error: 'Не удалось удалить пользователя' });
     }
-
-    if (String(user.id) === String(req.user.id)) {
-      return res.status(400).json({ error: 'Нельзя удалить себя' });
-    }
-
-    db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка удаления пользователя:', err);
-    res.status(500).json({ error: 'Не удалось удалить пользователя' });
   }
-});
+);
 
 /* ============================================================
-   АДМИН — ПАРТНЁРЫ (CRUD)
+   АДМИН — ПАРТНЁРЫ
    ============================================================ */
 
 app.get('/api/admin/partners', authRequired, requireRole('admin', 'manager'), (req, res) => {
@@ -1074,103 +1040,241 @@ app.get('/api/admin/partners', authRequired, requireRole('admin', 'manager'), (r
   }
 });
 
-app.post('/api/admin/partners', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const {
-      name, description, address, city, phone, hours,
-      image, latitude, longitude, website, instagram, sort_order
-    } = req.body;
+app.post('/api/admin/partners',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Создание партнёра'),
+  (req, res) => {
+    try {
+      const {
+        name, description, address, city, phone, hours,
+        image, latitude, longitude, website, instagram, sort_order
+      } = req.body;
 
-    if (!name || !address) {
-      return res.status(400).json({ error: 'Заполните название и адрес' });
+      if (!name || !address) {
+        return res.status(400).json({ error: 'Заполните название и адрес' });
+      }
+
+      const result = db.prepare(`
+        INSERT INTO partners
+          (name, description, address, city, phone, hours, image, latitude, longitude, website, instagram, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        name.trim(),
+        (description || '').trim(),
+        address.trim(),
+        (city || '').trim(),
+        (phone || '').trim(),
+        (hours || '').trim(),
+        (image || '').trim(),
+        latitude ? parseFloat(latitude) : null,
+        longitude ? parseFloat(longitude) : null,
+        (website || '').trim(),
+        (instagram || '').trim(),
+        parseInt(sort_order, 10) || 0
+      );
+
+      const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(result.lastInsertRowid);
+      res.status(201).json({ success: true, partner });
+    } catch (err) {
+      console.error('Ошибка создания партнёра:', err);
+      res.status(500).json({ error: 'Не удалось создать партнёра' });
     }
+  }
+);
 
-    const result = db.prepare(`
-      INSERT INTO partners
-        (name, description, address, city, phone, hours, image, latitude, longitude, website, instagram, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      name.trim(),
-      (description || '').trim(),
-      address.trim(),
-      (city || '').trim(),
-      (phone || '').trim(),
-      (hours || '').trim(),
-      (image || '').trim(),
-      latitude ? parseFloat(latitude) : null,
-      longitude ? parseFloat(longitude) : null,
-      (website || '').trim(),
-      (instagram || '').trim(),
-      parseInt(sort_order, 10) || 0
-    );
+app.patch('/api/admin/partners/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Обновление партнёра'),
+  (req, res) => {
+    try {
+      const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
+      if (!partner) {
+        return res.status(404).json({ error: 'Партнёр не найден' });
+      }
 
-    const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json({ success: true, partner });
+      const {
+        name, description, address, city, phone, hours,
+        image, latitude, longitude, website, instagram, sort_order, is_active
+      } = req.body;
+
+      db.prepare(`
+        UPDATE partners
+        SET name = ?, description = ?, address = ?, city = ?, phone = ?, hours = ?,
+            image = ?, latitude = ?, longitude = ?, website = ?, instagram = ?,
+            sort_order = ?, is_active = ?
+        WHERE id = ?
+      `).run(
+        name !== undefined ? name.trim() : partner.name,
+        description !== undefined ? description.trim() : partner.description,
+        address !== undefined ? address.trim() : partner.address,
+        city !== undefined ? city.trim() : partner.city,
+        phone !== undefined ? phone.trim() : partner.phone,
+        hours !== undefined ? hours.trim() : partner.hours,
+        image !== undefined ? image.trim() : partner.image,
+        latitude !== undefined ? (latitude ? parseFloat(latitude) : null) : partner.latitude,
+        longitude !== undefined ? (longitude ? parseFloat(longitude) : null) : partner.longitude,
+        website !== undefined ? website.trim() : partner.website,
+        instagram !== undefined ? instagram.trim() : partner.instagram,
+        sort_order !== undefined ? parseInt(sort_order, 10) : partner.sort_order,
+        is_active !== undefined ? (is_active ? 1 : 0) : partner.is_active,
+        req.params.id
+      );
+
+      const updated = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
+      res.json({ success: true, partner: updated });
+    } catch (err) {
+      console.error('Ошибка обновления партнёра:', err);
+      res.status(500).json({ error: 'Не удалось обновить партнёра' });
+    }
+  }
+);
+
+app.delete('/api/admin/partners/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление партнёра'),
+  (req, res) => {
+    try {
+      const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
+      if (!partner) {
+        return res.status(404).json({ error: 'Партнёр не найден' });
+      }
+
+      db.prepare('DELETE FROM partners WHERE id = ?').run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления партнёра:', err);
+      res.status(500).json({ error: 'Не удалось удалить партнёра' });
+    }
+  }
+);
+
+/* ============================================================
+   АДМИН — КОНСТРУКТОР ТОРТА
+   ============================================================ */
+
+app.get('/api/admin/constructor/options', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const options = db.prepare(`
+      SELECT * FROM constructor_options
+      ORDER BY group_key ASC, sort_order ASC
+    `).all();
+
+    const grouped = { shape: [], weight: [], filling: [], decor: [] };
+    options.forEach(opt => {
+      if (grouped[opt.group_key]) grouped[opt.group_key].push(opt);
+    });
+
+    res.json(grouped);
   } catch (err) {
-    console.error('Ошибка создания партнёра:', err);
-    res.status(500).json({ error: 'Не удалось создать партнёра' });
+    console.error('Ошибка:', err);
+    res.status(500).json({ error: 'Не удалось загрузить опции' });
   }
 });
 
-app.patch('/api/admin/partners/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
-    if (!partner) {
-      return res.status(404).json({ error: 'Партнёр не найден' });
+app.post('/api/admin/constructor/options',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Создание опции конструктора'),
+  (req, res) => {
+    try {
+      const {
+        group_key, name, description, price_modifier, price_type, sort_order, is_active, is_default
+      } = req.body;
+
+      if (!group_key || !name) {
+        return res.status(400).json({ error: 'Укажите группу и название' });
+      }
+
+      if (!['shape', 'weight', 'filling', 'decor'].includes(group_key)) {
+        return res.status(400).json({ error: 'Недопустимая группа' });
+      }
+
+      const result = db.prepare(`
+        INSERT INTO constructor_options
+          (group_key, name, description, price_modifier, price_type, sort_order, is_active, is_default)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        group_key,
+        name.trim(),
+        (description || '').trim(),
+        parseFloat(price_modifier) || 0,
+        price_type || 'fixed',
+        parseInt(sort_order, 10) || 0,
+        is_active !== undefined ? (is_active ? 1 : 0) : 1,
+        is_default ? 1 : 0
+      );
+
+      const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(result.lastInsertRowid);
+      res.status(201).json({ success: true, option: opt });
+    } catch (err) {
+      console.error('Ошибка создания:', err);
+      res.status(500).json({ error: 'Не удалось создать опцию' });
     }
-
-    const {
-      name, description, address, city, phone, hours,
-      image, latitude, longitude, website, instagram, sort_order, is_active
-    } = req.body;
-
-    db.prepare(`
-      UPDATE partners
-      SET name = ?, description = ?, address = ?, city = ?, phone = ?, hours = ?,
-          image = ?, latitude = ?, longitude = ?, website = ?, instagram = ?,
-          sort_order = ?, is_active = ?
-      WHERE id = ?
-    `).run(
-      name !== undefined ? name.trim() : partner.name,
-      description !== undefined ? description.trim() : partner.description,
-      address !== undefined ? address.trim() : partner.address,
-      city !== undefined ? city.trim() : partner.city,
-      phone !== undefined ? phone.trim() : partner.phone,
-      hours !== undefined ? hours.trim() : partner.hours,
-      image !== undefined ? image.trim() : partner.image,
-      latitude !== undefined ? (latitude ? parseFloat(latitude) : null) : partner.latitude,
-      longitude !== undefined ? (longitude ? parseFloat(longitude) : null) : partner.longitude,
-      website !== undefined ? website.trim() : partner.website,
-      instagram !== undefined ? instagram.trim() : partner.instagram,
-      sort_order !== undefined ? parseInt(sort_order, 10) : partner.sort_order,
-      is_active !== undefined ? (is_active ? 1 : 0) : partner.is_active,
-      req.params.id
-    );
-
-    const updated = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
-    res.json({ success: true, partner: updated });
-  } catch (err) {
-    console.error('Ошибка обновления партнёра:', err);
-    res.status(500).json({ error: 'Не удалось обновить партнёра' });
   }
-});
+);
 
-app.delete('/api/admin/partners/:id', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
-    if (!partner) {
-      return res.status(404).json({ error: 'Партнёр не найден' });
+app.patch('/api/admin/constructor/options/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Обновление опции конструктора'),
+  (req, res) => {
+    try {
+      const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
+      if (!opt) {
+        return res.status(404).json({ error: 'Опция не найдена' });
+      }
+
+      const {
+        name, description, price_modifier, price_type, sort_order, is_active, is_default
+      } = req.body;
+
+      db.prepare(`
+        UPDATE constructor_options
+        SET name = ?, description = ?, price_modifier = ?, price_type = ?,
+            sort_order = ?, is_active = ?, is_default = ?
+        WHERE id = ?
+      `).run(
+        name !== undefined ? name.trim() : opt.name,
+        description !== undefined ? description.trim() : opt.description,
+        price_modifier !== undefined ? parseFloat(price_modifier) : opt.price_modifier,
+        price_type !== undefined ? price_type : opt.price_type,
+        sort_order !== undefined ? parseInt(sort_order, 10) : opt.sort_order,
+        is_active !== undefined ? (is_active ? 1 : 0) : opt.is_active,
+        is_default !== undefined ? (is_default ? 1 : 0) : opt.is_default,
+        req.params.id
+      );
+
+      const updated = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
+      res.json({ success: true, option: updated });
+    } catch (err) {
+      console.error('Ошибка обновления:', err);
+      res.status(500).json({ error: 'Не удалось обновить опцию' });
     }
-
-    db.prepare('DELETE FROM partners WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка удаления партнёра:', err);
-    res.status(500).json({ error: 'Не удалось удалить партнёра' });
   }
-});
+);
 
+app.delete('/api/admin/constructor/options/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление опции конструктора'),
+  (req, res) => {
+    try {
+      const opt = db.prepare('SELECT * FROM constructor_options WHERE id = ?').get(req.params.id);
+      if (!opt) {
+        return res.status(404).json({ error: 'Опция не найдена' });
+      }
 
+      db.prepare('DELETE FROM constructor_options WHERE id = ?').run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления:', err);
+      res.status(500).json({ error: 'Не удалось удалить опцию' });
+    }
+  }
+);
 
 /* ============================================================
    АДМИН — НАСТРОЙКИ САЙТА
@@ -1188,66 +1292,75 @@ app.get('/api/admin/settings', authRequired, requireRole('admin'), (req, res) =>
   }
 });
 
-app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const updates = req.body;
+app.patch('/api/admin/settings',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Изменение настроек'),
+  (req, res) => {
+    try {
+      const updates = req.body;
 
-    if (!updates || typeof updates !== 'object' || Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'Нет данных для обновления' });
-    }
-
-    const allowedKeys = [
-      'site_name', 'site_description',
-      'phone', 'email', 'address',
-      'instagram', 'telegram',
-      'delivery_price', 'free_delivery_from',
-      'logo',
-      'hero_video',
-      'hero_poster',
-      'banner_1',
-      'banner_2',
-      'banner_3',
-      // Карта магазина
-      'map_latitude',
-      'map_longitude',
-      'map_zoom'
-    ];
-
-    const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-
-    const save = db.transaction(() => {
-      for (const [key, value] of Object.entries(updates)) {
-        if (allowedKeys.includes(key)) {
-          stmt.run(key, String(value ?? ''));
-        }
+      if (!updates || typeof updates !== 'object' || Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'Нет данных для обновления' });
       }
-    });
 
-    save();
+      const allowedKeys = [
+        'site_name', 'site_description',
+        'phone', 'email', 'address',
+        'instagram', 'telegram',
+        'delivery_price', 'free_delivery_from',
+        'logo',
+        'hero_video',
+        'hero_poster',
+        'banner_1',
+        'banner_2',
+        'banner_3',
+        'map_latitude',
+        'map_longitude',
+        'map_zoom'
+      ];
 
-    const rows = db.prepare('SELECT key, value FROM settings').all();
-    const settings = {};
-    rows.forEach(r => settings[r.key] = r.value);
+      const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
 
-    res.json({ success: true, settings });
-  } catch (err) {
-    console.error('Ошибка сохранения настроек:', err);
-    res.status(500).json({ error: 'Не удалось сохранить настройки' });
+      const save = db.transaction(() => {
+        for (const [key, value] of Object.entries(updates)) {
+          if (allowedKeys.includes(key)) {
+            stmt.run(key, String(value ?? ''));
+          }
+        }
+      });
+
+      save();
+
+      const rows = db.prepare('SELECT key, value FROM settings').all();
+      const settings = {};
+      rows.forEach(r => settings[r.key] = r.value);
+
+      res.json({ success: true, settings });
+    } catch (err) {
+      console.error('Ошибка сохранения настроек:', err);
+      res.status(500).json({ error: 'Не удалось сохранить настройки' });
+    }
   }
-});
+);
 
-app.post('/api/admin/settings/reset-demo', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    db.prepare('DELETE FROM order_items').run();
-    db.prepare('DELETE FROM orders').run();
-    db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')").run();
+app.post('/api/admin/settings/reset-demo',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Сброс демо-данных'),
+  (req, res) => {
+    try {
+      db.prepare('DELETE FROM order_items').run();
+      db.prepare('DELETE FROM orders').run();
+      db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')").run();
 
-    res.json({ success: true, message: 'Заказы удалены. Товары и пользователи сохранены.' });
-  } catch (err) {
-    console.error('Ошибка сброса:', err);
-    res.status(500).json({ error: 'Не удалось сбросить данные' });
+      res.json({ success: true, message: 'Заказы удалены. Товары и пользователи сохранены.' });
+    } catch (err) {
+      console.error('Ошибка сброса:', err);
+      res.status(500).json({ error: 'Не удалось сбросить данные' });
+    }
   }
-});
+);
 
 /* ============================================================
    АДМИН — МЕДИА-БИБЛИОТЕКА
@@ -1293,6 +1406,7 @@ app.get('/api/admin/media', authRequired, requireRole('admin', 'manager'), (req,
 app.post('/api/admin/media/upload',
   authRequired,
   requireRole('admin', 'manager'),
+  security.uploadLimiter,
   upload.single('file'),
   (req, res) => {
     try {
@@ -1300,7 +1414,6 @@ app.post('/api/admin/media/upload',
         return res.status(400).json({ error: 'Файл не получен' });
       }
 
-      // Определяем папку из query или body
       const folder = req.query.folder || req.body.folder || 'misc';
       const url = `/uploads/${folder}/${req.file.filename}`;
 
@@ -1320,33 +1433,97 @@ app.post('/api/admin/media/upload',
   }
 );
 
-app.delete('/api/admin/media', authRequired, requireRole('admin'), (req, res) => {
-  try {
-    const { folder, filename } = req.query;
+app.delete('/api/admin/media',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление медиафайла'),
+  (req, res) => {
+    try {
+      const { folder, filename } = req.query;
 
-    if (!folder || !filename) {
-      return res.status(400).json({ error: 'Укажите folder и filename' });
+      if (!folder || !filename) {
+        return res.status(400).json({ error: 'Укажите folder и filename' });
+      }
+
+      const allowed = ['products', 'hero', 'banners', 'misc'];
+      if (!allowed.includes(folder)) {
+        return res.status(400).json({ error: 'Недопустимая папка' });
+      }
+
+      const safeName = path.basename(filename);
+      const filePath = path.join(UPLOAD_DIR, folder, safeName);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Файл не найден' });
+      }
+
+      fs.unlinkSync(filePath);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления файла:', err);
+      res.status(500).json({ error: 'Не удалось удалить файл' });
     }
+  }
+);
 
-    const allowed = ['products', 'hero', 'banners', 'misc'];
-    if (!allowed.includes(folder)) {
-      return res.status(400).json({ error: 'Недопустимая папка' });
+/* ============================================================
+   БЭКАПЫ (только для админа)
+   ============================================================ */
+
+// Список бэкапов
+app.get('/api/admin/backups',
+  authRequired,
+  requireRole('admin'),
+  (req, res) => {
+    res.json(backup.listBackups());
+  }
+);
+
+// Создать бэкап вручную
+app.post('/api/admin/backups/create',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Создан бэкап БД вручную'),
+  (req, res) => {
+    const name = backup.createBackup();
+    if (name) {
+      res.json({ success: true, name });
+    } else {
+      res.status(500).json({ error: 'Не удалось создать бэкап' });
     }
+  }
+);
 
-    const safeName = path.basename(filename);
-    const filePath = path.join(UPLOAD_DIR, folder, safeName);
+// Скачать бэкап
+app.get('/api/admin/backups/:name',
+  authRequired,
+  requireRole('admin'),
+  (req, res) => {
+    const safeName = path.basename(req.params.name);
+    const filePath = path.join(__dirname, 'data', 'backups', safeName);
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Файл не найден' });
+      return res.status(404).json({ error: 'Бэкап не найден' });
     }
 
-    fs.unlinkSync(filePath);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Ошибка удаления файла:', err);
-    res.status(500).json({ error: 'Не удалось удалить файл' });
+    res.download(filePath);
   }
-});
+);
+
+// Восстановить из бэкапа
+app.post('/api/admin/backups/:name/restore',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Восстановление БД из бэкапа'),
+  (req, res) => {
+    try {
+      backup.restoreBackup(req.params.name);
+      res.json({ success: true, message: 'БД восстановлена. Перезапустите сервер.' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 /* ============================================================
    START
@@ -1354,5 +1531,27 @@ app.delete('/api/admin/media', authRequired, requireRole('admin'), (req, res) =>
 app.listen(PORT, () => {
   console.log(`\n🍰 Сервер запущен: http://localhost:${PORT}`);
   console.log(`📦 База: data/shop.db`);
-  console.log(`🖼️  Медиа: public/uploads/\n`);
+  console.log(`🖼️  Медиа: public/uploads/`);
+  console.log(`📝 Логи: data/logs/`);
+  console.log(`💾 Бэкапы: data/backups/\n`);
 });
+
+/* ============================================================
+   АВТОБЭКАПЫ (каждые 6 часов)
+   ============================================================ */
+if (process.env.BACKUP_ENABLED !== 'false') {
+  const cron = require('node-cron');
+
+  // Каждые 6 часов
+  cron.schedule('0 */6 * * *', () => {
+    console.log('🕐 Автобэкап по расписанию...');
+    backup.createBackup();
+  });
+
+  // При старте — один бэкап через 5 секунд
+  setTimeout(() => {
+    backup.createBackup();
+  }, 5000);
+
+  console.log('📅 Автобэкапы включены (каждые 6 часов)');
+}

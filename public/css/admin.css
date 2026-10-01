@@ -1,48 +1,121 @@
-/* ============================================
-   АДМИН-ПАНЕЛЬ — отдельный дизайн
-   ============================================ */
+/* ============================================================
+   АДМИН-ПАНЕЛЬ — Premium 2027
+   Тёмный шоколад + золото (в стиле сайта)
+   ============================================================ */
 
+/* ============================================================
+   1. ПЕРЕМЕННЫЕ АДМИНКИ
+   ============================================================ */
 :root {
-  --admin-bg: #f4f6fa;
-  --admin-sidebar: #1a1d2e;
-  --admin-sidebar-hover: #252942;
-  --admin-sidebar-active: #2f3555;
-  --admin-accent: #ff9b85;
-  --admin-accent-2: #d6336c;
-  --admin-card: #ffffff;
-  --admin-text: #1a1d2e;
-  --admin-text-muted: #6b7280;
-  --admin-border: #e5e7eb;
-  --admin-success: #22a06b;
-  --admin-warning: #f59e0b;
-  --admin-danger: #ef4444;
-  --admin-info: #3b82f6;
+  /* Фоны */
+  --admin-bg:         #0E0A08;
+  --admin-card:       #1A1310;
+  --admin-sidebar:    #080503;
+  --admin-sidebar-hover: #1A1310;
+  --admin-sidebar-active: #241A15;
+  --admin-elevated:   #241A15;
+
+  /* Текст */
+  --admin-text:       #F5EDE4;
+  --admin-text-muted: #A89888;
+  --admin-text-dim:   #6B5D52;
+
+  /* Акценты */
+  --admin-accent:     #E8A87C;
+  --admin-accent-2:   #C87A4D;
+  --admin-gold:       #C9A961;
+  --admin-gold-bright:#E5C57A;
+  --admin-gold-deep:  #9C7E42;
+
+  /* Границы */
+  --admin-border:        rgba(245, 237, 228, 0.08);
+  --admin-border-strong: rgba(245, 237, 228, 0.16);
+  --admin-border-gold:   rgba(201, 169, 97, 0.25);
+
+  /* Статусы */
+  --admin-success:  #6BBF87;
+  --admin-success-bg: rgba(107, 191, 135, 0.12);
+  --admin-danger:   #E07878;
+  --admin-danger-bg: rgba(224, 120, 120, 0.12);
+  --admin-warning:  #E0B878;
+  --admin-warning-bg: rgba(224, 184, 120, 0.12);
+  --admin-info:     #78A8D8;
+  --admin-info-bg:  rgba(120, 168, 216, 0.12);
+
+  /* Тени */
+  --admin-shadow-sm: 0 2px 6px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.3);
+  --admin-shadow-md: 0 8px 20px rgba(0,0,0,0.45), 0 3px 8px rgba(0,0,0,0.35);
+  --admin-shadow-lg: 0 20px 48px rgba(0,0,0,0.55), 0 8px 16px rgba(0,0,0,0.4);
+  --admin-shadow-xl: 0 40px 96px rgba(0,0,0,0.65), 0 16px 32px rgba(0,0,0,0.5);
+  --admin-shadow-inner: inset 0 1px 0 rgba(245, 237, 228, 0.06);
+  --admin-shadow-glow: 0 8px 32px rgba(232, 168, 124, 0.22);
+  --admin-shadow-glow-gold: 0 8px 32px rgba(201, 169, 97, 0.18);
+
+  /* Радиусы */
+  --admin-radius-sm: 6px;
+  --admin-radius-md: 10px;
+  --admin-radius-lg: 14px;
+  --admin-radius-xl: 20px;
+
+  /* Шрифты */
+  --admin-font-body: 'Inter Tight', 'Manrope', -apple-system, sans-serif;
+  --admin-font-display: 'Cormorant Garamond', Georgia, serif;
+  --admin-font-mono: 'JetBrains Mono', monospace;
+
+  /* Анимации */
+  --admin-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --admin-t-fast: 0.2s;
+  --admin-t-base: 0.35s;
 }
 
-* {
+/* ============================================================
+   2. СБРОС
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body.admin {
-  font-family: 'Manrope', -apple-system, sans-serif;
+  font-family: var(--admin-font-body);
   background: var(--admin-bg);
   color: var(--admin-text);
   min-height: 100vh;
   line-height: 1.5;
+  font-size: 15px;
 }
 
-/* ============ LAYOUT ============ */
+body.admin a {
+  color: inherit;
+  text-decoration: none;
+}
 
+body.admin button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* ============================================================
+   3. LAYOUT
+   ============================================================ */
 .admin-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
 }
 
-/* ============ SIDEBAR ============ */
-
+/* ============================================================
+   4. SIDEBAR
+   ============================================================ */
 .admin-sidebar {
   background: var(--admin-sidebar);
   color: #fff;
@@ -53,19 +126,21 @@ body.admin {
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  border-right: 1px solid var(--admin-border);
 }
 
 .admin-sidebar__logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 0 12px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--admin-border);
   margin-bottom: 24px;
 }
 
 .admin-sidebar__logo-icon {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  filter: drop-shadow(0 4px 8px rgba(232, 168, 124, 0.3));
 }
 
 .admin-sidebar__logo-text {
@@ -75,16 +150,20 @@ body.admin {
 }
 
 .admin-sidebar__logo-name {
-  font-weight: 800;
-  font-size: 1rem;
-  color: #fff;
+  font-family: var(--admin-font-display);
+  font-weight: 500;
+  font-size: 1.15rem;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
 }
 
 .admin-sidebar__logo-sub {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--admin-font-mono);
+  font-size: 0.6rem;
+  color: var(--admin-gold);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.22em;
+  margin-top: 2px;
 }
 
 .admin-menu {
@@ -99,76 +178,104 @@ body.admin {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.9rem;
-  font-weight: 600;
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--admin-t-fast) var(--admin-ease);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   text-align: left;
   font-family: inherit;
   width: 100%;
   text-decoration: none;
+  position: relative;
 }
 
 .admin-menu__item:hover {
   background: var(--admin-sidebar-hover);
-  color: #fff;
+  color: var(--admin-text);
 }
 
 .admin-menu__item.is-active {
   background: var(--admin-sidebar-active);
-  color: #fff;
+  color: var(--admin-gold-bright);
+  border-color: var(--admin-border-gold);
+  box-shadow: var(--admin-shadow-inner), 0 0 20px rgba(201, 169, 97, 0.08);
+}
+
+.admin-menu__item.is-active::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--admin-gold-bright);
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 12px var(--admin-gold-bright);
 }
 
 .admin-menu__item-icon {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   width: 20px;
   display: inline-flex;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .admin-menu__item-badge {
   margin-left: auto;
-  background: var(--admin-accent);
-  color: #fff;
-  font-size: 0.7rem;
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: var(--admin-sidebar);
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 100px;
   min-width: 22px;
   text-align: center;
+  box-shadow: 0 0 12px rgba(232, 168, 124, 0.4);
+}
+
+.admin-menu__item-badge.hidden {
+  display: none;
 }
 
 .admin-menu__divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--admin-border);
   margin: 16px 4px;
 }
 
 .admin-menu__item--exit {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--admin-text-dim);
 }
 
 .admin-menu__item--exit:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ff8a8a;
+  background: rgba(224, 120, 120, 0.1);
+  color: var(--admin-danger);
+  border-color: rgba(224, 120, 120, 0.2);
 }
 
-/* ============ MAIN ============ */
-
+/* ============================================================
+   5. MAIN
+   ============================================================ */
 .admin-main {
   padding: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  background: var(--admin-bg);
 }
 
 .admin-topbar {
-  background: var(--admin-card);
-  padding: 16px 32px;
+  background: rgba(14, 10, 8, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 20px 32px;
   border-bottom: 1px solid var(--admin-border);
   display: flex;
   align-items: center;
@@ -180,9 +287,11 @@ body.admin {
 }
 
 .admin-topbar__title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--admin-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
   color: var(--admin-text);
+  letter-spacing: -0.02em;
 }
 
 .admin-topbar__user {
@@ -200,27 +309,32 @@ body.admin {
 
 .admin-topbar__user-name {
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
+  color: var(--admin-text);
 }
 
 .admin-topbar__user-role {
-  font-size: 0.7rem;
-  color: var(--admin-text-muted);
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
+  color: var(--admin-gold);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.15em;
+  margin-top: 2px;
 }
 
 .admin-topbar__user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2));
-  color: #fff;
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: var(--admin-sidebar);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 1rem;
+  font-family: var(--admin-font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  box-shadow: var(--admin-shadow-md), 0 0 20px rgba(232, 168, 124, 0.3);
 }
 
 .admin-content {
@@ -228,8 +342,9 @@ body.admin {
   flex: 1;
 }
 
-/* ============ ЗАГРУЗКА ============ */
-
+/* ============================================================
+   6. ЗАГРУЗКА
+   ============================================================ */
 .admin-loading {
   display: flex;
   flex-direction: column;
@@ -243,7 +358,7 @@ body.admin {
 .admin-loading__spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid var(--admin-border);
+  border: 2px solid var(--admin-border);
   border-top-color: var(--admin-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -253,34 +368,470 @@ body.admin {
   to { transform: rotate(360deg); }
 }
 
-/* ============ ЗАГЛУШКА (для будущих вкладок) ============ */
-
+/* ============================================================
+   7. ЗАГЛУШКА
+   ============================================================ */
 .admin-placeholder {
   background: var(--admin-card);
-  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
   padding: 80px 24px;
   text-align: center;
-  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-md), var(--admin-shadow-inner);
 }
 
 .admin-placeholder__icon {
   font-size: 4rem;
   margin-bottom: 16px;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .admin-placeholder__title {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-family: var(--admin-font-display);
+  font-size: 1.75rem;
+  font-weight: 400;
   margin-bottom: 8px;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
 }
 
 .admin-placeholder__text {
   color: var(--admin-text-muted);
 }
 
-/* ============ АДАПТАЦИЯ ============ */
+/* ============================================================
+   8. КНОПКИ (общие для всех страниц админки)
+   ============================================================ */
+.btn-admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--admin-radius-md);
+  font-family: var(--admin-font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--admin-t-fast) var(--admin-ease);
+  border: 1px solid transparent;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
 
+.btn-admin--primary {
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: var(--admin-sidebar);
+  box-shadow: var(--admin-shadow-md), var(--admin-shadow-inner);
+  font-weight: 700;
+}
+
+.btn-admin--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg), 0 0 24px rgba(232, 168, 124, 0.4);
+}
+
+.btn-admin--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-admin--ghost {
+  background: transparent;
+  color: var(--admin-text-muted);
+  border-color: var(--admin-border);
+}
+
+.btn-admin--ghost:hover {
+  background: var(--admin-card);
+  color: var(--admin-text);
+  border-color: var(--admin-border-strong);
+}
+
+/* Кнопка "Добавить" (с "+") */
+.btn-add {
+  padding: 12px 22px;
+  border-radius: var(--admin-radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: var(--admin-sidebar);
+  border: none;
+  cursor: pointer;
+  transition: all var(--admin-t-fast) var(--admin-ease);
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--admin-shadow-md), var(--admin-shadow-inner);
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg), 0 0 24px rgba(232, 168, 124, 0.4);
+}
+
+.btn-add span {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* Опасная кнопка */
+.btn-danger {
+  padding: 12px 24px;
+  border-radius: var(--admin-radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #C84A4A 0%, #A03030 100%);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all var(--admin-t-fast) var(--admin-ease);
+  font-family: inherit;
+  white-space: nowrap;
+  box-shadow: var(--admin-shadow-md), var(--admin-shadow-inner);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg), 0 0 24px rgba(224, 120, 120, 0.4);
+}
+
+/* ============================================================
+   9. МОДАЛКИ (общие)
+   ============================================================ */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 5, 3, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--admin-t-base) var(--admin-ease);
+}
+
+.modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal__inner {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border-gold);
+  border-radius: var(--admin-radius-xl);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--admin-shadow-xl), 0 0 40px rgba(201, 169, 97, 0.15);
+  transform: translateY(20px) scale(0.98);
+  transition: transform var(--admin-t-base) var(--admin-ease);
+  position: relative;
+}
+
+.modal.is-open .modal__inner {
+  transform: translateY(0) scale(1);
+}
+
+.modal__inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--admin-gold), transparent);
+  opacity: 0.5;
+}
+
+.modal__header {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--admin-card);
+  z-index: 1;
+  border-radius: var(--admin-radius-xl) var(--admin-radius-xl) 0 0;
+}
+
+.modal__title {
+  font-family: var(--admin-font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+}
+
+.modal__close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--admin-elevated);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all var(--admin-t-fast) var(--admin-ease);
+  font-family: inherit;
+}
+
+.modal__close:hover {
+  background: rgba(224, 120, 120, 0.15);
+  border-color: rgba(224, 120, 120, 0.4);
+  color: var(--admin-danger);
+  transform: rotate(90deg);
+}
+
+.modal__body {
+  padding: 24px 28px;
+}
+
+.modal__section {
+  margin-bottom: 24px;
+}
+
+.modal__section:last-child {
+  margin-bottom: 0;
+}
+
+.modal__section-title {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--admin-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   10. ФОРМЫ (общие)
+   ============================================================ */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.admin-form__label .req {
+  color: var(--admin-accent);
+}
+
+.admin-form__hint {
+  font-size: 0.75rem;
+  color: var(--admin-text-dim);
+}
+
+.admin-form__input,
+.admin-form__textarea,
+.admin-form__select {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--admin-elevated);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  font-family: var(--admin-font-body);
+  font-size: 0.92rem;
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow-inner);
+  transition: all var(--admin-t-fast) var(--admin-ease);
+}
+
+.admin-form__input::placeholder,
+.admin-form__textarea::placeholder {
+  color: var(--admin-text-dim);
+}
+
+.admin-form__input:focus,
+.admin-form__textarea:focus,
+.admin-form__select:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  background: var(--admin-card);
+  box-shadow: var(--admin-shadow-inner), 0 0 0 3px rgba(232, 168, 124, 0.15);
+}
+
+.admin-form__textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.admin-form__error {
+  display: none;
+  padding: 12px 16px;
+  background: var(--admin-danger-bg);
+  border-left: 3px solid var(--admin-danger);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-danger);
+  font-size: 0.88rem;
+}
+
+.admin-form__error.is-visible {
+  display: block;
+  animation: fadeInUp 0.3s var(--admin-ease);
+}
+
+.admin-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--admin-border);
+  margin-top: 8px;
+}
+
+/* Чекбокс */
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--admin-text);
+  user-select: none;
+  padding: 10px 0;
+}
+
+.admin-checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--admin-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   11. TOAST
+   ============================================================ */
+.admin-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 14px 28px;
+  background: var(--admin-elevated);
+  color: var(--admin-text);
+  font-family: var(--admin-font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--admin-radius-md);
+  border: 1px solid var(--admin-border-gold);
+  box-shadow: var(--admin-shadow-xl), 0 0 24px rgba(201, 169, 97, 0.2);
+  opacity: 0;
+  z-index: 3000;
+  transition: all var(--admin-t-base) var(--admin-ease);
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+}
+
+.admin-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.admin-toast.is-error {
+  border-color: rgba(224, 120, 120, 0.4);
+  box-shadow: var(--admin-shadow-xl), 0 0 24px rgba(224, 120, 120, 0.25);
+}
+
+/* ============================================================
+   12. СКРОЛЛБАР
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--admin-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--admin-elevated);
+  border-radius: var(--admin-radius-sm);
+  border: 2px solid var(--admin-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-sidebar-hover);
+}
+
+/* ============================================================
+   13. УТИЛИТЫ
+   ============================================================ */
+.text-center { text-align: center; }
+.text-muted   { color: var(--admin-text-muted); }
+.hidden       { display: none !important; }
+
+/* ============================================================
+   14. ANIMATIONS
+   ============================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================================
+   15. АДАПТАЦИЯ
+   ============================================================ */
 @media (max-width: 900px) {
   .admin-layout {
     grid-template-columns: 1fr;
@@ -302,6 +853,11 @@ body.admin {
   .admin-menu__item {
     white-space: nowrap;
     flex-shrink: 0;
+    padding: 10px 14px;
+  }
+
+  .admin-menu__item.is-active::before {
+    display: none;
   }
 
   .admin-menu__divider {
@@ -314,5 +870,13 @@ body.admin {
 
   .admin-topbar {
     padding: 12px 20px;
+  }
+
+  .admin-topbar__title {
+    font-size: 1.25rem;
+  }
+
+  .admin-form__row {
+    grid-template-columns: 1fr;
   }
 }
