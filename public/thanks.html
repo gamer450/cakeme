@@ -3,65 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Спасибо за заказ! — Сладкий Дом</title>
+  <title>Спасибо за заказ! — Cake.Me</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Новый дизайн 2027 -->
   <link rel="stylesheet" href="/css/design-system.css" />
   <link rel="stylesheet" href="/css/premium-effects.css" />
-
-  <!-- Стили проекта -->
   <link rel="stylesheet" href="/css/header-footer.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/animations.css" />
 
   <style>
     .thanks {
-      padding: 80px 0 120px;
+      padding: 120px 0 140px;
       text-align: center;
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
     }
+
     .thanks__icon {
-      font-size: 6rem;
-      margin-bottom: 24px;
-      animation: bounceIn 0.8s var(--ease-bounce) both;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 32px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-100);
+      box-shadow: var(--shadow-xl), var(--shadow-glow-gold);
+      animation: bounceIn 0.8s var(--ease-spring) both;
     }
+
+    .thanks__icon svg {
+      width: 56px;
+      height: 56px;
+    }
+
     .thanks__title {
-      font-size: clamp(2rem, 4vw, 3rem);
-      margin-bottom: 16px;
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 300;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      letter-spacing: -0.025em;
     }
+
+    .thanks__title em {
+      font-style: italic;
+      color: var(--peach-300);
+    }
+
     .thanks__text {
       font-size: 1.15rem;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       max-width: 560px;
-      margin: 0 auto 32px;
+      margin: 0 auto 48px;
       line-height: 1.7;
     }
+
     .thanks__order {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px 28px;
-      background: var(--white);
-      border-radius: var(--r-full);
+      gap: 16px;
+      padding: 20px 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      margin-bottom: 48px;
       box-shadow: var(--shadow-md);
-      margin-bottom: 40px;
-      animation: fadeInUp 0.8s var(--ease) 0.3s both;
+      animation: fadeInUp 0.8s var(--ease-out) 0.3s both;
     }
+
     .thanks__order-label {
-      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
       color: var(--text-muted);
-      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.2em;
     }
+
     .thanks__order-id {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--pink-hover);
+      font-family: var(--font-mono);
+      font-size: 1.75rem;
+      font-weight: 500;
+      color: var(--gold-100);
+      letter-spacing: -0.02em;
     }
+
     .thanks__actions {
       display: flex;
       gap: 16px;
@@ -72,14 +104,18 @@
 </head>
 <body>
 
-  <!-- ============ ШАПКА ============ -->
   <header class="header" id="header">
     <div class="container">
       <div class="header__inner">
         <a href="/" class="logo">
-          <span class="logo__icon">🍰</span>
+          <span class="logo__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
+              <path d="M10 15h4M10 18h4"/>
+            </svg>
+          </span>
           <span class="logo__text">
-            <span class="logo__name" data-setting="site_name">Сладкий Дом</span>
+            <span class="logo__name" data-setting="site_name">Cake.Me</span>
             <span class="logo__tagline">торты &amp; кофе</span>
           </span>
         </a>
@@ -92,7 +128,7 @@
 
         <div class="header__actions">
           <a href="/cart.html" class="icon-btn" aria-label="Корзина">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="8" cy="21" r="1"></circle>
               <circle cx="19" cy="21" r="1"></circle>
               <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
@@ -106,11 +142,16 @@
     </div>
   </header>
 
-  <!-- ============ СПАСИБО ============ -->
   <main class="thanks">
     <div class="container">
-      <div class="thanks__icon">🎉</div>
-      <h1 class="thanks__title">Спасибо за заказ!</h1>
+      <div class="thanks__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <path d="m9 11 3 3L22 4"/>
+        </svg>
+      </div>
+
+      <h1 class="thanks__title">Спасибо <em>за заказ!</em></h1>
       <p class="thanks__text">
         Мы уже начали его готовить. Менеджер свяжется с вами
         в течение 15 минут для подтверждения.
@@ -122,17 +163,16 @@
       </div>
 
       <div class="thanks__actions">
-        <a href="/catalog.html" class="btn btn-primary btn-lg">Вернуться в каталог</a>
-        <a href="/" class="btn btn-secondary btn-lg">На главную</a>
+        <a href="/catalog.html" class="btn btn-primary btn-lg magnetic">Вернуться в каталог</a>
+        <a href="/" class="btn btn-secondary btn-lg magnetic">На главную</a>
       </div>
     </div>
   </main>
 
-  <!-- ============ ПОДВАЛ ============ -->
   <footer class="footer">
     <div class="container">
       <div class="footer__bottom" style="justify-content: center;">
-        <span>© 2026 Сладкий Дом. Все права защищены.</span>
+        <span>© 2026 Cake.Me. Все права защищены.</span>
       </div>
     </div>
   </footer>
@@ -141,7 +181,6 @@
   <script src="/js/settings.js"></script>
   <script src="/js/main.js"></script>
   <script>
-    // Показываем номер заказа из URL
     const params = new URLSearchParams(window.location.search);
     const orderId = params.get('orderId');
     if (orderId) {

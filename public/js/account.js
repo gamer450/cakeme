@@ -56,7 +56,6 @@ function render(user, orders) {
 
   container.innerHTML = `
     <div class="account-layout">
-      <!-- SIDEBAR -->
       <aside class="account-sidebar">
         <div class="account-user">
           <div class="account-user__avatar">${initial}</div>
@@ -67,28 +66,45 @@ function render(user, orders) {
 
         <div class="account-menu">
           <button class="account-menu__item is-active" data-tab="orders">
-            📦 Мои заказы
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
+            </svg>
+            Мои заказы
           </button>
           <button class="account-menu__item" data-tab="profile">
-            👤 Профиль
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Профиль
           </button>
           ${user.role === 'admin' ? `
             <a href="/admin/" class="account-menu__item">
-              👑 Админ-панель
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 20h20l-2-9-4 3-4-7-4 7-4-3z"/>
+              </svg>
+              Админ-панель
             </a>
           ` : ''}
           ${user.role === 'manager' ? `
             <a href="/admin/" class="account-menu__item">
-              🧑‍💼 Панель менеджера
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="7" rx="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              Панель менеджера
             </a>
           ` : ''}
           <button class="account-menu__item account-menu__item--danger" id="logout-btn">
-            🚪 Выйти
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Выйти
           </button>
         </div>
       </aside>
 
-      <!-- CONTENT -->
       <div class="account-content">
         <div class="account-tab is-active" data-tab="orders">
           <h2 class="account-tab__title">История заказов</h2>
@@ -97,27 +113,24 @@ function render(user, orders) {
 
         <div class="account-tab" data-tab="profile">
           <h2 class="account-tab__title">Профиль</h2>
-          <div class="checkout-form__grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-            <div class="checkout-form__field">
-              <span class="checkout-form__label">Имя</span>
-              <div style="padding:14px 16px;background:var(--cream);border-radius:var(--r-md);color:var(--choco);font-weight:600;">${user.name}</div>
+          <div class="profile-grid">
+            <div class="profile-field">
+              <span class="profile-field__label">Имя</span>
+              <div class="profile-field__value">${user.name}</div>
             </div>
-            <div class="checkout-form__field">
-              <span class="checkout-form__label">Email</span>
-              <div style="padding:14px 16px;background:var(--cream);border-radius:var(--r-md);color:var(--choco);font-weight:600;">${user.email}</div>
+            <div class="profile-field">
+              <span class="profile-field__label">Email</span>
+              <div class="profile-field__value">${user.email}</div>
             </div>
-            <div class="checkout-form__field">
-              <span class="checkout-form__label">Телефон</span>
-              <div style="padding:14px 16px;background:var(--cream);border-radius:var(--r-md);color:var(--choco);font-weight:600;">${user.phone || '—'}</div>
+            <div class="profile-field">
+              <span class="profile-field__label">Телефон</span>
+              <div class="profile-field__value">${user.phone || '—'}</div>
             </div>
-            <div class="checkout-form__field">
-              <span class="checkout-form__label">Роль</span>
-              <div style="padding:14px 16px;background:var(--cream);border-radius:var(--r-md);color:var(--choco);font-weight:600;">${user.role}</div>
+            <div class="profile-field">
+              <span class="profile-field__label">Роль</span>
+              <div class="profile-field__value">${user.role}</div>
             </div>
           </div>
-          <p style="margin-top:24px;color:var(--text-muted);font-size:0.9rem;">
-            Редактирование профиля появится в следующих обновлениях.
-          </p>
         </div>
       </div>
     </div>
@@ -134,10 +147,15 @@ function renderOrders(orders) {
   if (!orders.length) {
     return `
       <div class="account-empty">
-        <div class="account-empty__icon">📦</div>
+        <div class="account-empty__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
+          </svg>
+        </div>
         <div class="account-empty__title">Заказов пока нет</div>
-        <p class="account-empty__text">Загляните в каталог и выберите что-нибудь вкусное!</p>
-        <a href="/catalog.html" class="btn btn-primary">Перейти в каталог</a>
+        <p class="account-empty__text">Загляните в каталог и выберите что-нибудь вкусное</p>
+        <a href="/catalog.html" class="btn btn-primary btn-lg magnetic">Перейти в каталог</a>
       </div>
     `;
   }
@@ -154,10 +172,15 @@ function renderOrders(orders) {
             <span class="order-card__status order-status--${o.status}">${statusLabels[o.status] || o.status}</span>
           </div>
           <div class="order-card__items">
-            ${o.items.map(i => `<span>${i.product_name} × ${i.quantity} — ${i.price * i.quantity} ₽</span>`).join('')}
+            ${o.items.map(i => `
+              <div class="order-card__item">
+                <span>${i.product_name} × ${i.quantity}</span>
+                <span>${(i.price * i.quantity).toLocaleString('ru-RU')} ₽</span>
+              </div>
+            `).join('')}
           </div>
           <div class="order-card__total">
-            <span class="order-card__total-label">Итого:</span>
+            <span class="order-card__total-label">Итого</span>
             <span class="order-card__total-value">${o.total.toLocaleString('ru-RU')} ₽</span>
           </div>
         </div>
@@ -197,10 +220,10 @@ function initTabs() {
 // ============================================
 function initLogout() {
   document.getElementById('logout-btn')?.addEventListener('click', () => {
-    if (!confirm('Выйти из аккаунта? Корзина будет очищена.')) return;
+    if (!confirm('Выйти из аккаунта?')) return;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('cart'); // ← чистим корзину
+    localStorage.removeItem('cart');
     window.location.href = '/';
   });
 }
