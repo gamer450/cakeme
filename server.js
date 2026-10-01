@@ -1,6 +1,6 @@
 /* ============================================================
    Cake.Me — Главный сервер
-   Express + SQLite + JWT + Multer + Helmet + Rate limit + Бэкапы
+   Express + SQLite + JWT + Multer + Helmet + Rate limit + Бэкапы + Отзывы
    ============================================================ */
 
 require('dotenv').config();
@@ -10,6 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const { body } = require('express-validator');
 
 const db = require('./src/db');
 const {
@@ -30,7 +31,7 @@ const PORT = process.env.PORT || 3000;
    БЕЗОПАСНОСТЬ И MIDDLEWARE
    ============================================================ */
 
-// Helmet — заголовки безопасности
+// Helmet
 app.use(security.helmetConfig);
 
 // CORS
@@ -39,10 +40,10 @@ app.use(security.corsConfig);
 // Отключаем X-Powered-By
 app.disable('x-powered-by');
 
-// Парсинг JSON с лимитом
+// Парсинг JSON
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting (общий) — 500 запросов / 15 мин
+// Rate limiting (общий)
 if (process.env.RATE_LIMIT_ENABLED !== 'false') {
   app.use('/api/', security.generalLimiter);
 }
@@ -55,7 +56,6 @@ app.use(express.static(path.join(__dirname, 'public')));
    ============================================================ */
 const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
 
-// Создаём папки, если их нет
 ['products', 'hero', 'banners', 'misc'].forEach(dir => {
   const fullPath = path.join(UPLOAD_DIR, dir);
   if (!fs.existsSync(fullPath)) {
@@ -64,11 +64,7 @@ const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
 });
 
 const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/svg+xml',
-  'image/gif'
+  'image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'
 ];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
@@ -95,7 +91,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_TYPES.includes(file.mimetype)) {
       cb(null, true);
@@ -116,7 +112,6 @@ app.get('/api/health', (req, res) => {
    ПУБЛИЧНЫЕ API
    ============================================================ */
 
-// Все категории
 app.get('/api/categories', (req, res) => {
   const categories = db.prepare(
     'SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order'
@@ -124,7 +119,6 @@ app.get('/api/categories', (req, res) => {
   res.json(categories);
 });
 
-// Все товары (с фильтрами)
 app.get('/api/products', (req, res) => {
   const { category_id, search } = req.query;
 
@@ -152,7 +146,6 @@ app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
-// Один товар
 app.get('/api/products/:id', (req, res) => {
   const product = db.prepare(`
     SELECT p.*, c.name AS category_name, c.type AS category_type
@@ -167,7 +160,6 @@ app.get('/api/products/:id', (req, res) => {
   res.json(product);
 });
 
-// Настройки сайта (публичные)
 app.get('/api/settings', (req, res) => {
   const rows = db.prepare('SELECT key, value FROM settings').all();
   const settings = {};
@@ -176,10 +168,9 @@ app.get('/api/settings', (req, res) => {
 });
 
 /* ============================================================
-   ПАРТНЁРЫ (публичный API)
+   ПАРТНЁРЫ
    ============================================================ */
 
-// Все активные партнёры
 app.get('/api/partners', (req, res) => {
   try {
     const partners = db.prepare(`
@@ -194,7 +185,6 @@ app.get('/api/partners', (req, res) => {
   }
 });
 
-// Один партнёр
 app.get('/api/partners/:id', (req, res) => {
   const partner = db.prepare('SELECT * FROM partners WHERE id = ? AND is_active = 1').get(req.params.id);
   if (!partner) {
@@ -207,7 +197,6 @@ app.get('/api/partners/:id', (req, res) => {
    КОНСТРУКТОР ТОРТА
    ============================================================ */
 
-// Публичный: получить все опции, сгруппированные
 app.get('/api/constructor/options', (req, res) => {
   try {
     const options = db.prepare(`
@@ -216,17 +205,9 @@ app.get('/api/constructor/options', (req, res) => {
       ORDER BY group_key ASC, sort_order ASC
     `).all();
 
-    const grouped = {
-      shape: [],
-      weight: [],
-      filling: [],
-      decor: []
-    };
-
+    const grouped = { shape: [], weight: [], filling: [], decor: [] };
     options.forEach(opt => {
-      if (grouped[opt.group_key]) {
-        grouped[opt.group_key].push(opt);
-      }
+      if (grouped[opt.group_key]) grouped[opt.group_key].push(opt);
     });
 
     res.json(grouped);
@@ -236,7 +217,6 @@ app.get('/api/constructor/options', (req, res) => {
   }
 });
 
-// Публичный: рассчитать цену
 app.post('/api/constructor/calculate', (req, res) => {
   try {
     const { shape_id, weight_id, filling_id, decor_ids = [] } = req.body;
@@ -299,10 +279,161 @@ app.post('/api/constructor/calculate', (req, res) => {
 });
 
 /* ============================================================
+   ОТЗЫВЫ (публичный API)
+   ============================================================ */
+
+// Получить одобренные отзывы
+app.get('/api/reviews', (req, res) => {
+  try {
+    const { featured, limit = 20 } = req.query;
+
+    let sql = `
+      SELECT
+        r.id, r.author_name, r.rating, r.text,
+        r.is_featured, r.created_at,
+        p.name AS product_name,
+        p.image AS product_image
+      FROM reviews r
+      LEFT JOIN products p ON p.id = r.product_id
+      WHERE r.is_approved = 1
+    `;
+    const params = [];
+
+    if (featured === 'true') {
+      sql += ' AND r.is_featured = 1';
+    }
+
+    sql += ' ORDER BY r.is_featured DESC, r.created_at DESC LIMIT ?';
+    params.push(parseInt(limit, 10) || 20);
+
+    const reviews = db.prepare(sql).all(...params);
+    res.json(reviews);
+  } catch (err) {
+    console.error('Ошибка отзывов:', err);
+    res.status(500).json({ error: 'Не удалось загрузить отзывы' });
+  }
+});
+
+// Статистика отзывов
+app.get('/api/reviews/stats', (req, res) => {
+  try {
+    const stats = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        COALESCE(AVG(rating), 0) as avg_rating,
+        SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_stars,
+        SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_stars,
+        SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_stars,
+        SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_stars,
+        SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star
+      FROM reviews
+      WHERE is_approved = 1
+    `).get();
+
+    res.json({
+      total: stats.total,
+      avgRating: Math.round(stats.avg_rating * 10) / 10,
+      distribution: {
+        5: stats.five_stars,
+        4: stats.four_stars,
+        3: stats.three_stars,
+        2: stats.two_stars,
+        1: stats.one_star
+      }
+    });
+  } catch (err) {
+    console.error('Ошибка статистики отзывов:', err);
+    res.status(500).json({ error: 'Не удалось загрузить статистику' });
+  }
+});
+
+// Отзывы для товара
+app.get('/api/products/:id/reviews', (req, res) => {
+  try {
+    const reviews = db.prepare(`
+      SELECT id, author_name, rating, text, created_at
+      FROM reviews
+      WHERE product_id = ? AND is_approved = 1
+      ORDER BY created_at DESC
+      LIMIT 20
+    `).all(req.params.id);
+
+    const stats = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        COALESCE(AVG(rating), 0) as avg_rating
+      FROM reviews
+      WHERE product_id = ? AND is_approved = 1
+    `).get(req.params.id);
+
+    res.json({
+      reviews,
+      stats: {
+        total: stats.total,
+        avgRating: Math.round(stats.avg_rating * 10) / 10
+      }
+    });
+  } catch (err) {
+    console.error('Ошибка отзывов товара:', err);
+    res.status(500).json({ error: 'Не удалось загрузить отзывы' });
+  }
+});
+
+// Оставить отзыв
+app.post('/api/reviews',
+  security.generalLimiter,
+  body('author_name').trim().isLength({ min: 2, max: 100 }).escape(),
+  body('rating').isInt({ min: 1, max: 5 }),
+  body('text').trim().isLength({ min: 10, max: 2000 }).escape(),
+  security.handleValidationErrors,
+  (req, res) => {
+    try {
+      const { author_name, author_email, rating, text, order_id, product_id } = req.body;
+
+      let orderUserId = null;
+      if (order_id) {
+        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id);
+        if (!order) {
+          return res.status(400).json({ error: 'Заказ не найден' });
+        }
+        orderUserId = order.user_id;
+      }
+
+      const result = db.prepare(`
+        INSERT INTO reviews
+          (user_id, order_id, product_id, author_name, author_email, rating, text, is_approved)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+      `).run(
+        orderUserId,
+        order_id || null,
+        product_id || null,
+        author_name.trim(),
+        (author_email || '').trim(),
+        parseInt(rating, 10),
+        text.trim()
+      );
+
+      logger.logActivity('Новый отзыв (на модерации)', {
+        reviewId: result.lastInsertRowid,
+        author: author_name,
+        rating
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Спасибо за отзыв! Он появится после проверки модератором.'
+      });
+    } catch (err) {
+      console.error('Ошибка создания отзыва:', err);
+      res.status(500).json({ error: 'Не удалось сохранить отзыв' });
+    }
+  }
+);
+
+/* ============================================================
    ЗАКАЗЫ (публичные)
    ============================================================ */
 
-// Создать заказ
 app.post('/api/orders',
   authOptional,
   security.orderLimiter,
@@ -377,7 +508,6 @@ app.post('/api/orders',
   }
 );
 
-// Получить заказ по ID
 app.get('/api/orders/:id', (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
 
@@ -394,7 +524,6 @@ app.get('/api/orders/:id', (req, res) => {
    АВТОРИЗАЦИЯ
    ============================================================ */
 
-// Регистрация
 app.post('/api/auth/register',
   security.authLimiter,
   security.validateRegister,
@@ -442,7 +571,6 @@ app.post('/api/auth/register',
   }
 );
 
-// Вход
 app.post('/api/auth/login',
   security.authLimiter,
   security.validateLogin,
@@ -455,16 +583,14 @@ app.post('/api/auth/login',
 
       if (!user) {
         logger.logSecurity('Неудачная попытка входа (несуществующий email)', {
-          email,
-          ip: req.ip
+          email, ip: req.ip
         });
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
 
       if (!user.is_active) {
         logger.logSecurity('Попытка входа в заблокированный аккаунт', {
-          userId: user.id,
-          ip: req.ip
+          userId: user.id, ip: req.ip
         });
         return res.status(403).json({ error: 'Аккаунт заблокирован' });
       }
@@ -472,9 +598,7 @@ app.post('/api/auth/login',
       const ok = bcrypt.compareSync(password, user.password_hash);
       if (!ok) {
         logger.logSecurity('Неудачная попытка входа (неверный пароль)', {
-          userId: user.id,
-          email: user.email,
-          ip: req.ip
+          userId: user.id, email: user.email, ip: req.ip
         });
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
@@ -483,10 +607,7 @@ app.post('/api/auth/login',
       const token = signToken(safeUser);
 
       logger.logActivity('Успешный вход', {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-        ip: req.ip
+        userId: user.id, email: user.email, role: user.role, ip: req.ip
       });
 
       res.json({
@@ -502,12 +623,10 @@ app.post('/api/auth/login',
   }
 );
 
-// Текущий пользователь
 app.get('/api/auth/me', authRequired, (req, res) => {
   res.json({ user: req.user });
 });
 
-// Мои заказы
 app.get('/api/auth/my-orders', authRequired, (req, res) => {
   const orders = db.prepare(`
     SELECT * FROM orders
@@ -1152,7 +1271,7 @@ app.delete('/api/admin/partners/:id',
 );
 
 /* ============================================================
-   АДМИН — КОНСТРУКТОР ТОРТА
+   АДМИН — КОНСТРУКТОР
    ============================================================ */
 
 app.get('/api/admin/constructor/options', authRequired, requireRole('admin', 'manager'), (req, res) => {
@@ -1277,7 +1396,102 @@ app.delete('/api/admin/constructor/options/:id',
 );
 
 /* ============================================================
-   АДМИН — НАСТРОЙКИ САЙТА
+   АДМИН — ОТЗЫВЫ
+   ============================================================ */
+
+app.get('/api/admin/reviews',
+  authRequired,
+  requireRole('admin', 'manager'),
+  (req, res) => {
+    try {
+      const { filter } = req.query;
+
+      let sql = `
+        SELECT
+          r.*,
+          p.name AS product_name,
+          o.total AS order_total
+        FROM reviews r
+        LEFT JOIN products p ON p.id = r.product_id
+        LEFT JOIN orders o ON o.id = r.order_id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (filter === 'pending') {
+        sql += ' AND r.is_approved = 0';
+      } else if (filter === 'approved') {
+        sql += ' AND r.is_approved = 1';
+      } else if (filter === 'featured') {
+        sql += ' AND r.is_featured = 1 AND r.is_approved = 1';
+      }
+
+      sql += ' ORDER BY r.is_approved ASC, r.created_at DESC';
+
+      const reviews = db.prepare(sql).all(...params);
+      res.json(reviews);
+    } catch (err) {
+      console.error('Ошибка отзывов:', err);
+      res.status(500).json({ error: 'Не удалось загрузить отзывы' });
+    }
+  }
+);
+
+app.patch('/api/admin/reviews/:id',
+  authRequired,
+  requireRole('admin', 'manager'),
+  logger.activityLogger('Изменение отзыва'),
+  (req, res) => {
+    try {
+      const review = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id);
+      if (!review) {
+        return res.status(404).json({ error: 'Отзыв не найден' });
+      }
+
+      const { is_approved, is_featured } = req.body;
+
+      db.prepare(`
+        UPDATE reviews
+        SET is_approved = ?, is_featured = ?, approved_at = CASE WHEN ? = 1 THEN datetime('now') ELSE approved_at END
+        WHERE id = ?
+      `).run(
+        is_approved !== undefined ? (is_approved ? 1 : 0) : review.is_approved,
+        is_featured !== undefined ? (is_featured ? 1 : 0) : review.is_featured,
+        is_approved !== undefined ? (is_approved ? 1 : 0) : review.is_approved,
+        req.params.id
+      );
+
+      const updated = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id);
+      res.json({ success: true, review: updated });
+    } catch (err) {
+      console.error('Ошибка обновления отзыва:', err);
+      res.status(500).json({ error: 'Не удалось обновить отзыв' });
+    }
+  }
+);
+
+app.delete('/api/admin/reviews/:id',
+  authRequired,
+  requireRole('admin'),
+  logger.activityLogger('Удаление отзыва'),
+  (req, res) => {
+    try {
+      const review = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id);
+      if (!review) {
+        return res.status(404).json({ error: 'Отзыв не найден' });
+      }
+
+      db.prepare('DELETE FROM reviews WHERE id = ?').run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Ошибка удаления отзыва:', err);
+      res.status(500).json({ error: 'Не удалось удалить отзыв' });
+    }
+  }
+);
+
+/* ============================================================
+   АДМИН — НАСТРОЙКИ
    ============================================================ */
 
 app.get('/api/admin/settings', authRequired, requireRole('admin'), (req, res) => {
@@ -1309,15 +1523,9 @@ app.patch('/api/admin/settings',
         'phone', 'email', 'address',
         'instagram', 'telegram',
         'delivery_price', 'free_delivery_from',
-        'logo',
-        'hero_video',
-        'hero_poster',
-        'banner_1',
-        'banner_2',
-        'banner_3',
-        'map_latitude',
-        'map_longitude',
-        'map_zoom'
+        'logo', 'hero_video', 'hero_poster',
+        'banner_1', 'banner_2', 'banner_3',
+        'map_latitude', 'map_longitude', 'map_zoom'
       ];
 
       const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
@@ -1363,7 +1571,7 @@ app.post('/api/admin/settings/reset-demo',
 );
 
 /* ============================================================
-   АДМИН — МЕДИА-БИБЛИОТЕКА
+   АДМИН — МЕДИА
    ============================================================ */
 
 app.get('/api/admin/media', authRequired, requireRole('admin', 'manager'), (req, res) => {
@@ -1467,10 +1675,9 @@ app.delete('/api/admin/media',
 );
 
 /* ============================================================
-   БЭКАПЫ (только для админа)
+   БЭКАПЫ
    ============================================================ */
 
-// Список бэкапов
 app.get('/api/admin/backups',
   authRequired,
   requireRole('admin'),
@@ -1479,7 +1686,6 @@ app.get('/api/admin/backups',
   }
 );
 
-// Создать бэкап вручную
 app.post('/api/admin/backups/create',
   authRequired,
   requireRole('admin'),
@@ -1494,7 +1700,6 @@ app.post('/api/admin/backups/create',
   }
 );
 
-// Скачать бэкап
 app.get('/api/admin/backups/:name',
   authRequired,
   requireRole('admin'),
@@ -1510,7 +1715,6 @@ app.get('/api/admin/backups/:name',
   }
 );
 
-// Восстановить из бэкапа
 app.post('/api/admin/backups/:name/restore',
   authRequired,
   requireRole('admin'),
@@ -1537,18 +1741,16 @@ app.listen(PORT, () => {
 });
 
 /* ============================================================
-   АВТОБЭКАПЫ (каждые 6 часов)
+   АВТОБЭКАПЫ
    ============================================================ */
 if (process.env.BACKUP_ENABLED !== 'false') {
   const cron = require('node-cron');
 
-  // Каждые 6 часов
   cron.schedule('0 */6 * * *', () => {
     console.log('🕐 Автобэкап по расписанию...');
     backup.createBackup();
   });
 
-  // При старте — один бэкап через 5 секунд
   setTimeout(() => {
     backup.createBackup();
   }, 5000);
