@@ -1,6 +1,6 @@
-/* ============================================
-   АДМИН-ПАНЕЛЬ — каркас
-   ============================================ */
+/* ============================================================
+   АДМИН-ПАНЕЛЬ — каркас + роутинг
+   ============================================================ */
 
 const state = {
   user: null,
@@ -8,9 +8,9 @@ const state = {
   token: null
 };
 
-// ============================================
+// ============================================================
 // 1. Загрузка
-// ============================================
+// ============================================================
 async function init() {
   state.token = localStorage.getItem('token');
 
@@ -56,9 +56,9 @@ async function init() {
   }
 }
 
-// ============================================
+// ============================================================
 // 2. Рендер каркаса
-// ============================================
+// ============================================================
 function renderShell() {
   const root = document.getElementById('admin-root');
   const user = state.user;
@@ -95,6 +95,14 @@ function renderShell() {
             <span class="admin-menu__item-icon">🏷️</span>
             Категории
           </button>
+          <button class="admin-menu__item" data-tab="partners">
+            <span class="admin-menu__item-icon">🤝</span>
+            Партнёры
+          </button>
+          <button class="admin-menu__item" data-tab="media">
+            <span class="admin-menu__item-icon">🖼️</span>
+            Медиа
+          </button>
           ${user.role === 'admin' ? `
             <button class="admin-menu__item" data-tab="users">
               <span class="admin-menu__item-icon">👥</span>
@@ -104,10 +112,6 @@ function renderShell() {
               <span class="admin-menu__item-icon">⚙️</span>
               Настройки
             </button>
-             <button class="admin-menu__item" data-tab="media">
-            <span class="admin-menu__item-icon">🖼️</span>
-            Медиа
-          </button>
           ` : ''}
 
           <div class="admin-menu__divider"></div>
@@ -146,21 +150,21 @@ function renderShell() {
   initTabs();
   initLogout();
 
-  // Открыть первую вкладку
   navigate('dashboard');
 }
 
-// ============================================
-// 3. Навигация по вкладкам
-// ============================================
+// ============================================================
+// 3. Навигация
+// ============================================================
 const tabTitles = {
   dashboard: 'Дашборд',
   orders: 'Заказы',
   products: 'Товары',
   categories: 'Категории',
+  partners: 'Партнёры',
+  media: 'Медиа',
   users: 'Пользователи',
-  settings: 'Настройки',
-  media: 'Медиа'   // ← НОВОЕ
+  settings: 'Настройки'
 };
 
 function initTabs() {
@@ -187,31 +191,95 @@ function navigate(tab) {
   const content = document.getElementById('admin-content');
   if (!content) return;
 
-  // Роутинг по вкладкам
+  // Роутинг
   switch (tab) {
-    case 'dashboard': renderDashboard(content); break;
-    case 'orders': renderOrders(content); break;
-    case 'categories': renderCategories(content); break;
-    case 'products': renderProducts(content); break;
-    case 'users': renderUsers(content); break;
-    case 'settings': renderSettings(content); break;   // ← НОВОЕ
-    case 'media': renderMedia(content); break;
+    case 'dashboard':
+      renderDashboard(content);
+      break;
 
-    // Остальные вкладки — заглушки (заменим в следующих спринтах)
+    case 'orders':
+      renderOrders(content);
+      break;
+
+    case 'categories':
+      renderCategories(content);
+      break;
+
+    case 'products':
+      renderProducts(content);
+      break;
+
+    case 'partners':
+      renderPartners(content);
+      break;
+
+    case 'media':
+      renderMedia(content);
+      break;
+
+    case 'users':
+      renderUsers(content);
+      break;
+
+    case 'settings':
+      renderSettings(content);
+      break;
+
     default:
       content.innerHTML = `
         <div class="admin-placeholder">
           <div class="admin-placeholder__icon">🚧</div>
           <h2 class="admin-placeholder__title">${tabTitles[tab] || tab}</h2>
-          <p class="admin-placeholder__text">Раздел в разработке — появится в следующих обновлениях</p>
+          <p class="admin-placeholder__text">Раздел в разработке</p>
         </div>
       `;
   }
+
+  // Обновляем бейдж новых заказов
+  if (tab === 'dashboard') {
+    updateOrdersBadge();
+  }
 }
 
-// ============================================
-// 3.5. ДАШБОРД
-// ============================================
+// ============================================================
+// 4. Бейдж новых заказов
+// ============================================================
+async function updateOrdersBadge() {
+  try {
+    const res = await fetch('/api/admin/stats', {
+      headers: { Authorization: `Bearer ${state.token}` }
+    });
+    if (!res.ok) return;
+
+    const stats = await res.json();
+    const badge = document.getElementById('orders-badge');
+    if (!badge) return;
+
+    if (stats.newOrders > 0) {
+      badge.textContent = stats.newOrders;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch {}
+}
+
+// ============================================================
+// 5. Выход
+// ============================================================
+function initLogout() {
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    if (!confirm('Выйти из админ-панели?')) return;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('cart');
+    window.location.href = '/';
+  });
+}
+
+// ============================================================
+// 6. ДАШБОРД
+// ============================================================
 async function renderDashboard(container) {
   container.innerHTML = `
     <div class="admin-loading" style="min-height:200px">
@@ -229,7 +297,6 @@ async function renderDashboard(container) {
     const stats = await res.json();
 
     container.innerHTML = `
-      <!-- ВИДЖЕТЫ -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-card__icon stat-card__icon--orders">📦</div>
@@ -260,7 +327,6 @@ async function renderDashboard(container) {
         </div>
       </div>
 
-      <!-- ГРАФИК + ТОП -->
       <div class="dashboard-row">
         <div class="dashboard-panel">
           <div class="dashboard-panel__header">
@@ -277,7 +343,6 @@ async function renderDashboard(container) {
         </div>
       </div>
 
-      <!-- ПОСЛЕДНИЕ ЗАКАЗЫ -->
       <div class="dashboard-panel">
         <div class="dashboard-panel__header">
           <h3 class="dashboard-panel__title">📋 Последние заказы</h3>
@@ -287,13 +352,11 @@ async function renderDashboard(container) {
       </div>
     `;
 
-    // Ссылка «Все заказы»
     document.getElementById('go-orders')?.addEventListener('click', (e) => {
       e.preventDefault();
       navigate('orders');
     });
 
-    // Клик по заказу — переход в раздел заказов
     document.querySelectorAll('.recent-order').forEach(el => {
       el.addEventListener('click', () => navigate('orders'));
     });
@@ -309,15 +372,12 @@ async function renderDashboard(container) {
   }
 }
 
-// ============================================
-// 3.6. ГРАФИК ПРОДАЖ
-// ============================================
+// График продаж
 function renderChart(salesByDay) {
   if (!salesByDay || salesByDay.length === 0) {
     return `<div class="chart__empty">Пока нет продаж 📉</div>`;
   }
 
-  // Заполняем все 7 дней (даже пустые)
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -351,9 +411,7 @@ function renderChart(salesByDay) {
   `;
 }
 
-// ============================================
-// 3.7. ТОП ТОВАРОВ
-// ============================================
+// Топ товаров
 function renderTopProducts(products) {
   if (!products || products.length === 0) {
     return `<div class="top-list__empty">Пока нет продаж</div>`;
@@ -375,9 +433,7 @@ function renderTopProducts(products) {
   `;
 }
 
-// ============================================
-// 3.8. ПОСЛЕДНИЕ ЗАКАЗЫ
-// ============================================
+// Последние заказы
 function renderRecentOrders(orders) {
   if (!orders || orders.length === 0) {
     return `<div class="recent-orders__empty">Заказов пока нет 📭</div>`;
@@ -409,50 +465,12 @@ function renderRecentOrders(orders) {
   `;
 }
 
-// ============================================
-// 3.9. ВСПОМОГАТЕЛЬНОЕ
-// ============================================
+// Вспомогательное
 function formatMoney(n) {
   return Math.round(n).toLocaleString('ru-RU');
 }
 
-// ============================================
-// 4. Бейдж новых заказов
-// ============================================
-async function updateOrdersBadge() {
-  try {
-    const res = await fetch('/api/admin/stats', {
-      headers: { Authorization: `Bearer ${state.token}` }
-    });
-    if (!res.ok) return;
-
-    const stats = await res.json();
-    const badge = document.getElementById('orders-badge');
-    if (!badge) return;
-
-    if (stats.newOrders > 0) {
-      badge.textContent = stats.newOrders;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-  } catch {}
-}
-
-// ============================================
-// 5. Выход
-// ============================================
-function initLogout() {
-  document.getElementById('logout-btn')?.addEventListener('click', () => {
-    if (!confirm('Выйти из админ-панели?')) return;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('cart');
-    window.location.href = '/';
-  });
-}
-
-// ============================================
-// 6. СТАРТ
-// ============================================
+// ============================================================
+// 7. СТАРТ
+// ============================================================
 document.addEventListener('DOMContentLoaded', init);

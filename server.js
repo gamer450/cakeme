@@ -1,6 +1,6 @@
 /* ============================================================
-   СЛАДКИЙ ДОМ — Главный сервер
-   Express + SQLite + JWT + Multer (медиа)
+   Cake.Me — Главный сервер
+   Express + SQLite + JWT + Multer (медиа) + Партнёры
    ============================================================ */
 
 require('dotenv').config();
@@ -53,8 +53,8 @@ const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Папка может прийти из query-параметра (более надёжно для multipart)
-    const folder = req.query.folder || req.body.folder || 'misc';
+    // Папка может прийти из query-параметра (надёжнее для multipart)
+    const folder = req.query.folder || req.body.folder || req.params.folder || 'misc';
     const allowed = ['products', 'hero', 'banners', 'misc'];
     const target = allowed.includes(folder) ? folder : 'misc';
     cb(null, path.join(UPLOAD_DIR, target));
@@ -152,6 +152,34 @@ app.get('/api/settings', (req, res) => {
   const settings = {};
   rows.forEach(r => settings[r.key] = r.value);
   res.json(settings);
+});
+
+// ============================================
+// ПАРТНЁРЫ (публичный API)
+// ============================================
+
+// Все активные партнёры
+app.get('/api/partners', (req, res) => {
+  try {
+    const partners = db.prepare(`
+      SELECT * FROM partners
+      WHERE is_active = 1
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+    res.json(partners);
+  } catch (err) {
+    console.error('Ошибка партнёров:', err);
+    res.status(500).json({ error: 'Не удалось загрузить партнёров' });
+  }
+});
+
+// Один партнёр
+app.get('/api/partners/:id', (req, res) => {
+  const partner = db.prepare('SELECT * FROM partners WHERE id = ? AND is_active = 1').get(req.params.id);
+  if (!partner) {
+    return res.status(404).json({ error: 'Партнёр не найден' });
+  }
+  res.json(partner);
 });
 
 /* ============================================================
@@ -817,6 +845,119 @@ app.delete('/api/admin/users/:id', authRequired, requireRole('admin'), (req, res
 });
 
 /* ============================================================
+   АДМИН — ПАРТНЁРЫ (CRUD)
+   ============================================================ */
+
+app.get('/api/admin/partners', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const partners = db.prepare(`
+      SELECT * FROM partners
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+    res.json(partners);
+  } catch (err) {
+    console.error('Ошибка партнёров:', err);
+    res.status(500).json({ error: 'Не удалось загрузить партнёров' });
+  }
+});
+
+app.post('/api/admin/partners', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const {
+      name, description, address, city, phone, hours,
+      image, latitude, longitude, website, instagram, sort_order
+    } = req.body;
+
+    if (!name || !address) {
+      return res.status(400).json({ error: 'Заполните название и адрес' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO partners
+        (name, description, address, city, phone, hours, image, latitude, longitude, website, instagram, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      name.trim(),
+      (description || '').trim(),
+      address.trim(),
+      (city || '').trim(),
+      (phone || '').trim(),
+      (hours || '').trim(),
+      (image || '').trim(),
+      latitude ? parseFloat(latitude) : null,
+      longitude ? parseFloat(longitude) : null,
+      (website || '').trim(),
+      (instagram || '').trim(),
+      parseInt(sort_order, 10) || 0
+    );
+
+    const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json({ success: true, partner });
+  } catch (err) {
+    console.error('Ошибка создания партнёра:', err);
+    res.status(500).json({ error: 'Не удалось создать партнёра' });
+  }
+});
+
+app.patch('/api/admin/partners/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Партнёр не найден' });
+    }
+
+    const {
+      name, description, address, city, phone, hours,
+      image, latitude, longitude, website, instagram, sort_order, is_active
+    } = req.body;
+
+    db.prepare(`
+      UPDATE partners
+      SET name = ?, description = ?, address = ?, city = ?, phone = ?, hours = ?,
+          image = ?, latitude = ?, longitude = ?, website = ?, instagram = ?,
+          sort_order = ?, is_active = ?
+      WHERE id = ?
+    `).run(
+      name !== undefined ? name.trim() : partner.name,
+      description !== undefined ? description.trim() : partner.description,
+      address !== undefined ? address.trim() : partner.address,
+      city !== undefined ? city.trim() : partner.city,
+      phone !== undefined ? phone.trim() : partner.phone,
+      hours !== undefined ? hours.trim() : partner.hours,
+      image !== undefined ? image.trim() : partner.image,
+      latitude !== undefined ? (latitude ? parseFloat(latitude) : null) : partner.latitude,
+      longitude !== undefined ? (longitude ? parseFloat(longitude) : null) : partner.longitude,
+      website !== undefined ? website.trim() : partner.website,
+      instagram !== undefined ? instagram.trim() : partner.instagram,
+      sort_order !== undefined ? parseInt(sort_order, 10) : partner.sort_order,
+      is_active !== undefined ? (is_active ? 1 : 0) : partner.is_active,
+      req.params.id
+    );
+
+    const updated = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
+    res.json({ success: true, partner: updated });
+  } catch (err) {
+    console.error('Ошибка обновления партнёра:', err);
+    res.status(500).json({ error: 'Не удалось обновить партнёра' });
+  }
+});
+
+app.delete('/api/admin/partners/:id', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Партнёр не найден' });
+    }
+
+    db.prepare('DELETE FROM partners WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка удаления партнёра:', err);
+    res.status(500).json({ error: 'Не удалось удалить партнёра' });
+  }
+});
+
+/* ============================================================
    АДМИН — НАСТРОЙКИ САЙТА
    ============================================================ */
 
@@ -850,7 +991,11 @@ app.patch('/api/admin/settings', authRequired, requireRole('admin'), (req, res) 
       'hero_poster',
       'banner_1',
       'banner_2',
-      'banner_3'
+      'banner_3',
+      // Карта магазина
+      'map_latitude',
+      'map_longitude',
+      'map_zoom'
     ];
 
     const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
@@ -940,7 +1085,8 @@ app.post('/api/admin/media/upload',
         return res.status(400).json({ error: 'Файл не получен' });
       }
 
-      const folder = req.body.folder || 'misc';
+      // Определяем папку из query или body
+      const folder = req.query.folder || req.body.folder || 'misc';
       const url = `/uploads/${folder}/${req.file.filename}`;
 
       res.status(201).json({
