@@ -104,6 +104,10 @@ function renderShell() {
               <span class="admin-menu__item-icon">⚙️</span>
               Настройки
             </button>
+             <button class="admin-menu__item" data-tab="media">
+            <span class="admin-menu__item-icon">🖼️</span>
+            Медиа
+          </button>
           ` : ''}
 
           <div class="admin-menu__divider"></div>
@@ -155,7 +159,8 @@ const tabTitles = {
   products: 'Товары',
   categories: 'Категории',
   users: 'Пользователи',
-  settings: 'Настройки'
+  settings: 'Настройки',
+  media: 'Медиа'   // ← НОВОЕ
 };
 
 function initTabs() {
@@ -190,6 +195,7 @@ function navigate(tab) {
     case 'products': renderProducts(content); break;
     case 'users': renderUsers(content); break;
     case 'settings': renderSettings(content); break;   // ← НОВОЕ
+    case 'media': renderMedia(content); break;
 
     // Остальные вкладки — заглушки (заменим в следующих спринтах)
     default:

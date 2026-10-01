@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Haute Pâtisserie — Style Preview v2</title>
+  <link rel="stylesheet" href="/css/design-system.css" />
+  <link rel="stylesheet" href="/css/premium-effects.css" />
+  <style>
+    .preview-section {
+      padding: clamp(96px, 12vw, 160px) 0;
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-label {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--gold-300);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 32px;
+      padding: 6px 14px;
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-xs);
+      background: rgba(201, 169, 97, 0.04);
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .color-swatch {
+      border-radius: var(--radius-md);
+      padding: 24px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--border-subtle);
+      transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+    }
+
+    .color-swatch:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .color-swatch__name {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 500;
+    }
+
+    .color-swatch__hex {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+
+    /* Хедер-полоса */
+    .preview-header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(14, 10, 8, 0.72);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .preview-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .preview-logo svg {
+      color: var(--peach-300);
+    }
+
+    /* Hero для превью */
+    .preview-hero {
+      padding: clamp(100px, 14vw, 180px) 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-hero h1 {
+      max-width: 1000px;
+      margin: 20px 0 32px;
+    }
+
+    .preview-hero .lead {
+      max-width: 560px;
+    }
+
+    /* Метка со счётчиком */
+    .stat-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-preview__num {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      font-weight: 300;
+      background: var(--grad-gold);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .stat-preview__label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+    }
+
+    /* Карточка товара */
+    .preview-product {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--shadow-lg), var(--shadow-inner);
+      transition: all 0.5s var(--ease-out);
+    }
+
+    .preview-product::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg,
+        rgba(201,169,97,0.5) 0%,
+        rgba(232,168,124,0.2) 30%,
+        transparent 60%,
+        rgba(201,169,97,0.3) 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+              mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .preview-product:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-2xl), var(--shadow-inner);
+    }
+
+    .preview-product:hover::before {
+      opacity: 1;
+    }
+
+    .preview-product__img {
+      aspect-ratio: 4/3;
+      background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-product__img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 55%, rgba(8,5,3,0.7) 100%);
+    }
+
+    .preview-product__img svg {
+      width: 96px;
+      height: 96px;
+      color: var(--gold-300);
+      opacity: 0.5;
+      transition: transform 0.7s var(--ease-out), opacity 0.5s;
+      z-index: 1;
+    }
+
+    .preview-product:hover .preview-product__img svg {
+      transform: scale(1.12) rotate(-4deg);
+      opacity: 0.7;
+    }
+
+    .preview-product__body {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Marquee */
+    .marquee-text {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      opacity: 0.4;
+      padding: 0 24px;
+      white-space: nowrap;
+    }
+
+    .marquee-text em {
+      color: var(--peach-300);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============ ХЕДЕР ============ -->
+  <header class="preview-header">
+    <div class="container" style="display: flex; align-items: center; justify-content: space-between;">
+      <div class="preview-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
+          <path d="M10 15h4"/>
+        </svg>
+        <span>Cake.Me</span>
+      </div>
+      <span class="eyebrow eyebrow--no-line" style="margin: 0;">Haute Pâtisserie — Preview v2</span>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="preview-hero">
+    <div class="glow-orb glow-orb--peach" style="width: 700px; height: 700px; top: -200px; right: -200px;" data-parallax="0.4"></div>
+    <div class="glow-orb glow-orb--gold" style="width: 500px; height: 500px; bottom: -150px; left: -150px;" data-parallax="0.6"></div>
+
+    <div class="container" style="position: relative; z-index: 2;">
+      <span class="eyebrow reveal">Boutique Patisserie — 2027</span>
+
+      <h1 class="kinetic mt-4">
+        <span class="kinetic__word"><span style="--i:0">Торты,</span></span>
+        <span class="kinetic__word"><span style="--i:1">от</span></span>
+        <span class="kinetic__word"><span style="--i:2">которых</span></span>
+        <span class="kinetic__word kinetic__word--accent"><span style="--i:3">невозможно</span></span>
+        <span class="kinetic__word kinetic__word--accent"><span style="--i:4">отказаться</span></span>
+      </h1>
+
+      <p class="lead reveal mt-5" data-delay="2" style="max-width: 580px;">
+        Домашняя кондитерская, где каждый торт — это произведение искусства.
+        Готовим вручную из отборных ингредиентов.
+      </p>
+
+      <div class="reveal mt-6" data-delay="3" style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <button class="btn btn-primary btn-lg magnetic">
+          Заказать торт
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <button class="btn btn-secondary btn-lg magnetic">Смотреть каталог</button>
+      </div>
+
+      <div class="reveal mt-7" data-delay="4" style="display: flex; gap: 72px; flex-wrap: wrap;">
+        <div class="stat-preview">
+          <span class="stat-preview__num" data-count="7">0</span>
+          <span class="stat-preview__label">Лет опыта</span>
+        </div>
+        <div class="stat-preview">
+          <span class="stat-preview__num" data-count="2400">0</span>
+          <span class="stat-preview__label">Довольных клиентов</span>
+        </div>
+        <div class="stat-preview">
+          <span class="stat-preview__num" data-count="48">0</span>
+          <span class="stat-preview__label">Тортов в неделю</span>
+        </div>
+      </div>
+
+      <div class="reveal mt-7" data-delay="5">
+        <div class="scroll-indicator">
+          <span>Scroll</span>
+          <div class="scroll-indicator__line"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARQUEE ============ -->
+  <section style="padding: 48px 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); background: rgba(31, 23, 18, 0.3);">
+    <div class="marquee">
+      <div class="marquee__inner">
+        <span class="marquee-text">Свежая выпечка <em>—</em></span>
+        <span class="marquee-text">Обжарка кофе <em>—</em></span>
+        <span class="marquee-text">Доставка 24 часа <em>—</em></span>
+        <span class="marquee-text">Ручная работа <em>—</em></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ПАЛИТРА ============ -->
+  <section class="preview-section">
+    <div class="container">
+      <span class="preview-label reveal">01 / Палитра</span>
+      <h2 class="reveal" data-delay="1">Цветовая система</h2>
+      <p class="lead reveal mt-4" data-delay="2" style="max-width: 640px;">
+        Тёмный шоколад как основа, персик как тёплый акцент, золото как премиум-деталь.
+      </p>
+
+      <div class="preview-grid reveal mt-6" data-delay="3" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));" data-stagger="0.05">
+        <div class="color-swatch" style="background: var(--bg-void); color: var(--text-primary);">
+          <span class="color-swatch__name">Void</span>
+          <span class="color-swatch__hex">#080503</span>
+        </div>
+        <div class="color-swatch" style="background: var(--bg-card); color: var(--text-primary);">
+          <span class="color-swatch__name">Card</span>
+          <span class="color-swatch__hex">#2A1F19</span>
+        </div>
+        <div class="color-swatch" style="background: var(--peach-300); color: var(--text-inverse);">
+          <span class="color-swatch__name">Peach 300</span>
+          <span class="color-swatch__hex">#E8A87C</span>
+        </div>
+        <div class="color-swatch" style="background: var(--peach-500); color: var(--text-inverse);">
+          <span class="color-swatch__name">Peach 500</span>
+          <span class="color-swatch__hex">#C87A4D</span>
+        </div>
+        <div class="color-swatch" style="background: var(--gold-300); color: var(--text-inverse);">
+          <span class="color-swatch__name">Gold 300</span>
+          <span class="color-swatch__hex">#C9A961</span>
+        </div>
+        <div class="color-swatch" style="background: var(--gold-100); color: var(--text-inverse);">
+          <span class="color-swatch__name">Gold 100</span>
+          <span class="color-swatch__hex">#E5C57A</span>
+        </div>
+        <div class="color-swatch" style="background: var(--cream-100); color: var(--text-inverse);">
+          <span class="color-swatch__name">Cream</span>
+          <span class="color-swatch__hex">#F5EDE4</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ТИПОГРАФИКА ============ -->
+  <section class="preview-section">
+    <div class="container">
+      <span class="preview-label reveal">02 / Типографика</span>
+      <span class="eyebrow reveal" data-delay="1">Haute Pâtisserie</span>
+      <h2 class="reveal" data-delay="2" style="margin-top: 22px;">
+        Наши <em>категории</em>
+      </h2>
+
+      <div class="reveal mt-6" data-delay="3" style="display: flex; flex-direction: column; gap: 40px;">
+        <div>
+          <span class="eyebrow">H3 — Card Title</span>
+          <h3 class="mt-2">Наполеон</h3>
+        </div>
+        <div>
+          <span class="eyebrow">Body — Inter Tight</span>
+          <p class="mt-2" style="max-width: 600px;">
+            Классический слоёный торт с заварным кремом и тонким ароматом ванили.
+            Готовим по семейному рецепту уже более семи лет.
+          </p>
+        </div>
+        <div>
+          <span class="eyebrow">Price — JetBrains Mono</span>
+          <div class="price mt-2" style="font-size: 2.5rem; color: var(--gold-100);">
+            2 500 ₽
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ КНОПКИ ============ -->
+  <section class="preview-section">
+    <div class="container">
+      <span class="preview-label reveal">03 / Кнопки</span>
+      <h2 class="reveal" data-delay="1">Интеракции</h2>
+      <p class="lead reveal mt-4" data-delay="2">С подъёмом, свечением, бликом и ripple-эффектом при клике.</p>
+
+      <div class="preview-grid reveal mt-6" data-delay="3">
+        <div>
+          <span class="eyebrow">Primary</span>
+          <div class="mt-3">
+            <button class="btn btn-primary magnetic">Заказать торт</button>
+          </div>
+        </div>
+        <div>
+          <span class="eyebrow">Secondary</span>
+          <div class="mt-3">
+            <button class="btn btn-secondary magnetic">Смотреть каталог</button>
+          </div>
+        </div>
+        <div>
+          <span class="eyebrow">Light</span>
+          <div class="mt-3">
+            <button class="btn btn-light magnetic">Узнать больше</button>
+          </div>
+        </div>
+        <div>
+          <span class="eyebrow">Ghost</span>
+          <div class="mt-3">
+            <button class="btn btn-ghost magnetic">
+              Весь каталог
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div>
+          <span class="eyebrow">Add to cart</span>
+          <div class="mt-3">
+            <button class="btn-add-to-cart">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ КАРТОЧКИ ============ -->
+  <section class="preview-section">
+    <div class="container">
+      <span class="preview-label reveal">04 / Продуктовые карточки</span>
+      <h2 class="reveal" data-delay="1">С <em>градиентной</em> обводкой</h2>
+      <p class="lead reveal mt-4" data-delay="2">Тёмный шоколад, золотая обводка, объёмный край.</p>
+
+      <div class="preview-grid reveal mt-6" data-delay="3" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+
+        <article class="preview-product tilt">
+          <div class="preview-product__img">
+            <span class="badge badge--gold" style="position: absolute; top: 16px; left: 16px; z-index: 2;">Хит</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
+              <path d="M10 15h4M10 18h4"/>
+            </svg>
+          </div>
+          <div class="preview-product__body">
+            <span class="product-card__category">Торты</span>
+            <h3 class="product-card__title">Наполеон</h3>
+            <p class="product-card__desc">Классический слоёный торт с заварным кремом и домашним вкусом.</p>
+            <div class="product-card__footer">
+              <div>
+                <div class="product-card__price">2 500 ₽</div>
+                <div class="product-card__weight">1 кг</div>
+              </div>
+              <button class="btn-add-to-cart">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <article class="preview-product tilt">
+          <div class="preview-product__img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/>
+              <path d="M6 1v3M10 1v3M14 1v3"/>
+            </svg>
+          </div>
+          <div class="preview-product__body">
+            <span class="product-card__category">Кофе</span>
+            <h3 class="product-card__title">Ethiopia Yirgacheffe</h3>
+            <p class="product-card__desc">Светлая обжарка. Ноты жасмина, цитруса и бергамота.</p>
+            <div class="product-card__footer">
+              <div>
+                <div class="product-card__price">1 100 ₽</div>
+                <div class="product-card__weight">250 г</div>
+              </div>
+              <button class="btn-add-to-cart">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <article class="preview-product tilt">
+          <div class="preview-product__img">
+            <span class="badge badge--peach" style="position: absolute; top: 16px; left: 16px; z-index: 2;">Мало</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v5l3 3"/>
+            </svg>
+          </div>
+          <div class="preview-product__body">
+            <span class="product-card__category">Пирожные</span>
+            <h3 class="product-card__title">Эклер с ванилью</h3>
+            <p class="product-card__desc">Классический французский эклер с кремом из мадагаскарской ванили.</p>
+            <div class="product-card__footer">
+              <div>
+                <div class="product-card__price">150 ₽</div>
+                <div class="product-card__weight">80 г</div>
+              </div>
+              <button class="btn-add-to-cart">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ БЕЙДЖИ ============ -->
+  <section class="preview-section">
+    <div class="container">
+      <span class="preview-label reveal">05 / Бейджи</span>
+      <h2 class="reveal" data-delay="1">Статусы</h2>
+
+      <div class="reveal mt-5" data-delay="2" style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <span class="badge badge--gold">Premium</span>
+        <span class="badge badge--peach">Новинка</span>
+        <span class="badge badge--success">Готов</span>
+        <span class="badge badge--warning">Готовится</span>
+        <span class="badge badge--danger">Отменён</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer style="padding: 64px 0; text-align: center; background: var(--bg-void); border-top: 1px solid var(--border-gold);">
+    <div class="container">
+      <span class="eyebrow eyebrow--center">Haute Pâtisserie — Preview v2 · 2027</span>
+    </div>
+  </footer>
+
+  
+  <script src="/js/premium.js"></script>
+<script src="/js/settings.js"></script>
+
+</body>
+</html>

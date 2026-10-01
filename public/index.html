@@ -11,11 +11,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- Подключаем стили -->
-  <link rel="stylesheet" href="/css/style.css" />
+  <!-- Новый дизайн 2027 -->
+  <link rel="stylesheet" href="/css/design-system.css" />
+  <link rel="stylesheet" href="/css/premium-effects.css" />
+
+  <!-- Стили проекта -->
+  <link rel="stylesheet" href="/css/header-footer.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/animations.css" />
-  <link rel="stylesheet" href="/css/header-footer.css" />
-    <link rel="stylesheet" href="/css/home.css" />
+  <link rel="stylesheet" href="/css/home.css" />
 </head>
 <body>
 
@@ -25,7 +29,12 @@
       <div class="header__inner">
         <!-- Логотип -->
         <a href="/" class="logo">
-          <span class="logo__icon">🍰</span>
+          <span class="logo__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
+              <path d="M10 15h4M10 18h4"/>
+            </svg>
+          </span>
           <span class="logo__text">
             <span class="logo__name" data-setting="site_name">Сладкий Дом</span>
             <span class="logo__tagline">торты &amp; кофе</span>
@@ -355,6 +364,10 @@
       </div>
     </div>
   </footer>
+
+  <script src="/js/premium.js"></script>
+  <script src="/js/settings.js"></script>
+  <!-- остальные скрипты как были -->
 
   <!-- Подключаем скрипты -->
   <script src="/js/settings.js"></script>

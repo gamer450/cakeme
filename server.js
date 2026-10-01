@@ -4,6 +4,8 @@ const { signToken, authRequired, authOptional, requireRole } = require('./src/mi
 const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const fs = require('fs');
 const db = require('./src/db');
 
 const app = express();
@@ -11,6 +13,56 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ============================================
+// ЗАГРУЗКА ФАЙЛОВ (Multer)
+// ============================================
+
+const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
+
+// Убедимся, что папки существуют
+['products', 'hero', 'banners', 'misc'].forEach(dir => {
+  const fullPath = path.join(UPLOAD_DIR, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+});
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const folder = req.params.folder || req.body.folder || 'misc';
+    const allowed = ['products', 'hero', 'banners', 'misc'];
+    const target = allowed.includes(folder) ? folder : 'misc';
+    cb(null, path.join(UPLOAD_DIR, target));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = path.basename(file.originalname, ext)
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 40);
+    const timestamp = Date.now();
+    const random = Math.round(Math.random() * 1e6);
+    cb(null, `${safeName || 'file'}-${timestamp}-${random}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Недопустимый тип файла. Разрешены: JPG, PNG, WEBP, SVG, GIF, MP4, WEBM'));
+    }
+  }
+});
 
 // API: проверка что сервер работает
 app.get('/api/health', (req, res) => {
@@ -825,6 +877,109 @@ app.get('/api/auth/my-orders', authRequired, (req, res) => {
   }));
 
   res.json(withItems);
+});
+
+// ============================================
+// МЕДИА-БИБЛИОТЕКА
+// ============================================
+
+// GET /api/admin/media — список всех файлов
+app.get('/api/admin/media', authRequired, requireRole('admin', 'manager'), (req, res) => {
+  try {
+    const folders = ['products', 'hero', 'banners', 'misc'];
+    const files = [];
+
+    folders.forEach(folder => {
+      const dir = path.join(UPLOAD_DIR, folder);
+      if (!fs.existsSync(dir)) return;
+
+      fs.readdirSync(dir).forEach(filename => {
+        const filePath = path.join(dir, filename);
+        const stat = fs.statSync(filePath);
+        const ext = path.extname(filename).toLowerCase();
+
+        const isImage = ['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif'].includes(ext);
+        const isVideo = ['.mp4', '.webm'].includes(ext);
+
+        files.push({
+          name: filename,
+          folder,
+          url: `/uploads/${folder}/${filename}`,
+          size: stat.size,
+          type: isImage ? 'image' : (isVideo ? 'video' : 'other'),
+          modified: stat.mtime
+        });
+      });
+    });
+
+    // Сортировка: сначала новые
+    files.sort((a, b) => new Date(b.modified) - new Date(a.modified));
+
+    res.json(files);
+  } catch (err) {
+    console.error('Ошибка загрузки медиа:', err);
+    res.status(500).json({ error: 'Не удалось загрузить файлы' });
+  }
+});
+
+// POST /api/admin/media/upload — загрузка файла
+app.post('/api/admin/media/upload',
+  authRequired,
+  requireRole('admin', 'manager'),
+  upload.single('file'),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Файл не получен' });
+      }
+
+      const folder = req.body.folder || 'misc';
+      const url = `/uploads/${folder}/${req.file.filename}`;
+
+      res.status(201).json({
+        success: true,
+        file: {
+          name: req.file.filename,
+          url,
+          size: req.file.size,
+          mimetype: req.file.mimetype
+        }
+      });
+    } catch (err) {
+      console.error('Ошибка загрузки файла:', err);
+      res.status(500).json({ error: err.message || 'Не удалось загрузить файл' });
+    }
+  }
+);
+
+// DELETE /api/admin/media — удалить файл
+app.delete('/api/admin/media', authRequired, requireRole('admin'), (req, res) => {
+  try {
+    const { folder, filename } = req.query;
+
+    if (!folder || !filename) {
+      return res.status(400).json({ error: 'Укажите folder и filename' });
+    }
+
+    const allowed = ['products', 'hero', 'banners', 'misc'];
+    if (!allowed.includes(folder)) {
+      return res.status(400).json({ error: 'Недопустимая папка' });
+    }
+
+    // Защита от path traversal
+    const safeName = path.basename(filename);
+    const filePath = path.join(UPLOAD_DIR, folder, safeName);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Файл не найден' });
+    }
+
+    fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Ошибка удаления файла:', err);
+    res.status(500).json({ error: 'Не удалось удалить файл' });
+  }
 });
 
 app.listen(PORT, () => {
