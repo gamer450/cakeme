@@ -1,17 +1,15 @@
 /* ============================================================
-   КАРТА МАГАЗИНА (на главной, в секции «Контакты»)
+   КАРТА МАГАЗИНА (Яндекс.Карты) — главная страница
    ============================================================ */
 
 let shopMap = null;
 
-
-
 // ============================================================
-// 1. Инициализация
+// Инициализация — вызывается после ymaps.ready()
 // ============================================================
-async function initShopMap() {
+window.initShopMap = async function() {
   const mapEl = document.getElementById('shop-map');
-  if (!mapEl || typeof L === 'undefined') return;
+  if (!mapEl) return;
 
   await waitForSettings();
 
@@ -21,43 +19,37 @@ async function initShopMap() {
   const zoom = parseInt(s.map_zoom, 10) || 16;
 
   // Создаём карту
-  shopMap = L.map('shop-map', {
-    center: [shopLat, shopLng],
-    zoom: zoom,
-    zoomControl: true,
-    scrollWheelZoom: false,
-    attributionControl: true
-  });
+shopMap = new ymaps.Map('shop-map', {
+  center: [shopLat, shopLng],
+  zoom: zoom,
+  controls: ['zoomControl', 'fullscreenControl'],
+  type: 'yandex#dark'      // ← добавили эту строку
+});
 
-  // OpenStreetMap
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(shopMap);
-
-  // Маркер магазина
-  const shopIcon = L.divIcon({
-    className: 'shop-marker',
-    html: '<div class="shop-marker__dot"></div>',
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
-    popupAnchor: [0, -16]
-  });
-
-  L.marker([shopLat, shopLng], { icon: shopIcon })
-    .addTo(shopMap)
-    .bindPopup(`
-      <div>
-        <div class="partner-popup__name">${s.site_name || 'Cake.Me'}</div>
-        <div class="partner-popup__address">${s.address || ''}</div>
-        <div class="partner-popup__desc">Приходите в гости!</div>
+  // ✅ Метка магазина
+  const placemark = new ymaps.Placemark([shopLat, shopLng], {
+    balloonContentHeader: escapeHtml(s.site_name || 'Cake.Me'),
+    balloonContentBody: `
+      <div style="font-family: -apple-system, sans-serif; line-height: 1.5;">
+        <div style="color: #6B5D52; font-size: 13px; margin-bottom: 8px;">
+          ${escapeHtml(s.address || '')}
+        </div>
+        <div style="color: #A89888; font-size: 12px;">
+          Приходите в гости!
+        </div>
       </div>
-    `)
-    .openPopup();
-}
+    `,
+    hintContent: escapeHtml(s.site_name || 'Cake.Me')
+  }, {
+    preset: 'islands#darkGreenIcon',
+    iconColor: '#C9A961'
+  });
+
+  shopMap.geoObjects.add(placemark);
+};
 
 // ============================================================
-// 2. Ждём настройки
+// Ждём настройки
 // ============================================================
 function waitForSettings() {
   return new Promise((resolve) => {
@@ -75,8 +67,3 @@ function waitForSettings() {
     }, 100);
   });
 }
-
-// ============================================================
-// 3. СТАРТ
-// ============================================================
-document.addEventListener('DOMContentLoaded', initShopMap);

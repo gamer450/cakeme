@@ -474,6 +474,29 @@
   <!-- Leaflet JS — локально -->
   <script src="/vendor/leaflet/leaflet.js"></script>
 
+  <!-- ✅ Динамическая загрузка Яндекс.Карт после получения API-ключа -->
+  <script>
+    (function() {
+      fetch('/api/settings')
+        .then(r => r.json())
+        .then(s => {
+          if (!s.yandex_maps_api_key) {
+            console.warn('⚠️ Яндекс.Карты: API-ключ не задан в .env');
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = `https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=${s.yandex_maps_api_key}`;
+          script.onload = () => {
+            if (window.ymaps && typeof window.initShopMap === 'function') {
+              window.ymaps.ready(window.initShopMap);
+            }
+          };
+          document.head.appendChild(script);
+        });
+    })();
+  </script>
+
+  <!-- Скрипты проекта (без Leaflet) -->
   <script src="/js/premium.js"></script>
   <script src="/js/toast.js"></script>
   <script src="/js/settings.js"></script>

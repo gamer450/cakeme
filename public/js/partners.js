@@ -1,30 +1,29 @@
 /* ============================================================
-   СТРАНИЦА ПАРТНЁРОВ + КАРТА
+   ПАРТНЁРЫ + КАРТА (Яндекс.Карты)
    ============================================================ */
 
 let partnersMap = null;
-let partnerMarkers = {};
-let shopMarker = null;
+let partnerPlacemarks = {};
+let shopPlacemark = null;
 let activePartnerId = null;
 
-
 // ============================================================
-// 1. Загрузка
+// 1. Загрузка партнёров (сразу)
 // ============================================================
-async function initPartners() {
+async function loadPartnersData() {
   const listEl = document.getElementById('partners-list');
   if (!listEl) return;
 
   try {
-    const partnersRes = await fetch('/api/partners');
-    const partners = await partnersRes.json();
+    const res = await fetch('/api/partners');
+    const partners = await res.json();
 
     await waitForSettings();
 
     const countEl = document.getElementById('partners-count');
     if (countEl) countEl.textContent = `${partners.length} заведений`;
 
-    initMap(partners);
+    window.__PARTNERS_DATA = partners;
     renderPartnersList(partners);
   } catch (err) {
     console.error('Ошибка загрузки партнёров:', err);
@@ -33,82 +32,113 @@ async function initPartners() {
 }
 
 // ============================================================
-// 2. Карта
+// 2. Инициализация карты (после ymaps.ready)
 // ============================================================
-function initMap(partners) {
+window.initPartners = function() {
   const mapEl = document.getElementById('partners-map');
-  if (!mapEl || typeof L === 'undefined') return;
+  if (!mapEl) return;
 
+  const partners = window.__PARTNERS_DATA || [];
   const s = window.SITE_SETTINGS || {};
 
   const shopLat = parseFloat(s.map_latitude) || 55.755864;
   const shopLng = parseFloat(s.map_longitude) || 37.617698;
-  const zoom = parseInt(s.map_zoom, 10) || 12;
 
-  partnersMap = L.map('partners-map', {
-    center: [shopLat, shopLng],
-    zoom: zoom,
-    zoomControl: true,
-    scrollWheelZoom: false,
-    attributionControl: true
-  });
+  const withCoords = partners.filter(p => p.latitude && p.longitude);
 
-  // OpenStreetMap (бесплатно, без ключа)
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(partnersMap);
+  // Центр карты
+  let centerLat = shopLat;
+  let centerLng = shopLng;
+  let zoom = 12;
 
-  // Маркер магазина
-  const shopIcon = L.divIcon({
-    className: 'shop-marker',
-    html: '<div class="shop-marker__dot"></div>',
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
-    popupAnchor: [0, -16]
-  });
+  if (withCoords.length > 0) {
+    centerLat = withCoords.reduce((sum, p) => sum + parseFloat(p.latitude), 0) / withCoords.length;
+    centerLng = withCoords.reduce((sum, p) => sum + parseFloat(p.longitude), 0) / withCoords.length;
+    if (withCoords.length === 1) zoom = 15;
+  }
 
-  shopMarker = L.marker([shopLat, shopLng], { icon: shopIcon })
-    .addTo(partnersMap)
-    .bindPopup(`
-      <div>
-        <div class="partner-popup__name">${s.site_name || 'Cake.Me'}</div>
-        <div class="partner-popup__address">${s.address || ''}</div>
-        <div class="partner-popup__desc">Наш основной адрес. Приходите в гости!</div>
+partnersMap = new ymaps.Map('partners-map', {
+  center: [centerLat, centerLng],
+  zoom: zoom,
+  controls: ['zoomControl', 'fullscreenControl'],
+  // ✅ Тёмная тема из коробки
+  type: 'yandex#dark'
+});
+
+  // ✅ Метка магазина (золотая)
+  shopPlacemark = new ymaps.Placemark([shopLat, shopLng], {
+    balloonContentHeader: escapeHtml(s.site_name || 'Cake.Me'),
+    balloonContentBody: `
+      <div style="font-family: -apple-system, sans-serif;">
+        <div style="color: #6B5D52; font-size: 13px; margin-bottom: 6px;">
+          ${escapeHtml(s.address || '')}
+        </div>
+        <div style="color: #A89888; font-size: 12px;">
+          Наш основной адрес.
+        </div>
       </div>
-    `);
+    `,
+    hintContent: escapeHtml(s.site_name || 'Cake.Me')
+  }, {
+    preset: 'islands#yellowIcon',
+    iconColor: '#C9A961'
+  });
 
-  // Метки партнёров
+  partnersMap.geoObjects.add(shopPlacemark);
+
+  // ✅ Метки партнёров
   partners.forEach(p => {
     if (!p.latitude || !p.longitude) return;
 
-    const icon = L.divIcon({
-      className: 'partner-marker',
-      html: '<div class="partner-marker__dot"></div>',
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-      popupAnchor: [0, -12]
-    });
+    const placemark = new ymaps.Placemark(
+      [parseFloat(p.latitude), parseFloat(p.longitude)],
+      {
+        balloonContentHeader: escapeHtml(p.name),
+        balloonContentBody: `
+          <div style="font-family: -apple-system, sans-serif; max-width: 260px;">
+            <div style="color: #6B5D52; font-size: 12px; margin-bottom: 8px;">
+              ${escapeHtml(p.address)}${p.city ? ', ' + escapeHtml(p.city) : ''}
+            </div>
+            ${p.description ? `<div style="color: #3D2B2A; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">${escapeHtml(p.description)}</div>` : ''}
+            ${p.hours ? `<div style="color: #A89888; font-size: 12px; margin-bottom: 8px;">🕐 ${escapeHtml(p.hours)}</div>` : ''}
+            ${p.website ? `<a href="${escapeHtml(p.website)}" target="_blank" rel="noopener" style="color: #C9A961; font-size: 12px; text-decoration: none;">Перейти на сайт →</a>` : ''}
+          </div>
+        `,
+        hintContent: escapeHtml(p.name)
+      },
+      {
+        preset: 'islands#blueIcon',
+        iconColor: '#E8A87C'
+      }
+    );
 
-    const marker = L.marker([p.latitude, p.longitude], { icon })
-      .addTo(partnersMap)
-      .bindPopup(`
-        <div>
-          <div class="partner-popup__name">${p.name}</div>
-          <div class="partner-popup__address">${p.address}${p.city ? ', ' + p.city : ''}</div>
-          ${p.description ? `<div class="partner-popup__desc">${p.description}</div>` : ''}
-          ${p.hours ? `<div class="partner-popup__address">${p.hours}</div>` : ''}
-          ${p.website ? `<a href="${p.website}" target="_blank" rel="noopener" class="partner-popup__link">Перейти на сайт →</a>` : ''}
-        </div>
-      `);
+    partnerPlacemarks[p.id] = placemark;
 
-    partnerMarkers[p.id] = marker;
-
-    marker.on('click', () => {
+    placemark.events.add('click', () => {
       highlightPartner(p.id);
     });
+
+    partnersMap.geoObjects.add(placemark);
   });
-}
+
+  // ✅ Авто-зум на партнёров
+  if (withCoords.length > 1) {
+    const lats = withCoords.map(p => parseFloat(p.latitude));
+    const lngs = withCoords.map(p => parseFloat(p.longitude));
+    partnersMap.setBounds(
+      [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
+      { checkZoomRange: true, zoomMargin: 50 }
+    );
+  }
+
+  // ✅ Клик по карточке → фокус на маркер
+  document.querySelectorAll('.partner-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = parseInt(el.dataset.id, 10);
+      focusPartner(id);
+    });
+  });
+};
 
 // ============================================================
 // 3. Список партнёров
@@ -126,7 +156,7 @@ function renderPartnersList(partners) {
     <div class="partner-item reveal" data-id="${p.id}">
       <div class="partner-item__image">
         ${p.image
-          ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />`
+          ? `<img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" />`
           : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>`
         }
       </div>
@@ -146,18 +176,9 @@ function renderPartnersList(partners) {
     </div>
   `).join('');
 
-  listEl.querySelectorAll('.partner-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = parseInt(el.dataset.id, 10);
-      focusPartner(id);
-    });
-  });
-
   requestAnimationFrame(() => {
     listEl.querySelectorAll('.reveal:not(.is-visible)').forEach((el, i) => {
-      setTimeout(() => {
-        el.classList.add('is-visible');
-      }, i * 80);
+      setTimeout(() => el.classList.add('is-visible'), i * 80);
     });
   });
 }
@@ -166,18 +187,13 @@ function renderPartnersList(partners) {
 // 4. Фокус на партнёре
 // ============================================================
 function focusPartner(id) {
-  const marker = partnerMarkers[id];
-  if (!marker || !partnersMap) return;
+  if (!partnersMap || !partnerPlacemarks[id]) return;
 
-  const latlng = marker.getLatLng();
-  partnersMap.flyTo(latlng, 16, {
-    duration: 1.2,
-    easeLinearity: 0.3
-  });
+  const placemark = partnerPlacemarks[id];
+  const coords = placemark.geometry.getCoordinates();
 
-  setTimeout(() => {
-    marker.openPopup();
-  }, 800);
+  partnersMap.setCenter(coords, 16, { duration: 600 });
+  placemark.balloon.open();
 
   highlightPartner(id);
 }
@@ -212,4 +228,4 @@ function waitForSettings() {
 // ============================================================
 // 6. СТАРТ
 // ============================================================
-document.addEventListener('DOMContentLoaded', initPartners);
+document.addEventListener('DOMContentLoaded', loadPartnersData);

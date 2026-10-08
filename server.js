@@ -253,9 +253,12 @@ app.get('/api/settings', (req, res) => {
   const rows = db.prepare('SELECT key, value FROM settings').all();
   const settings = {};
   rows.forEach(r => settings[r.key] = r.value);
+
+  // ✅ ФИКС: передаём API-ключ Яндекс.Карт на фронтенд
+  settings.yandex_maps_api_key = process.env.YANDEX_MAPS_API_KEY || '';
+
   res.json(settings);
 });
-
 /* ============================================================
    ЗАГРУЗКА ФОТО НА ТОРТ (публичный — из checkout)
    Не требует авторизации: клиент на checkout не залогинен

@@ -2,47 +2,24 @@
    ЛОГИН
    ============================================ */
 
-const DEMO_ACCOUNTS = {
+// ✅ Демо-аккаунты работают ТОЛЬКО на localhost
+const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+const DEMO_ACCOUNTS = IS_LOCAL ? {
   client:  { email: 'client@cake.ru',  password: 'client123'  },
   manager: { email: 'manager@cake.ru', password: 'manager123' },
   admin:   { email: 'admin@cake.ru',   password: 'admin123'   }
-};
+} : {};
 
-// ============================================
-// ✅ ДЕМО-КНОПКИ (заполнить email + пароль)
-// ============================================
 document.querySelectorAll('.demo-btn[data-demo]').forEach(btn => {
   btn.addEventListener('click', () => {
     const role = btn.dataset.demo;
     const account = DEMO_ACCOUNTS[role];
     if (!account) return;
 
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-
-    if (emailInput) emailInput.value = account.email;
-    if (passwordInput) passwordInput.value = account.password;
-
-    // Визуальный отклик — активная кнопка
-    document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('is-active'));
-    btn.classList.add('is-active');
-
-    // Убираем ошибку если была
-    const errorBox = document.getElementById('form-error');
-    if (errorBox) errorBox.classList.remove('is-visible');
-
-    // Фокус на кнопку "Войти" — чтобы можно было сразу Enter
-    const submitBtn = document.getElementById('submit-btn');
-    if (submitBtn) submitBtn.focus();
-
-    // Toast-подсказка
-    if (typeof showToast === 'function') {
-      const roleNames = { client: 'Клиент', manager: 'Менеджер', admin: 'Админ' };
-      showToast(`Данные ${roleNames[role] || role} заполнены. Нажмите «Войти»`);
-    }
+    // ... остальной код
   });
 });
-
 // Показать/скрыть пароль
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();

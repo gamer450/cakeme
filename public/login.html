@@ -85,7 +85,7 @@
         Нет аккаунта? <a href="/register.html">Зарегистрироваться</a>
       </div>
 
-      <div class="auth-card__demo">
+      <div class="auth-card__demo" id="demo-block" style="display: none;">
         <div class="auth-card__demo-title">Тестовые аккаунты</div>
         <div class="auth-card__demo-buttons">
           <button class="demo-btn" data-demo="client">
@@ -112,6 +112,14 @@
       </div>
     </div>
   </main>
+
+    <script>
+    // ✅ Показываем демо-кнопки ТОЛЬКО на localhost
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      const demoBlock = document.getElementById('demo-block');
+      if (demoBlock) demoBlock.style.display = 'block';
+    }
+  </script>
 
   <script src="/js/premium.js"></script>
   <script src="/js/toast.js"></script>

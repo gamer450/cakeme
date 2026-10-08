@@ -213,10 +213,31 @@
     </div>
   </footer>
 
-  <!-- Leaflet JS — локально -->
-  <script src="/vendor/leaflet/leaflet.js"></script>
+  <!-- ✅ Динамическая загрузка Яндекс.Карт -->
+  <script>
+    (function() {
+      fetch('/api/settings')
+        .then(r => r.json())
+        .then(s => {
+          if (!s.yandex_maps_api_key) {
+            console.warn('⚠️ Яндекс.Карты: API-ключ не задан');
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = `https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=${s.yandex_maps_api_key}`;
+          script.onload = () => {
+            if (window.ymaps && typeof window.initPartners === 'function') {
+              window.ymaps.ready(window.initPartners);
+            }
+          };
+          document.head.appendChild(script);
+        });
+    })();
+  </script>
 
+  <!-- Скрипты проекта (без Leaflet) -->
   <script src="/js/premium.js"></script>
+  <script src="/js/toast.js"></script>
   <script src="/js/settings.js"></script>
   <script src="/js/seo.js"></script>
   <script src="/js/main.js"></script>
