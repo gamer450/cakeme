@@ -48,7 +48,6 @@ async function promosLoad() {
     console.error(err);
     document.getElementById('promos-grid-wrap').innerHTML = `
       <div class="orders-empty">
-        <div class="orders-empty__icon">😕</div>
         <div class="orders-empty__title">Не удалось загрузить промокоды</div>
       </div>
     `;
