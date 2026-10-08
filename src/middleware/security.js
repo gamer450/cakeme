@@ -28,11 +28,11 @@ const cspReportFile = path.join(cspReportDir, 'csp-violations.log');
 const cspDirectives = {
   defaultSrc: ["'self'"],
 
-  // Скрипты: только свои (Leaflet теперь локально!)
-  scriptSrc: [
-    "'self'",
-    "'unsafe-inline'"
-  ],
+scriptSrc: [
+  "'self'",
+  "'unsafe-inline'",
+  "https://api-maps.yandex.ru"
+],
 
   // Стили: свои + Google Fonts + inline
   styleSrc: [
