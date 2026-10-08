@@ -3501,7 +3501,7 @@ app.patch('/api/admin/users/:id',
         return res.status(404).json({ error: 'Пользователь не найден' });
       }
 
-      const { name, phone, role, is_active } = req.body;
+      const { name, phone, role, is_active, password } = req.body;
 
       if (role && !['client', 'manager', 'admin'].includes(role)) {
         return res.status(400).json({ error: 'Недопустимая роль' });
@@ -3516,6 +3516,20 @@ app.patch('/api/admin/users/:id',
         }
       }
 
+      // ✅ Новое: валидация пароля
+      let newPasswordHash = null;
+      if (password !== undefined && password !== null && String(password).trim() !== '') {
+        const pwd = String(password);
+        if (pwd.length < 6) {
+          return res.status(400).json({ error: 'Пароль должен быть минимум 6 символов' });
+        }
+        if (pwd.length > 100) {
+          return res.status(400).json({ error: 'Пароль слишком длинный (макс 100 символов)' });
+        }
+        newPasswordHash = bcrypt.hashSync(pwd, 10);
+      }
+
+      // Обновляем основные поля
       db.prepare(`
         UPDATE users
         SET name = ?, phone = ?, role = ?, is_active = ?
@@ -3528,8 +3542,27 @@ app.patch('/api/admin/users/:id',
         req.params.id
       );
 
+      // ✅ Новое: если был пароль — обновляем отдельно
+      if (newPasswordHash) {
+        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+          .run(newPasswordHash, req.params.id);
+
+        logger.logActivity('Смена пароля через админку', {
+          userId: req.user.id,
+          userName: req.user.name,
+          targetUserId: user.id,
+          targetEmail: user.email,
+          ip: req.ip
+        });
+      }
+
       const updated = db.prepare('SELECT id, name, email, phone, role, is_active, created_at FROM users WHERE id = ?').get(req.params.id);
-      res.json({ success: true, user: updated });
+
+      res.json({
+        success: true,
+        user: updated,
+        password_changed: !!newPasswordHash
+      });
     } catch (err) {
       console.error('Ошибка обновления пользователя:', err);
       res.status(500).json({ error: 'Не удалось обновить пользователя' });

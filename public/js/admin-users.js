@@ -247,6 +247,18 @@ function usersOpenModal(id) {
             <input type="tel" id="u-phone" class="admin-form__input" value="${u.phone || ''}" />
           </div>
 
+                    <div class="admin-form__field">
+            <label class="admin-form__label" for="u-password">
+              Новый пароль <span style="color:var(--admin-text-dim);font-weight:400;text-transform:none;letter-spacing:0;">(оставьте пустым, чтобы не менять)</span>
+            </label>
+            <input type="password" id="u-password" class="admin-form__input"
+                   placeholder="Минимум 6 символов"
+                   autocomplete="new-password" />
+            <span class="admin-form__hint" id="u-password-hint">
+              Пароль будет изменён после сохранения. Минимум 6 символов.
+            </span>
+          </div>
+
           <div class="admin-form__field">
             <label class="admin-form__label">Роль</label>
             <div class="role-options" id="role-options">
@@ -318,6 +330,24 @@ function usersOpenModal(id) {
     e.preventDefault();
     await usersSubmit(close, selectedRole, isMe);
   });
+
+  // ✅ Новое: показываем, что пароль будет изменён
+  const passwordInput = document.getElementById('u-password');
+  const passwordHint = document.getElementById('u-password-hint');
+
+  passwordInput?.addEventListener('input', () => {
+    const val = passwordInput.value;
+    if (val.length === 0) {
+      passwordHint.textContent = 'Пароль будет изменён после сохранения. Минимум 6 символов.';
+      passwordHint.style.color = 'var(--admin-text-dim)';
+    } else if (val.length < 6) {
+      passwordHint.textContent = `⚠️ Слишком короткий (${val.length}/6)`;
+      passwordHint.style.color = 'var(--admin-danger)';
+    } else {
+      passwordHint.textContent = `✅ Пароль будет изменён (${val.length} символов)`;
+      passwordHint.style.color = 'var(--admin-success)';
+    }
+  });
 }
 
 // ============================================
@@ -339,6 +369,26 @@ async function usersSubmit(closeFn, role, isMe) {
     payload.is_active = document.getElementById('u-active').checked;
   }
 
+  // ✅ Новое: считываем пароль
+  const passwordInput = document.getElementById('u-password');
+  const passwordValue = passwordInput ? passwordInput.value : '';
+
+  if (passwordValue && passwordValue.length > 0) {
+    if (passwordValue.length < 6) {
+      errorBox.textContent = 'Пароль должен быть минимум 6 символов';
+      errorBox.classList.add('is-visible');
+      passwordInput.focus();
+      return;
+    }
+    if (passwordValue.length > 100) {
+      errorBox.textContent = 'Пароль слишком длинный (макс 100 символов)';
+      errorBox.classList.add('is-visible');
+      passwordInput.focus();
+      return;
+    }
+    payload.password = passwordValue;
+  }
+
   if (!payload.name) {
     errorBox.textContent = 'Имя не может быть пустым';
     errorBox.classList.add('is-visible');
@@ -347,6 +397,7 @@ async function usersSubmit(closeFn, role, isMe) {
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Сохраняем...';
+  // ... остальное без изменений
 
   try {
     const res = await fetch(`/api/admin/users/${usersState.editingId}`, {
@@ -363,7 +414,13 @@ async function usersSubmit(closeFn, role, isMe) {
 
     closeFn();
     await usersLoad();
-    showAdminToast('Пользователь обновлён');
+
+    // ✅ Разный toast, если пароль менялся
+    if (payload.password) {
+      showAdminToast('Пароль изменён');
+    } else {
+      showAdminToast('Пользователь обновлён');
+    }
   } catch (err) {
     errorBox.textContent = err.message;
     errorBox.classList.add('is-visible');
