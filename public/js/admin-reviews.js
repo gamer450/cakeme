@@ -21,13 +21,13 @@ async function renderReviews(container) {
         Все <span class="reviews-tab__count" data-count="all">0</span>
       </button>
       <button class="reviews-tab" data-filter="pending">
-        ⏳ На модерации <span class="reviews-tab__count" data-count="pending">0</span>
+        На модерации <span class="reviews-tab__count" data-count="pending">0</span>
       </button>
       <button class="reviews-tab" data-filter="approved">
-        ✅ Одобренные <span class="reviews-tab__count" data-count="approved">0</span>
+        Одобренные <span class="reviews-tab__count" data-count="approved">0</span>
       </button>
       <button class="reviews-tab" data-filter="featured">
-        ⭐ Избранные <span class="reviews-tab__count" data-count="featured">0</span>
+        Избранные <span class="reviews-tab__count" data-count="featured">0</span>
       </button>
     </div>
 
@@ -75,7 +75,6 @@ async function reviewsLoad() {
     console.error(err);
     document.getElementById('reviews-list-wrap').innerHTML = `
       <div class="reviews-empty">
-        <div class="reviews-empty__icon">😕</div>
         <div class="reviews-empty__title">Не удалось загрузить отзывы</div>
       </div>
     `;
@@ -167,7 +166,7 @@ function reviewsRenderCard(r) {
       <div class="review-card__text">
         «${r.text}»
       </div>
-
+      ${r.photos ? renderAdminReviewPhotos(r.photos) : ''}
       ${r.product_name ? `
         <div class="review-card__product">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -180,20 +179,20 @@ function reviewsRenderCard(r) {
       <div class="review-card__actions">
         ${!r.is_approved ? `
           <button class="review-btn review-btn--approve" data-approve="${r.id}">
-            ✓ Одобрить
+            Одобрить
           </button>
         ` : `
           <button class="review-btn" data-approve="${r.id}">
-            🙈 Скрыть
+            Скрыть
           </button>
         `}
         ${r.is_approved ? `
           <button class="review-btn review-btn--feature ${r.is_featured ? 'is-active' : ''}" data-feature="${r.id}">
-            ⭐ ${r.is_featured ? 'Убрать из избранных' : 'В избранное'}
+            ${r.is_featured ? 'Убрать из избранных' : 'В избранное'}
           </button>
         ` : ''}
         <button class="review-btn review-btn--danger" data-delete="${r.id}">
-          🗑️ Удалить
+          Удалить
         </button>
       </div>
     </div>
@@ -220,6 +219,9 @@ function initTabs() {
 async function reviewsToggleApprove(id) {
   const r = reviewsState.all.find(x => x.id === id);
   if (!r) return;
+
+  // ✅ Индикация
+  showAdminToast('Сохраняем...', 'info');
 
   try {
     const res = await fetch(`/api/admin/reviews/${id}`, {
@@ -282,4 +284,32 @@ async function reviewsDelete(id) {
   } catch (err) {
     showAdminToast(err.message, 'error');
   }
+}
+// ============================================================
+// Рендер фото в отзыве для модерации
+// ============================================================
+function renderAdminReviewPhotos(photosJson) {
+  let photos = [];
+  try {
+    photos = typeof photosJson === 'string' ? JSON.parse(photosJson) : photosJson;
+  } catch {
+    return '';
+  }
+
+  if (!Array.isArray(photos) || photos.length === 0) return '';
+
+  return `
+    <div class="review-card__photos">
+      <div class="review-card__photos-label">
+        Фото от клиента (${photos.length}):
+      </div>
+      <div class="review-card__photos-grid">
+        ${photos.map((url, i) => `
+          <a href="${url}" target="_blank" class="review-card__photo-link" title="Открыть в новой вкладке">
+            <img src="${url}" alt="Фото ${i + 1}" loading="lazy" />
+          </a>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }

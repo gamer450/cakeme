@@ -358,3 +358,185 @@
     display: none;
   }
 }
+/* ============================================================
+   ДАШБОРД v2 — тренды, мини-метрики, дополнительная сетка
+   ============================================================ */
+
+/* Тренды в стат-карточках */
+.stat-trend {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+  font-family: var(--admin-font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-trend.is-up { color: var(--admin-success); }
+.stat-trend.is-down { color: var(--admin-danger); }
+.stat-trend.is-flat { color: var(--admin-text-muted); }
+
+.stat-trend__label {
+  color: var(--admin-text-dim);
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Акцентная карточка (когда есть badge) */
+.stat-card--accent {
+  border-color: var(--admin-border-gold);
+  box-shadow: var(--admin-shadow-md), 0 0 24px rgba(201, 169, 97, 0.15);
+}
+
+/* Мини-метрики (второй ряд) */
+.mini-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mini-metric {
+  padding: 16px 20px;
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mini-metric__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+}
+
+.mini-metric__value {
+  font-family: var(--admin-font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mini-metric__value.is-warning {
+  color: var(--admin-warning);
+}
+
+.mini-metric__badge {
+  font-family: var(--admin-font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  background: var(--admin-warning-bg);
+  color: var(--admin-warning);
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Графики */
+.chart-container {
+  position: relative;
+  padding: 8px 4px;
+}
+
+.chart-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+}
+
+.dashboard-panel__legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--admin-font-mono);
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Двухколоночный ряд (для статусов/категорий и топ/остатки) */
+.dashboard-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+/* Список товаров с низким остатком */
+.low-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.low-stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--admin-bg);
+  border-radius: var(--admin-radius-md);
+  border-left: 3px solid var(--admin-warning);
+}
+
+.low-stock-item__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.low-stock-item__stock {
+  font-family: var(--admin-font-mono);
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+}
+
+.low-stock-item__stock strong {
+  color: var(--admin-warning);
+  font-weight: 700;
+}
+
+/* Адаптив */
+@media (max-width: 1200px) {
+  .mini-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .mini-metrics {
+    grid-template-columns: 1fr;
+  }
+}

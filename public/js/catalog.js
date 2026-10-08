@@ -24,6 +24,8 @@ async function loadData() {
     ]);
 
     state.allProducts = await productsRes.json();
+    // ✅ ФИКС: кэш для проверки остатков
+    window.__PRODUCTS_CACHE = state.allProducts;
     state.categories = await categoriesRes.json();
 
     renderCategoryFilters();
@@ -180,7 +182,18 @@ function renderProducts(products) {
   grid.className = 'grid grid--4';
   grid.innerHTML = products.map((p, i) => {
     const isCoffee = p.category_type === 'coffee';
+        // ✅ Проверяем избранное
+    let isFav = false;
+    try {
+      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      isFav = favs.includes(p.id);
+    } catch {}
 
+        // ✅ ФИКС: проверяем остаток
+    const isOutOfStock = p.track_stock === 1 && p.stock === 0;
+    const stockBadge = isOutOfStock
+      ? '<span class="badge badge--danger product-card__badge">Нет в наличии</span>'
+      : '';
     // Фото или SVG-иконка
     const imageHtml = p.image
       ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />`
@@ -200,18 +213,24 @@ function renderProducts(products) {
     return `
       <a href="/product.html?id=${p.id}" class="product-card ${isCoffee ? 'product-card--coffee' : ''} reveal" data-delay="${Math.min(i + 1, 6)}">
         <div class="product-card__image">
+          ${stockBadge}
           ${imageHtml}
         </div>
         <div class="product-card__body">
-          <span class="product-card__category">${p.category_name}</span>
-          <h3 class="product-card__title">${p.name}</h3>
-          <p class="product-card__desc">${p.description || ''}</p>
+          <span class="product-card__category">${escapeHtml(p.category_name)}</span>
+          <h3 class="product-card__title">${escapeHtml(p.name)}</h3>
+          <p class="product-card__desc">${escapeHtml(p.description || '')}</p>
           <div class="product-card__footer">
             <div>
               <div class="product-card__price">${p.price} ₽</div>
               <div class="product-card__weight">${p.weight || ''}</div>
             </div>
-            <button class="product-card__btn" data-add-to-cart="${p.id}" aria-label="В корзину">
+                        <button class="product-card__fav ${isFav ? 'is-active' : ''}" data-favorite="${p.id}" aria-label="В избранное">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </button>
+            <button class="product-card__btn" data-add-to-cart="${p.id}" ${isOutOfStock ? 'disabled' : ''} aria-label="В корзину">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 5v14"></path>
                 <path d="M5 12h14"></path>
@@ -224,18 +243,9 @@ function renderProducts(products) {
   }).join('');
 
   // Анимация появления
+  // ✅ ФИКС: сразу показываем
   requestAnimationFrame(() => {
-    grid.querySelectorAll('.reveal').forEach(el => {
-      const obs = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.05 });
-      obs.observe(el);
-    });
+    grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
   });
 }
 

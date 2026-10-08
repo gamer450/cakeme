@@ -7,6 +7,7 @@ const state = {
   quantity: 1
 };
 
+
 // ============================================
 // 1. Загрузка товара
 // ============================================
@@ -51,6 +52,13 @@ function renderProduct() {
     ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>`
     : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/><path d="M10 15h4M10 18h4"/></svg>`;
 
+      // ✅ Проверяем избранное
+  let isFav = false;
+  try {
+    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+    isFav = favs.includes(p.id);
+  } catch {}
+
   const mainImage = p.image
     ? `<img src="${p.image}" alt="${p.name}" />`
     : `<div class="product-gallery__placeholder">${svgIcon}</div>`;
@@ -94,23 +102,55 @@ function renderProduct() {
           ${p.category_name}
         </span>
 
-        <h1 class="product-info__title">${p.name}</h1>
-        <p class="product-info__desc">${p.description || ''}</p>
+        <h1 class="product-info__title">${escapeHtml(p.name)}</h1>
+        <p class="product-info__desc">${escapeHtml(p.description || '')}</p>
 
         <div class="product-info__meta">
           <div class="product-info__meta-item">
             <span class="product-info__meta-label">Вес</span>
             <span class="product-info__meta-value">${p.weight || '—'}</span>
           </div>
-          <div class="product-info__meta-item">
-            <span class="product-info__meta-label">В наличии</span>
-            <span class="product-info__meta-value">${p.stock > 0 ? 'Да' : 'Нет'}</span>
-          </div>
+          ${p.portions ? `
+            <div class="product-info__meta-item">
+              <span class="product-info__meta-label">На сколько человек</span>
+              <span class="product-info__meta-value">${p.portions}</span>
+            </div>
+          ` : ''}
           <div class="product-info__meta-item">
             <span class="product-info__meta-label">Категория</span>
             <span class="product-info__meta-value">${p.category_name}</span>
           </div>
         </div>
+
+        ${p.ingredients || p.storage_info ? `
+          <div class="product-info__details">
+            ${p.ingredients ? `
+              <details class="product-info__detail-item">
+                <summary>
+                  <span class="product-info__detail-icon">🥣</span>
+                  <span>Состав и аллергены</span>
+                  <svg class="product-info__detail-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </summary>
+                <div class="product-info__detail-content">${p.ingredients}</div>
+              </details>
+            ` : ''}
+
+            ${p.storage_info ? `
+              <details class="product-info__detail-item">
+                <summary>
+                  <span class="product-info__detail-icon">❄️</span>
+                  <span>Срок и условия хранения</span>
+                  <svg class="product-info__detail-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </summary>
+                <div class="product-info__detail-content">${p.storage_info}</div>
+              </details>
+            ` : ''}
+          </div>
+        ` : ''}
 
         <div class="product-info__price-block">
           <span class="product-info__price" id="price-display">${p.price} ₽</span>
@@ -126,15 +166,31 @@ function renderProduct() {
           </div>
         </div>
 
+        <button class="product-info__fav ${isFav ? 'is-active' : ''}" data-favorite="${p.id}" aria-label="В избранное">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+          <span>${isFav ? 'В избранном' : 'В избранное'}</span>
+        </button>
+
         <div class="product-info__actions">
-          <button class="btn btn-primary btn-lg magnetic" id="add-to-cart-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="21" r="1"></circle>
-              <circle cx="19" cy="21" r="1"></circle>
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-            </svg>
-            Добавить в корзину
-          </button>
+          ${p.track_stock === 1 && p.stock === 0
+            ? `<button class="btn btn-secondary btn-lg" disabled style="cursor:not-allowed;opacity:0.6;">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                   <circle cx="12" cy="12" r="10"/>
+                   <path d="M12 8v4M12 16h.01"/>
+                 </svg>
+                 Нет в наличии
+               </button>`
+            : `<button class="btn btn-primary btn-lg magnetic" id="add-to-cart-btn">
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                   <circle cx="8" cy="21" r="1"></circle>
+                   <circle cx="19" cy="21" r="1"></circle>
+                   <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                 </svg>
+                 Добавить в корзину
+               </button>`
+          }
         </div>
 
         <div class="product-info__features">
@@ -219,6 +275,13 @@ function initAddToCart() {
   if (!btn) return;
 
   btn.addEventListener('click', () => {
+    // ✅ ФИКС: проверяем остаток
+    const p = state.product;
+    if (p.track_stock === 1 && p.stock < state.quantity) {
+      showToast(`На складе только ${p.stock} шт`);
+      return;
+    }
+
     addToCartWithQty(state.product.id, state.quantity);
     showToast(`Добавлено в корзину: ${state.quantity} шт`);
   });
@@ -321,15 +384,7 @@ async function loadSimilar() {
 function initReveal() {
   requestAnimationFrame(() => {
     document.querySelectorAll('.reveal:not(.is-visible)').forEach(el => {
-      const obs = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            obs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.1 });
-      obs.observe(el);
+      el.classList.add('is-visible');
     });
   });
 }

@@ -52,10 +52,10 @@
   --admin-shadow-glow-gold: 0 8px 32px rgba(201, 169, 97, 0.18);
 
   /* Радиусы */
-  --admin-radius-sm: 6px;
-  --admin-radius-md: 10px;
-  --admin-radius-lg: 14px;
-  --admin-radius-xl: 20px;
+  --admin-radius-sm: 2px;
+  --admin-radius-md: 4px;
+  --admin-radius-lg: 6px;
+  --admin-radius-xl: 8px;
 
   /* Шрифты */
   --admin-font-body: 'Inter Tight', 'Manrope', -apple-system, sans-serif;
@@ -139,8 +139,19 @@ body.admin button {
 }
 
 .admin-sidebar__logo-icon {
-  font-size: 1.6rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-gold-bright);
   filter: drop-shadow(0 4px 8px rgba(232, 168, 124, 0.3));
+  flex-shrink: 0;
+}
+
+.admin-sidebar__logo-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .admin-sidebar__logo-text {
@@ -219,11 +230,28 @@ body.admin button {
 }
 
 .admin-menu__item-icon {
-  font-size: 1.1rem;
   width: 20px;
+  height: 20px;
   display: inline-flex;
   justify-content: center;
+  align-items: center;
   flex-shrink: 0;
+  color: currentColor;
+  transition: color 0.2s var(--admin-ease);
+}
+
+.admin-menu__item-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.admin-menu__item.is-active .admin-menu__item-icon {
+  color: var(--admin-gold-bright);
+}
+
+.admin-menu__item:hover .admin-menu__item-icon {
+  color: var(--admin-accent);
 }
 
 .admin-menu__item-badge {
@@ -325,7 +353,7 @@ body.admin button {
 .admin-topbar__user-avatar {
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: var(--admin-radius-md);
   background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
   color: var(--admin-sidebar);
   display: flex;
@@ -576,7 +604,7 @@ body.admin button {
 .modal__close {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: var(--admin-radius-md);
   background: var(--admin-elevated);
   border: 1px solid var(--admin-border);
   color: var(--admin-text-muted);

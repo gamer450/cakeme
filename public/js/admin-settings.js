@@ -40,7 +40,6 @@ async function settingsLoad() {
     console.error(err);
     document.getElementById('settings-page').innerHTML = `
       <div class="orders-empty">
-        <div class="orders-empty__icon">😕</div>
         <div class="orders-empty__title">Не удалось загрузить настройки</div>
       </div>
     `;
@@ -58,7 +57,6 @@ function renderForm() {
     <!-- ОСНОВНОЕ -->
     <div class="settings-section">
       <div class="settings-section__header">
-        <div class="settings-section__icon">📋</div>
         <div>
           <div class="settings-section__title">Основное</div>
           <div class="settings-section__desc">Название и описание сайта</div>
@@ -77,10 +75,115 @@ function renderForm() {
       </div>
     </div>
 
+        <!-- О НАС -->
+    <div class="settings-section">
+      <div class="settings-section__header">
+        <div class="settings-section__icon">👋</div>
+        <div>
+          <div class="settings-section__title">Блок «О нас»</div>
+          <div class="settings-section__desc">Текст и фото на главной странице</div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-about_subtitle">Надзаголовок (eyebrow)</label>
+          <input type="text" id="s-about_subtitle" class="settings-field__input"
+                 value="${escapeAttr(s.about_subtitle || '')}"
+                 data-setting="about_subtitle"
+                 placeholder="о нас" />
+        </div>
+
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-about_title">Заголовок</label>
+          <input type="text" id="s-about_title" class="settings-field__input"
+                 value="${escapeAttr(s.about_title || '')}"
+                 data-setting="about_title"
+                 placeholder="Готовим с душой с 2019 года" />
+          <span class="settings-field__hint">Можно использовать &lt;br&gt; для переноса и &lt;em&gt;для курсива&lt;/em&gt;</span>
+        </div>
+
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-about_text_1">Абзац 1</label>
+          <textarea id="s-about_text_1" class="settings-field__textarea"
+                    data-setting="about_text_1"
+                    style="min-height: 90px;">${escapeHtml(s.about_text_1 || '')}</textarea>
+        </div>
+
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-about_text_2">Абзац 2</label>
+          <textarea id="s-about_text_2" class="settings-field__textarea"
+                    data-setting="about_text_2"
+                    style="min-height: 90px;">${escapeHtml(s.about_text_2 || '')}</textarea>
+        </div>
+
+        <!-- Фото блока -->
+        ${renderMediaField('about_image_1', 'Фото 1', 'Первое фото в слайдере', s.about_image_1)}
+        ${renderMediaField('about_image_2', 'Фото 2', 'Второе фото в слайдере', s.about_image_2)}
+        ${renderMediaField('about_image_3', 'Фото 3', 'Третье фото в слайдере', s.about_image_3)}
+        ${renderMediaField('about_video', 'Видео', 'MP4/WEBM — играет после фото и зацикливается', s.about_video, 'video')}
+
+        <!-- Преимущества -->
+        <div class="settings-field settings-field--full" style="margin-top: 8px;">
+          <div class="settings-section__desc" style="font-weight: 700;color:var(--admin-text);">Преимущества (3 штуки)</div>
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-about_feature_1_title">Преимущество 1 — заголовок</label>
+          <input type="text" id="s-about_feature_1_title" class="settings-field__input"
+                 value="${escapeAttr(s.about_feature_1_title || '')}"
+                 data-setting="about_feature_1_title"
+                 placeholder="Натуральные ингредиенты" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-about_feature_1_desc">Преимущество 1 — описание</label>
+          <input type="text" id="s-about_feature_1_desc" class="settings-field__input"
+                 value="${escapeAttr(s.about_feature_1_desc || '')}"
+                 data-setting="about_feature_1_desc"
+                 placeholder="Без консервантов и красителей" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-about_feature_2_title">Преимущество 2 — заголовок</label>
+          <input type="text" id="s-about_feature_2_title" class="settings-field__input"
+                 value="${escapeAttr(s.about_feature_2_title || '')}"
+                 data-setting="about_feature_2_title"
+                 placeholder="Доставка 24/7" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-about_feature_2_desc">Преимущество 2 — описание</label>
+          <input type="text" id="s-about_feature_2_desc" class="settings-field__input"
+                 value="${escapeAttr(s.about_feature_2_desc || '')}"
+                 data-setting="about_feature_2_desc"
+                 placeholder="Привезём точно в срок" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-about_feature_3_title">Преимущество 3 — заголовок</label>
+          <input type="text" id="s-about_feature_3_title" class="settings-field__input"
+                 value="${escapeAttr(s.about_feature_3_title || '')}"
+                 data-setting="about_feature_3_title"
+                 placeholder="Индивидуальный подход" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-about_feature_3_desc">Преимущество 3 — описание</label>
+          <input type="text" id="s-about_feature_3_desc" class="settings-field__input"
+                 value="${escapeAttr(s.about_feature_3_desc || '')}"
+                 data-setting="about_feature_3_desc"
+                 placeholder="Учтём любые пожелания" />
+        </div>
+      </div>
+    </div>
+
+    <!-- МЕДИА САЙТА -->
+    <div class="settings-section">
+
     <!-- МЕДИА САЙТА -->
     <div class="settings-section">
       <div class="settings-section__header">
-        <div class="settings-section__icon">🖼️</div>
         <div>
           <div class="settings-section__title">Медиа сайта</div>
           <div class="settings-section__desc">Логотип, видео для главной и баннеры</div>
@@ -100,12 +203,82 @@ function renderForm() {
     <!-- КОНТАКТЫ -->
     <div class="settings-section">
       <div class="settings-section__header">
-        <div class="settings-section__icon">📞</div>
         <div>
           <div class="settings-section__title">Контакты</div>
           <div class="settings-section__desc">Как с вами связаться</div>
         </div>
       </div>
+
+          <!-- ЮРИДИЧЕСКИЕ ДАННЫЕ -->
+    <div class="settings-section">
+      <div class="settings-section__header">
+        <div class="settings-section__icon">🏢</div>
+        <div>
+          <div class="settings-section__title">Юридические данные</div>
+          <div class="settings-section__desc">Реквизиты ИП/ООО для оферты и футера</div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-legal_name">Наименование (ИП / ООО)</label>
+          <input type="text" id="s-legal_name" class="settings-field__input"
+                 value="${escapeAttr(s.legal_name || '')}"
+                 data-setting="legal_name"
+                 placeholder="ИП Иванов Иван Иванович / ООО «Ромашка»" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-legal_inn">ИНН</label>
+          <input type="text" id="s-legal_inn" class="settings-field__input"
+                 value="${escapeAttr(s.legal_inn || '')}"
+                 data-setting="legal_inn"
+                 placeholder="123456789012"
+                 maxlength="12" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-legal_ogrn">ОГРН / ОГРНИП</label>
+          <input type="text" id="s-legal_ogrn" class="settings-field__input"
+                 value="${escapeAttr(s.legal_ogrn || '')}"
+                 data-setting="legal_ogrn"
+                 placeholder="123456789012345"
+                 maxlength="15" />
+        </div>
+
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-legal_address">Юридический адрес</label>
+          <input type="text" id="s-legal_address" class="settings-field__input"
+                 value="${escapeAttr(s.legal_address || '')}"
+                 data-setting="legal_address"
+                 placeholder="г. Москва, ул. Примерная, д. 1, офис 5" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-legal_phone">Юридический телефон</label>
+          <input type="tel" id="s-legal_phone" class="settings-field__input"
+                 value="${escapeAttr(s.legal_phone || '')}"
+                 data-setting="legal_phone"
+                 placeholder="+7 900 000-00-00" />
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-field__label" for="s-legal_email">Юридический email</label>
+          <input type="email" id="s-legal_email" class="settings-field__input"
+                 value="${escapeAttr(s.legal_email || '')}"
+                 data-setting="legal_email"
+                 placeholder="info@yourdomain.ru" />
+        </div>
+
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label" for="s-working_hours">Часы работы</label>
+          <input type="text" id="s-working_hours" class="settings-field__input"
+                 value="${escapeAttr(s.working_hours || '')}"
+                 data-setting="working_hours"
+                 placeholder="Пн-Вс: 9:00 – 21:00" />
+        </div>
+      </div>
+    </div>
 
       <div class="settings-grid">
         <div class="settings-field">
@@ -126,7 +299,6 @@ function renderForm() {
     <!-- ДОСТАВКА -->
     <div class="settings-section">
       <div class="settings-section__header">
-        <div class="settings-section__icon">🚚</div>
         <div>
           <div class="settings-section__title">Доставка</div>
           <div class="settings-section__desc">Стоимость и порог бесплатной доставки</div>
@@ -156,7 +328,6 @@ function renderForm() {
     <!-- СОЦСЕТИ -->
     <div class="settings-section">
       <div class="settings-section__header">
-        <div class="settings-section__icon">🔗</div>
         <div>
           <div class="settings-section__title">Соцсети</div>
           <div class="settings-section__desc">Ссылки на соцсети в подвале сайта</div>
@@ -178,7 +349,6 @@ function renderForm() {
     <!-- ОПАСНАЯ ЗОНА -->
     <div class="settings-section danger-zone">
       <div class="settings-section__header">
-        <div class="settings-section__icon">⚠️</div>
         <div>
           <div class="settings-section__title">Опасная зона</div>
           <div class="settings-section__desc">Действия, которые нельзя отменить</div>

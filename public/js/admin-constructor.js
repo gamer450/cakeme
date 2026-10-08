@@ -1,5 +1,6 @@
 /* ============================================
    АДМИН: КОНСТРУКТОР ТОРТА
+   v1.1 — фикс editingId при редактировании
    ============================================ */
 
 const constructorState = {
@@ -147,6 +148,9 @@ function constructorRenderOption(opt) {
 // 5. Модалка создания/редактирования
 // ============================================
 function openConstructorModal(groupKey, id) {
+  // ✅ ФИКС: запоминаем id для последующего PATCH
+  constructorState.editingId = id;
+
   let opt = null;
   let actualGroupKey = groupKey;
 

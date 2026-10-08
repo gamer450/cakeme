@@ -1,0 +1,260 @@
+/* ============================================================
+   КАНБАН ЗАКАЗОВ
+   ============================================================ */
+
+.kanban-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.kanban-header__title {
+  font-family: var(--admin-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.kanban-header__subtitle {
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+  margin: 0;
+}
+
+/* Доска */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(260px, 1fr));
+  gap: 16px;
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: 20px;
+  min-height: 400px;
+}
+
+@media (max-width: 1400px) {
+  .kanban-board {
+    grid-template-columns: repeat(5, 280px);
+  }
+}
+
+/* Колонка */
+.kanban-column {
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+  min-height: 200px;
+}
+
+.kanban-column__header {
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--admin-border);
+  border-top: 3px solid transparent;
+  background: var(--admin-card);
+  border-radius: var(--admin-radius-lg) var(--admin-radius-lg) 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.kanban-column__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.kanban-column__count {
+  margin-left: auto;
+  font-family: var(--admin-font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: var(--admin-elevated);
+  border-radius: 100px;
+  color: var(--admin-text-muted);
+}
+
+.kanban-column__body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 100px;
+  transition: background 0.2s var(--admin-ease);
+}
+
+.kanban-column__body.is-dragover {
+  background: rgba(232, 168, 124, 0.08);
+  border: 2px dashed var(--admin-accent);
+  border-radius: var(--admin-radius-md);
+}
+
+.kanban-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--admin-text-dim);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Карточка */
+.kanban-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  padding: 14px;
+  cursor: grab;
+  transition: all 0.2s var(--admin-ease);
+  position: relative;
+  user-select: none;
+}
+
+.kanban-card:hover {
+  border-color: var(--admin-border-gold);
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-md);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+}
+
+.kanban-card.is-dragging {
+  opacity: 0.4;
+  transform: rotate(2deg) scale(1.02);
+}
+
+.kanban-card.is-urgent {
+  border-left: 3px solid var(--admin-danger);
+  animation: kanbanPulse 2s ease-in-out infinite;
+}
+
+@keyframes kanbanPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 120, 120, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(224, 120, 120, 0.15); }
+}
+
+.kanban-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.kanban-card__id {
+  font-family: var(--admin-font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--admin-gold-bright);
+  letter-spacing: 0.02em;
+}
+
+.kanban-card__time {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  color: var(--admin-text-dim);
+}
+
+.kanban-card__customer {
+  margin-bottom: 10px;
+}
+
+.kanban-card__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanban-card__phone {
+  font-family: var(--admin-font-mono);
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.kanban-card__delivery {
+  padding: 6px 10px;
+  background: var(--admin-elevated);
+  border-radius: var(--admin-radius-sm);
+  font-size: 0.75rem;
+  color: var(--admin-text-secondary, var(--admin-text-muted));
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanban-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--admin-border);
+  gap: 8px;
+}
+
+.kanban-card__meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  font-family: var(--admin-font-mono);
+}
+
+.kanban-card__badge {
+  font-size: 0.85rem;
+}
+
+.kanban-card__total {
+  font-family: var(--admin-font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  white-space: nowrap;
+}
+
+/* Адаптив */
+@media (max-width: 900px) {
+  .kanban-board {
+    grid-template-columns: repeat(2, 300px);
+    gap: 12px;
+  }
+}
+.kanban-column__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.kanban-card__badge {
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--admin-gold-bright);
+  background: rgba(201, 169, 97, 0.15);
+  border: 1px solid var(--admin-border-gold);
+  padding: 1px 5px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}

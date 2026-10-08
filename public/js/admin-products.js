@@ -61,7 +61,6 @@ async function prodsLoad() {
     console.error(err);
     document.getElementById('prods-table-wrap').innerHTML = `
       <div class="orders-empty">
-        <div class="orders-empty__icon">😕</div>
         <div class="orders-empty__title">Не удалось загрузить товары</div>
       </div>
     `;
@@ -132,7 +131,6 @@ function prodsRenderTable() {
   if (list.length === 0) {
     wrap.innerHTML = `
       <div class="orders-empty">
-        <div class="orders-empty__icon">📦</div>
         <div class="orders-empty__title">Товаров не найдено</div>
         <p>Измените фильтр или добавьте новый товар</p>
       </div>
@@ -277,6 +275,40 @@ function openProductModal(id) {
             <div class="admin-form__field">
               <label class="admin-form__label" for="p-stock">Остаток, шт</label>
               <input type="number" id="p-stock" class="admin-form__input" min="0" value="${p ? p.stock : 0}" />
+            </div>
+          </div>
+
+          <div class="admin-form__field">
+            <label class="admin-form__label" for="p-portions">На сколько человек</label>
+            <input type="text" id="p-portions" class="admin-form__input"
+                   placeholder="Например: 6-8 человек"
+                   value="${p ? p.portions || '' : ''}" />
+            <span class="admin-form__hint">Показывается в карточке товара</span>
+          </div>
+
+          <div class="admin-form__field">
+            <label class="admin-form__label" for="p-ingredients">Состав / аллергены</label>
+            <textarea id="p-ingredients" class="admin-form__textarea"
+                      placeholder="Мука пшеничная, масло сливочное, яйца, сахар, ваниль. Содержит глютен и лактозу."
+                      style="min-height:70px;">${p ? p.ingredients || '' : ''}</textarea>
+          </div>
+
+          <div class="admin-form__field">
+            <label class="admin-form__label" for="p-storage">Срок и условия хранения</label>
+            <input type="text" id="p-storage" class="admin-form__input"
+                   placeholder="48 часов при 2-6°C"
+                   value="${p ? p.storage_info || '' : ''}" />
+          </div>
+
+          <div class="admin-form__row">
+            <label class="admin-checkbox">
+              <input type="checkbox" id="p-track-stock" ${p && p.track_stock === 0 ? '' : 'checked'} />
+              Отслеживать остатки
+            </label>
+
+            <div class="admin-form__field">
+              <label class="admin-form__label" for="p-low-stock">Порог «мало», шт</label>
+              <input type="number" id="p-low-stock" class="admin-form__input" min="1" value="${p ? p.low_stock_threshold || 5 : 5}" />
             </div>
           </div>
 
@@ -427,6 +459,11 @@ async function prodsSubmit(isEdit, closeFn) {
     price: parseFloat(document.getElementById('p-price').value),
     weight: document.getElementById('p-weight').value.trim(),
     stock: parseInt(document.getElementById('p-stock').value, 10) || 0,
+    track_stock: document.getElementById('p-track-stock').checked ? 1 : 0,
+    low_stock_threshold: parseInt(document.getElementById('p-low-stock').value, 10) || 5,
+    portions: document.getElementById('p-portions').value.trim(),
+    ingredients: document.getElementById('p-ingredients').value.trim(),
+    storage_info: document.getElementById('p-storage').value.trim(),
     description: document.getElementById('p-desc').value.trim(),
     image: prodsState.currentImage || ''
   };
@@ -533,9 +570,9 @@ async function uploadProductImage(file) {
 
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('folder', 'products');
 
-  const res = await fetch('/api/admin/media/upload', {
+  // ✅ ФИКС: folder через query string, а не через FormData
+  const res = await fetch('/api/admin/media/upload?folder=products', {
     method: 'POST',
     headers: { Authorization: `Bearer ${state.token}` },
     body: formData

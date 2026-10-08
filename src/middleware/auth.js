@@ -5,8 +5,21 @@
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
-const JWT_EXPIRES = '7d';
+// ✅ ФИКС: валидация JWT_SECRET при старте (без дефолта!)
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ FATAL: JWT_SECRET не задан в .env');
+  console.error('   Сгенерируй: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
+
+if (JWT_SECRET.length < 32) {
+  console.error(`❌ FATAL: JWT_SECRET слишком короткий (${JWT_SECRET.length} < 32)`);
+  process.exit(1);
+}
+
+const JWT_EXPIRES = process.env.JWT_EXPIRES || '7d';
 
 // Генерируем токен
 function signToken(user) {
@@ -75,4 +88,13 @@ function authOptional(req, res, next) {
   next();
 }
 
-module.exports = { signToken, authRequired, requireRole, authOptional };
+// ============================================================
+// Проверка — требуется ли 2FA для пользователя
+// ============================================================
+function checkTwoFA(user) {
+  return user.twofa_enabled === 1;
+}
+
+module.exports.checkTwoFA = checkTwoFA;
+
+module.exports = { signToken, authRequired, requireRole, authOptional, checkTwoFA };

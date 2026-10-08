@@ -314,7 +314,87 @@
   align-items: center;
 }
 
-.about__visual { position: relative; height: 560px; }
+.about__visual {
+  position: relative;
+  height: 560px;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl), var(--shadow-inner);
+  background: var(--bg-card);
+}
+
+/* ✅ Слайдер */
+.about__slider {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.about__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-out);
+  pointer-events: none;
+}
+
+.about__slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.about__slide img,
+.about__slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Точки навигации */
+.about__dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(8, 5, 3, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 100px;
+  border: 1px solid var(--border-subtle);
+  z-index: 2;
+}
+
+.about__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(245, 237, 228, 0.35);
+  border: none;
+  cursor: pointer;
+  transition: all var(--t-base) var(--ease-out);
+  padding: 0;
+}
+
+.about__dot:hover {
+  background: rgba(245, 237, 228, 0.6);
+}
+
+.about__dot.is-active {
+  background: var(--gold-100);
+  width: 24px;
+  border-radius: 100px;
+  box-shadow: 0 0 12px var(--gold-100);
+}
+
+@media (max-width: 640px) {
+  .about__visual {
+    height: 380px;
+  }
+}
 .about__image-wrapper { position: relative; width: 100%; height: 100%; }
 
 .about__image {
@@ -329,7 +409,25 @@
   overflow: hidden;
 }
 
-.about__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+about__image {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl), var(--shadow-inner);
+  transition: transform var(--t-slow) var(--ease-out);
+  color: var(--gold-300);
+  overflow: hidden;     /* ✅ обрезаем img по границам */
+}
+
+/* ✅ ФИКС: картинки в About */
+.about__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 .about__image svg { width: 50%; height: 50%; opacity: 0.6; }
 
 .about__image--1 { top: 0; left: 0; width: 65%; height: 60%; background: var(--bg-card); color: var(--peach-300); }
@@ -722,4 +820,95 @@ a.contact-card__value:hover { color: var(--peach-200); }
   .category-card { padding: 32px 24px; }
   .about__visual { height: 380px; }
   .contacts-map { height: 350px; }
+}
+/* ============================================================
+   FAQ
+   ============================================================ */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s var(--ease-out);
+}
+
+.faq-item[open] {
+  border-color: var(--border-gold);
+  background: var(--bg-card-hi);
+  box-shadow: var(--shadow-lg);
+}
+
+.faq-item__question {
+  padding: 20px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  list-style: none;
+  transition: color 0.2s var(--ease-out);
+}
+
+.faq-item__question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item__question:hover {
+  color: var(--peach-200);
+}
+
+.faq-item__icon {
+  flex-shrink: 0;
+  color: var(--gold-300);
+  transition: transform 0.3s var(--ease-out);
+}
+
+.faq-item[open] .faq-item__icon {
+  transform: rotate(180deg);
+  color: var(--gold-100);
+}
+
+.faq-item__answer {
+  padding: 0 24px 24px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.faq-footer {
+  text-align: center;
+  margin-top: 48px;
+}
+
+.faq-footer__text {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 640px) {
+  .faq-item__question {
+    padding: 16px 18px;
+    font-size: 1rem;
+  }
+
+  .faq-item__answer {
+    padding: 0 18px 18px;
+    font-size: 0.9rem;
+  }
 }

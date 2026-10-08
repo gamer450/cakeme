@@ -1,5 +1,6 @@
 /* ============================================
    АДМИН: ПАРТНЁРЫ
+   v1.1 — убран двойной handler на «Удалить фото»
    ============================================ */
 
 const partnersState = {
@@ -289,10 +290,51 @@ function openPartnerModal(id) {
   modal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
   modal.addEventListener('click', (e) => e.target === modal && close());
 
-  // Загрузка фото
+  // ============================================
+  // Загрузка фото — единая логика (ФИКС)
+  // ============================================
   const fileInput = document.getElementById('partner-image-file-input');
   const uploadBtn = document.getElementById('partner-image-upload-btn');
   const preview = document.getElementById('partner-image-preview');
+  const actionsBox = modal.querySelector('.partner-image-upload__actions');
+
+  const PLACEHOLDER_SVG = `
+    <span class="partner-image-upload__placeholder">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="9" cy="9" r="2"/>
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+      </svg>
+    </span>
+  `;
+
+  // Единая функция удаления изображения
+  function clearImage() {
+    partnersState.currentImage = '';
+    preview.innerHTML = PLACEHOLDER_SVG;
+    uploadBtn.textContent = 'Загрузить фото';
+
+    const rmBtn = document.getElementById('partner-image-remove-btn');
+    if (rmBtn) rmBtn.remove();
+  }
+
+  // Единая функция установки изображения
+  function setImage(url) {
+    partnersState.currentImage = url;
+    preview.innerHTML = `<img src="${url}" alt="preview" />`;
+    uploadBtn.textContent = 'Заменить фото';
+
+    // Если кнопки «Удалить» ещё нет — создаём ОДИН раз
+    if (!document.getElementById('partner-image-remove-btn')) {
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'btn-admin btn-admin--ghost';
+      rm.id = 'partner-image-remove-btn';
+      rm.textContent = 'Удалить';
+      rm.addEventListener('click', clearImage);
+      actionsBox.appendChild(rm);
+    }
+  }
 
   uploadBtn.addEventListener('click', () => fileInput.click());
 
@@ -305,50 +347,18 @@ function openPartnerModal(id) {
 
     try {
       const url = await uploadPartnerImage(file);
-      partnersState.currentImage = url;
-      preview.innerHTML = `<img src="${url}" alt="preview" />`;
-      uploadBtn.textContent = 'Заменить фото';
-
-      if (!document.getElementById('partner-image-remove-btn')) {
-        const actions = modal.querySelector('.partner-image-upload__actions');
-        const rm = document.createElement('button');
-        rm.type = 'button';
-        rm.className = 'btn-admin btn-admin--ghost';
-        rm.id = 'partner-image-remove-btn';
-        rm.textContent = 'Удалить';
-        rm.addEventListener('click', () => {
-          partnersState.currentImage = '';
-          preview.innerHTML = `<span class="partner-image-upload__placeholder">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="9" cy="9" r="2"/>
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-            </svg>
-          </span>`;
-          rm.remove();
-          uploadBtn.textContent = 'Загрузить фото';
-        });
-        actions.appendChild(rm);
-      }
+      setImage(url);
     } catch (err) {
       alert('Ошибка загрузки: ' + err.message);
     } finally {
       uploadBtn.disabled = false;
+      // Сбросим input, чтобы можно было выбрать тот же файл ещё раз
+      fileInput.value = '';
     }
   });
 
-  document.getElementById('partner-image-remove-btn')?.addEventListener('click', () => {
-    partnersState.currentImage = '';
-    preview.innerHTML = `<span class="partner-image-upload__placeholder">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="9" cy="9" r="2"/>
-        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-      </svg>
-    </span>`;
-    document.getElementById('partner-image-remove-btn').remove();
-    uploadBtn.textContent = 'Загрузить фото';
-  });
+  // Если кнопка «Удалить» есть изначально (картинка была) — вешаем единственный handler
+  document.getElementById('partner-image-remove-btn')?.addEventListener('click', clearImage);
 
   // Отправка
   document.getElementById('partner-form').addEventListener('submit', async (e) => {
@@ -483,7 +493,8 @@ async function uploadPartnerImage(file) {
   const formData = new FormData();
   formData.append('file', file);
 
-  // Отправляем в папку banners
+  // Отправляем в папку banners (см. комментарий ниже)
+  // Папка 'partners' тоже подойдёт, если добавишь её в server.js в UPLOAD_DIR
   const res = await fetch('/api/admin/media/upload?folder=banners', {
     method: 'POST',
     headers: { Authorization: `Bearer ${state.token}` },

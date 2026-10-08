@@ -1,0 +1,226 @@
+/* ============================================================
+   АДМИН: УВЕДОМЛЕНИЯ
+   ============================================================ */
+
+.notif-header {
+  margin-bottom: 24px;
+}
+
+.notif-header__title {
+  font-family: var(--admin-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+
+.notif-header__subtitle {
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+#notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Карточка */
+.notif-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 24px;
+  transition: all 0.2s var(--admin-ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.notif-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--admin-border);
+  transition: background 0.3s var(--admin-ease);
+}
+
+.notif-card.is-active::before {
+  background: linear-gradient(90deg, #6BBF87, #4CAF50);
+}
+
+.notif-card:hover {
+  border-color: var(--admin-border-gold);
+}
+
+.notif-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.notif-card__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.notif-card__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.notif-card__title {
+  font-family: var(--admin-font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--admin-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.notif-badge {
+  display: inline-block;
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: fit-content;
+}
+
+.notif-badge--active {
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
+  border: 1px solid rgba(107, 191, 135, 0.3);
+}
+
+.notif-badge--warning {
+  background: var(--admin-warning-bg);
+  color: var(--admin-warning);
+  border: 1px solid rgba(224, 184, 120, 0.3);
+}
+
+.notif-badge--inactive {
+  background: var(--admin-elevated);
+  color: var(--admin-text-dim);
+  border: 1px solid var(--admin-border);
+}
+
+.notif-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notif-card__desc {
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.notif-card__desc a {
+  color: var(--admin-gold-bright);
+  text-decoration: underline;
+}
+
+.notif-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notif-card__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+}
+
+.notif-card__hint {
+  padding: 14px 16px;
+  background: var(--admin-warning-bg);
+  border-left: 3px solid var(--admin-warning);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.notif-card__hint code {
+  font-family: var(--admin-font-mono);
+  font-size: 0.8rem;
+  background: var(--admin-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--admin-gold-bright);
+}
+
+.notif-card__hint a {
+  color: var(--admin-gold-bright);
+  text-decoration: underline;
+}
+
+.notif-card__hint strong {
+  color: var(--admin-text);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.notif-card__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.notif-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--admin-radius-md);
+  font-family: var(--admin-font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--admin-ease);
+  border: none;
+}
+
+.notif-card__btn--test {
+  background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-accent-2) 100%);
+  color: var(--admin-sidebar);
+  box-shadow: var(--admin-shadow-md);
+}
+
+.notif-card__btn--test:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg), 0 0 24px rgba(232, 168, 124, 0.4);
+}
+
+.notif-card__btn--test:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}

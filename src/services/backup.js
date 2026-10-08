@@ -5,8 +5,12 @@
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', '..', 'data', 'shop.db');
-const BACKUP_DIR = path.join(__dirname, '..', '..', 'data', 'backups');
+// ✅ ФИКС: путь к БД тот же, что и в db.js
+const DB_PATH = process.env.DB_PATH
+  ? path.resolve(process.env.DB_PATH)
+  : path.join(__dirname, '..', '..', 'data', 'shop.db');
+
+const BACKUP_DIR = path.join(path.dirname(DB_PATH), 'backups');
 const MAX_BACKUPS = 30;  // храним последние 30 бэкапов
 
 // Создаём папку бэкапов
@@ -27,17 +31,43 @@ function createBackup() {
     const timestamp = new Date()
       .toISOString()
       .replace(/[:.]/g, '-')
-      .slice(0, 19);  // 2026-10-02T14-30-45
+      .slice(0, 19);
 
     const backupName = `shop-${timestamp}.db`;
     const backupPath = path.join(BACKUP_DIR, backupName);
 
-    fs.copyFileSync(DB_PATH, backupPath);
+    // ✅ ФИКС: VACUUM INTO — атомарный бэкап (совместимо с WAL)
+    let success = false;
+
+    try {
+      const Database = require('better-sqlite3');
+      const sourceDb = new Database(DB_PATH, { readonly: true });
+
+      // Экранируем путь для SQL
+      const safePath = backupPath.replace(/'/g, "''");
+      sourceDb.exec(`VACUUM INTO '${safePath}'`);
+      sourceDb.close();
+
+      success = true;
+    } catch (err) {
+      console.warn('⚠️  VACUUM INTO не сработал, fallback на wal_checkpoint:', err.message);
+
+      // Fallback: делаем checkpoint и копируем
+      try {
+        const db = require('../db');
+        db.pragma('wal_checkpoint(TRUNCATE)');
+        fs.copyFileSync(DB_PATH, backupPath);
+        success = true;
+      } catch (err2) {
+        console.error('❌ Оба способа бэкапа провалились:', err2.message);
+      }
+    }
+
+    if (!success) return null;
 
     const stats = fs.statSync(backupPath);
     console.log(`✅ Бэкап создан: ${backupName} (${(stats.size / 1024).toFixed(1)} КБ)`);
 
-    // Чистим старые бэкапы
     cleanupOldBackups();
 
     return backupName;
@@ -103,16 +133,35 @@ function listBackups() {
 function restoreBackup(backupName) {
   try {
     const safeName = path.basename(backupName);
+
+    // ✅ ФИКС: защита от path traversal
+    if (!safeName.match(/^shop-[\d\-T]+\.db$/)) {
+      throw new Error('Недопустимое имя бэкапа');
+    }
+
     const backupPath = path.join(BACKUP_DIR, safeName);
 
     if (!fs.existsSync(backupPath)) {
       throw new Error('Бэкап не найден');
     }
 
-    // Копируем бэкап поверх текущей БД
+    // ✅ ФИКС: ЗАКРЫВАЕМ текущее соединение (иначе порча SQLite)
+    const db = require('../db');
+    try {
+      db.close();
+    } catch (err) {
+      console.warn('Не удалось закрыть db:', err.message);
+    }
+
     fs.copyFileSync(backupPath, DB_PATH);
 
+    // ✅ Удаляем устаревшие WAL/SHM
+    try { fs.unlinkSync(DB_PATH + '-wal'); } catch {}
+    try { fs.unlinkSync(DB_PATH + '-shm'); } catch {}
+
     console.log(`♻️  Восстановлено из бэкапа: ${safeName}`);
+    console.log('⚠️  Сервер нужно перезапустить.');
+
     return true;
   } catch (err) {
     console.error('Ошибка восстановления:', err);

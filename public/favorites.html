@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Избранное — Cake.Me</title>
+  <meta name="robots" content="noindex" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link rel="stylesheet" href="/css/design-system.css" />
+  <link rel="stylesheet" href="/css/premium-effects.css" />
+  <link rel="stylesheet" href="/css/header-footer.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+  <link rel="stylesheet" href="/css/cookie-banner.css" />
+  <link rel="stylesheet" href="/css/catalog.css" />
+  <link rel="stylesheet" href="/css/favorites.css" />
+  <link rel="stylesheet" href="/css/operator-form.css" />
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container">
+      <div class="header__inner">
+        <a href="/" class="logo">
+<span class="logo__icon">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+    <rect x="4" y="10" width="16" height="11" />
+    <path d="M4 14h16" />
+    <path d="M8 10V6h8v4" />
+    <path d="M12 6V3" />
+    <path d="M10 3h4" />
+  </svg>
+</span>
+          <span class="logo__text">
+            <span class="logo__name" data-setting="site_name">Cake.Me</span>
+            <span class="logo__tagline">торты &amp; кофе</span>
+          </span>
+        </a>
+
+        <nav class="nav" id="nav">
+          <a href="/" class="nav__link">Главная</a>
+          <a href="/catalog.html?type=cake" class="nav__link">Торты</a>
+          <a href="/catalog.html?type=coffee" class="nav__link">Кофе</a>
+          <a href="/favorites.html" class="nav__link is-active">Избранное</a>
+        </nav>
+
+        <div class="header__actions">
+          <a href="/favorites.html" class="icon-btn" aria-label="Избранное">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span class="icon-btn__badge" id="favorites-badge" style="display:none">0</span>
+          </a>
+
+          <a href="/cart.html" class="icon-btn" aria-label="Корзина">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"></circle>
+              <circle cx="19" cy="21" r="1"></circle>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+            </svg>
+            <span class="icon-btn__badge" id="cart-badge" style="display:none">0</span>
+          </a>
+
+          <a href="/account.html" class="icon-btn" aria-label="Личный кабинет">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </a>
+
+          <button class="burger" id="burger" aria-label="Меню">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="page-header__inner">
+        <div class="breadcrumbs">
+          <a href="/">Главная</a>
+          <span class="breadcrumbs__sep">/</span>
+          <span>Избранное</span>
+        </div>
+        <h1 class="page-header__title">Моё <em>избранное</em></h1>
+        <p class="page-header__desc">Товары, которые вы сохранили на будущее</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="catalog">
+    <div class="container">
+      <div class="catalog__header">
+        <div class="catalog__count" id="favorites-count">Загрузка...</div>
+        <button class="catalog__reset hidden" id="clear-favorites-btn">Очистить всё ✕</button>
+      </div>
+
+      <div class="grid grid--4" id="favorites-grid">
+        <div class="loading">
+          <div class="loading__spinner"></div>
+          Загружаем избранное...
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__legal">
+        <div class="footer__legal-row">
+          <span data-setting="legal_name"></span>
+          <span data-setting="legal_inn_wrap" data-prefix="ИНН: " data-setting="legal_inn"></span>
+          <span data-setting="legal_ogrn_wrap" data-prefix="ОГРН: " data-setting="legal_ogrn"></span>
+        </div>
+        <div class="footer__legal-row">
+          <span data-setting="legal_address"></span>
+          <span data-setting="working_hours"></span>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span>© 2026 Cake.Me. Все права защищены.</span>
+        <div class="footer__bottom-links">
+          <a href="/privacy.html">Политика конфиденциальности</a>
+          <a href="/offer.html">Публичная оферта</a>
+          <a href="/returns.html">Возврат и обмен</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/premium.js"></script>
+  <script src="/js/toast.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/product-card.js"></script>
+  <script src="/js/favorites.js"></script>
+  <script src="/js/cookie-banner.js"></script>
+  <script src="/js/operator-form.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+/* ============================================================
+   АДМИН: ЗАЯВКИ ОПЕРАТОРУ
+   ============================================================ */
+
+/* Табы */
+.operator-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--admin-card);
+  padding: 4px;
+  border-radius: var(--admin-radius-md);
+  border: 1px solid var(--admin-border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.operator-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.operator-tab {
+  padding: 10px 18px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: all 0.2s var(--admin-ease);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.operator-tab:hover {
+  color: var(--admin-text);
+  background: var(--admin-elevated);
+}
+
+.operator-tab.is-active {
+  background: var(--admin-sidebar);
+  color: var(--admin-gold-bright);
+  border: 1px solid var(--admin-border-gold);
+}
+
+.operator-tab__count {
+  padding: 1px 8px;
+  border-radius: 100px;
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--admin-elevated);
+  color: var(--admin-text-muted);
+}
+
+.operator-tab.is-active .operator-tab__count {
+  background: var(--admin-gold-deep);
+  color: var(--admin-text);
+}
+
+/* Карточка */
+.operator-card {
+  transition: all 0.25s var(--admin-ease);
+}
+
+.operator-card:hover {
+  border-color: var(--admin-border-gold) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-md);
+}

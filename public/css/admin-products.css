@@ -162,6 +162,22 @@
   justify-content: center;
   font-size: 1.5rem;
   flex-shrink: 0;
+  overflow: hidden;                /* ✅ обрезаем всё, что вылезло */
+}
+
+/* ✅ ФИКС: ограничиваем img внутри превью */
+.prods-table__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+
+/* ✅ ФИКС: SVG-иконки тоже ограничиваем */
+.prods-table__image svg {
+  width: 24px;
+  height: 24px;
 }
 
 .prods-table__image--coffee {

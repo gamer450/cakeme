@@ -1,0 +1,201 @@
+/* ============================================================
+   АДМИН: ПРОМОКОДЫ
+   ============================================================ */
+
+.promos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.promos-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.promos-header__title small {
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  margin-left: 8px;
+}
+
+/* Сетка */
+.promos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* Карточка */
+.promo-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  transition: all 0.2s var(--admin-ease);
+}
+
+.promo-card:hover {
+  border-color: var(--admin-border-gold);
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-md);
+}
+
+.promo-card--disabled,
+.promo-card--expired,
+.promo-card--exhausted {
+  opacity: 0.55;
+}
+
+.promo-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.promo-card__code {
+  font-family: var(--admin-font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--admin-gold-bright);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.promo-card__status {
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid;
+}
+
+.promo-card__status--active {
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
+  border-color: rgba(107, 191, 135, 0.3);
+}
+
+.promo-card__status--disabled {
+  background: var(--admin-elevated);
+  color: var(--admin-text-dim);
+  border-color: var(--admin-border);
+}
+
+.promo-card__status--expired,
+.promo-card__status--exhausted {
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger);
+  border-color: rgba(224, 120, 120, 0.3);
+}
+
+.promo-card__discount {
+  font-family: var(--admin-font-display);
+  font-size: 2.25rem;
+  font-weight: 500;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.promo-card__desc {
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+  line-height: 1.5;
+}
+
+.promo-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid var(--admin-border);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.promo-card__meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--admin-text);
+}
+
+.promo-card__meta-label {
+  color: var(--admin-text-muted);
+}
+
+.promo-card__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.promo-card__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.promo-card__stat-label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.65rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.promo-card__stat-value {
+  font-family: var(--admin-font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.promo-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.promo-card__btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-elevated);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--admin-ease);
+  text-align: center;
+}
+
+.promo-card__btn:hover {
+  background: var(--admin-sidebar);
+  color: var(--admin-gold-bright);
+  border-color: var(--admin-border-gold);
+}
+
+.promo-card__btn--danger {
+  color: var(--admin-danger);
+}
+
+.promo-card__btn--danger:hover {
+  background: var(--admin-danger);
+  color: #fff;
+  border-color: var(--admin-danger);
+}

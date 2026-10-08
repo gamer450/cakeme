@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Тест оплаты — Cake.Me</title>
+  <link rel="stylesheet" href="/css/design-system.css" />
+  <link rel="stylesheet" href="/css/header-footer.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/operator-form.css" />
+</head>
+<body>
+
+  <main style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div style="max-width: 500px; text-align: center; background: var(--bg-card); padding: 48px; border-radius: var(--radius-xl); border: 1px solid var(--border-gold);">
+      <div style="font-size: 4rem; margin-bottom: 24px;">💳</div>
+      <h1 style="font-family: var(--font-display); font-size: 1.75rem; color: var(--text-primary); margin-bottom: 12px;">
+        Режим тестирования оплаты
+      </h1>
+      <p style="color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6;">
+        ЮKassa не настроена. Это страница-заглушка.
+        Нажмите «Оплатить» — заказ пометится оплаченным для тестирования.
+      </p>
+
+      <div style="background: var(--bg-elevated); padding: 20px; border-radius: var(--radius-md); margin-bottom: 32px; text-align: left;">
+        <div style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">ЗАКАЗ</div>
+        <div style="color: var(--text-primary); font-family: var(--font-mono); font-size: 1.25rem;" id="stub-order-id">—</div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <a href="/" class="btn btn-ghost" style="flex: 1;">Отмена</a>
+        <button class="btn btn-primary" id="stub-pay-btn" style="flex: 1;">
+          💳 Оплатить (тест)
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId');
+    const paymentId = params.get('paymentId');
+
+    if (orderId) {
+      document.getElementById('stub-order-id').textContent = '№' + orderId;
+    }
+
+    document.getElementById('stub-pay-btn').addEventListener('click', async () => {
+      // Отмечаем заказ как оплаченный через API
+      try {
+        const res = await fetch('/api/orders/' + orderId + '/payment-status');
+        const data = await res.json();
+
+        // Даже если статус не succeeded — просто редиректим
+        window.location.href = `/thanks.html?orderId=${orderId}&paid=1`;
+      } catch {
+        window.location.href = `/thanks.html?orderId=${orderId}`;
+      }
+    });
+  </script>
+
+</body>
+</html>

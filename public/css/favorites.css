@@ -1,0 +1,50 @@
+/* ============================================================
+   ИЗБРАННОЕ — дополнение к product-card
+   ============================================================ */
+
+/* Кнопка ❤️ на карточке — левый нижний угол */
+.product-card__fav {
+  position: absolute;
+  right: 18px;
+  bottom: 72px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--t-base) var(--ease-out);
+  z-index: 4;
+  opacity: 0.85;
+}
+
+.product-card__fav:hover {
+  border-color: rgba(232, 168, 124, 0.5);
+  color: var(--peach-200);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+  opacity: 1;
+}
+
+.product-card__fav.is-active {
+  background: rgba(232, 168, 124, 0.15);
+  border-color: var(--peach-300);
+  color: var(--peach-200);
+  opacity: 1;
+}
+
+.product-card__fav.is-active svg {
+  fill: currentColor;
+}
+
+.product-card__fav svg {
+  transition: transform var(--t-base) var(--ease-spring);
+}
+
+.product-card__fav:hover svg {
+  transform: scale(1.15);
+}

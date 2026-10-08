@@ -338,8 +338,8 @@
 
 .footer__grid {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1fr 1.2fr;
-  gap: 64px;
+  grid-template-columns: 1.8fr 1fr 1fr 1.2fr 1.4fr;
+  gap: 48px;
   margin-bottom: 72px;
   position: relative;
   z-index: 1;
@@ -563,4 +563,164 @@
    ============================================================ */
 :root {
   --radius-full: 999px;
+}
+/* Форма подписки */
+.footer__col--subscribe {
+  min-width: 0;
+}
+
+.subscribe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.subscribe-form input {
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  transition: all 0.2s var(--ease-out);
+}
+
+.subscribe-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.subscribe-form input:focus {
+  outline: none;
+  border-color: var(--peach-300);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--peach-glow);
+}
+
+.subscribe-form button {
+  padding: 12px 20px;
+  background: var(--grad-peach);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.subscribe-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-peach);
+}
+
+.subscribe-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.subscribe-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(107, 191, 135, 0.1);
+  border: 1px solid rgba(107, 191, 135, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--success);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.subscribe-success__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.subscribe-success strong {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .footer__grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .footer__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer__grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* Юридическая информация в футере */
+.footer__legal {
+  padding: 24px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer__legal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.footer__legal-row span {
+  position: relative;
+}
+
+.footer__legal-row span:not(:last-child)::after {
+  content: '•';
+  position: absolute;
+  right: -14px;
+  opacity: 0.4;
+}
+
+.footer__bottom-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer__bottom-links a {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: color 0.2s var(--ease-out);
+}
+
+.footer__bottom-links a:hover {
+  color: var(--peach-200);
+}
+
+@media (max-width: 640px) {
+  .footer__legal-row {
+    gap: 12px;
+    font-size: 0.7rem;
+  }
+
+  .footer__legal-row span:not(:last-child)::after {
+    display: none;
+  }
+
+  .footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

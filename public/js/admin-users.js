@@ -31,9 +31,9 @@ async function renderUsers(container) {
       </div>
       <div class="users-roles" id="users-roles">
         <button class="users-role is-active" data-role="all">Все</button>
-        <button class="users-role" data-role="client">👤 Клиенты</button>
-        <button class="users-role" data-role="manager">🧑‍💼 Менеджеры</button>
-        <button class="users-role" data-role="admin">👑 Админы</button>
+        <button class="users-role" data-role="client">Клиенты</button>
+        <button class="users-role" data-role="manager">Менеджеры</button>
+        <button class="users-role" data-role="admin">Админы</button>
       </div>
     </div>
 
@@ -68,7 +68,6 @@ async function usersLoad() {
     console.error(err);
     document.getElementById('users-table-wrap').innerHTML = `
       <div class="orders-empty">
-        <div class="orders-empty__icon">😕</div>
         <div class="orders-empty__title">Не удалось загрузить пользователей</div>
       </div>
     `;
@@ -136,7 +135,6 @@ function usersRenderTable() {
   if (list.length === 0) {
     wrap.innerHTML = `
       <div class="orders-empty">
-        <div class="orders-empty__icon">👥</div>
         <div class="orders-empty__title">Пользователи не найдены</div>
         <p>Измените фильтр или поиск</p>
       </div>
@@ -253,21 +251,18 @@ function usersOpenModal(id) {
             <label class="admin-form__label">Роль</label>
             <div class="role-options" id="role-options">
               <button type="button" class="role-option ${u.role === 'client' ? 'is-selected' : ''}" data-role="client" ${isMe ? 'disabled' : ''}>
-                <span class="role-option__icon">👤</span>
                 <div class="role-option__text">
                   <span class="role-option__title">Клиент</span>
                   <span class="role-option__desc">Может заказывать товары</span>
                 </div>
               </button>
               <button type="button" class="role-option ${u.role === 'manager' ? 'is-selected' : ''}" data-role="manager" ${isMe ? 'disabled' : ''}>
-                <span class="role-option__icon">🧑‍💼</span>
                 <div class="role-option__text">
                   <span class="role-option__title">Менеджер</span>
                   <span class="role-option__desc">Видит и обрабатывает заказы</span>
                 </div>
               </button>
               <button type="button" class="role-option ${u.role === 'admin' ? 'is-selected' : ''}" data-role="admin" ${isMe ? 'disabled' : ''}>
-                <span class="role-option__icon">👑</span>
                 <div class="role-option__text">
                   <span class="role-option__title">Администратор</span>
                   <span class="role-option__desc">Полный доступ</span>

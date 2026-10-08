@@ -477,3 +477,409 @@
     font-size: 1.25rem;
   }
 }
+.checkout-summary__row--discount {
+  color: var(--success);
+}
+
+.checkout-summary__discount-value {
+  color: var(--success) !important;
+  font-weight: 700;
+}
+/* ============================================================
+   ДОП. УСЛУГИ
+   ============================================================ */
+.checkout-extras {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.checkout-extra {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  position: relative;
+}
+
+.checkout-extra:hover {
+  border-color: var(--border-gold);
+  background: var(--bg-card);
+}
+
+.checkout-extra input {
+  display: none;
+}
+
+.checkout-extra:has(input:checked) {
+  border-color: var(--peach-300);
+  background: rgba(232, 168, 124, 0.06);
+  box-shadow: 0 0 0 3px var(--peach-glow);
+}
+
+.checkout-extra__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.checkout-extra__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checkout-extra__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.checkout-extra:has(input:checked) .checkout-extra__name {
+  color: var(--peach-200);
+}
+
+.checkout-extra__desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.checkout-extra__price {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold-100);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .checkout-extras {
+    grid-template-columns: 1fr;
+  }
+}
+/* ============================================================
+   СПОСОБ ПОЛУЧЕНИЯ
+   ============================================================ */
+.delivery-methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.delivery-method {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  position: relative;
+}
+
+.delivery-method:hover {
+  border-color: var(--border-gold);
+  background: var(--bg-card);
+}
+
+.delivery-method input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.delivery-method.is-selected {
+  border-color: var(--peach-300);
+  background: rgba(232, 168, 124, 0.06);
+  box-shadow: 0 0 0 3px var(--peach-glow);
+}
+
+.delivery-method__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-300);
+  flex-shrink: 0;
+  transition: all 0.2s var(--ease-out);
+}
+
+.delivery-method.is-selected .delivery-method__icon {
+  color: var(--peach-200);
+  border-color: var(--border-peach);
+}
+
+.delivery-method__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delivery-method__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.delivery-method__desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Самовывоз — адрес */
+.pickup-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+}
+
+.pickup-address__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(232, 168, 124, 0.08);
+  border: 1px solid var(--border-peach);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--peach-200);
+  flex-shrink: 0;
+}
+
+.pickup-address__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pickup-address__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.pickup-address__value {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.pickup-address__hours {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .delivery-methods {
+    grid-template-columns: 1fr;
+  }
+}
+/* ============================================================
+   ФОТОПЕЧАТЬ НА ТОРТЕ
+   ============================================================ */
+
+.cake-photo-upload {
+  position: relative;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  transition: all 0.3s var(--ease-out);
+  overflow: hidden;
+}
+
+.cake-photo-upload:hover {
+  border-color: var(--border-gold);
+  background: var(--bg-card);
+}
+
+.cake-photo-upload.is-dragover {
+  border-color: var(--peach-300);
+  background: rgba(232, 168, 124, 0.08);
+  transform: scale(1.01);
+}
+
+.cake-photo-upload__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px 24px;
+  cursor: pointer;
+  color: var(--gold-300);
+  transition: color 0.2s var(--ease-out);
+}
+
+.cake-photo-upload:hover .cake-photo-upload__placeholder {
+  color: var(--peach-200);
+}
+
+.cake-photo-upload__placeholder svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.cake-photo-upload__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cake-photo-upload__text strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.cake-photo-upload__text span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Превью */
+.cake-photo-upload__preview {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.cake-photo-upload__preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
+}
+
+.cake-photo-upload__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cake-photo-upload__info-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.cake-photo-upload__info-row span {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.cake-photo-upload__info-row strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.cake-photo-upload__remove {
+  padding: 10px 18px;
+  background: rgba(224, 120, 120, 0.1);
+  border: 1px solid rgba(224, 120, 120, 0.3);
+  color: var(--danger);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.cake-photo-upload__remove:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+  transform: translateY(-1px);
+}
+
+/* Прогресс */
+.cake-photo-upload__progress {
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.cake-photo-upload__progress-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.cake-photo-upload__progress-bar {
+  height: 4px;
+  background: var(--bg-deep);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.cake-photo-upload__progress-fill {
+  height: 100%;
+  background: var(--grad-peach);
+  border-radius: 100px;
+  transition: width 0.3s var(--ease-out);
+  box-shadow: 0 0 12px var(--peach-glow);
+}
+
+@media (max-width: 640px) {
+  .cake-photo-upload__placeholder {
+    flex-direction: column;
+    text-align: center;
+    padding: 32px 20px;
+    gap: 12px;
+  }
+
+  .cake-photo-upload__preview {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .cake-photo-upload__preview img {
+    width: 100%;
+    height: auto;
+    max-height: 240px;
+  }
+
+  .cake-photo-upload__remove {
+    width: 100%;
+  }
+}

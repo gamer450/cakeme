@@ -1,0 +1,532 @@
+/* ============================================================
+   СВЯЗАТЬСЯ С ОПЕРАТОРОМ
+   Плавающая кнопка + модалка
+   ============================================================ */
+
+/* ============================================================
+   ПЛАВАЮЩАЯ КНОПКА
+   ============================================================ */
+.operator-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9997;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, var(--peach-300) 0%, var(--peach-500) 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 12px 32px rgba(232, 168, 124, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: operatorBtnIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1s both;
+}
+
+.operator-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow:
+    0 20px 48px rgba(232, 168, 124, 0.55),
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.operator-btn:active {
+  transform: translateY(-1px) scale(1);
+}
+
+.operator-btn__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  animation: operatorBtnPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes operatorBtnIn {
+  from {
+    opacity: 0;
+    transform: translateY(80px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes operatorBtnPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15) rotate(-8deg); }
+}
+
+@media (max-width: 640px) {
+  .operator-btn {
+    bottom: 16px;
+    right: 16px;
+    padding: 12px;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    justify-content: center;
+  }
+
+  .operator-btn__text {
+    display: none;
+  }
+
+  .operator-btn__icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================================
+   МОДАЛКА
+   ============================================================ */
+.operator-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.operator-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.operator-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 5, 3, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.operator-modal__inner {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    var(--shadow-2xl),
+    0 0 60px rgba(201, 169, 97, 0.2);
+  transform: translateY(20px) scale(0.96);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.operator-modal.is-open .operator-modal__inner {
+  transform: translateY(0) scale(1);
+}
+
+.operator-modal__inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40px;
+  right: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-300), transparent);
+  opacity: 0.6;
+}
+
+/* ============================================================
+   ЗАГОЛОВОК МОДАЛКИ
+   ============================================================ */
+.operator-modal__header {
+  padding: 28px 32px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.operator-modal__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.operator-modal__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.operator-modal__subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.operator-modal__close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.operator-modal__close:hover {
+  background: rgba(224, 120, 120, 0.15);
+  border-color: rgba(224, 120, 120, 0.4);
+  color: var(--danger);
+  transform: rotate(90deg);
+}
+
+/* ============================================================
+   ФОРМА
+   ============================================================ */
+.operator-form {
+  padding: 24px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.operator-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.operator-form__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.operator-form__label .req {
+  color: var(--peach-300);
+}
+
+.operator-form__input,
+.operator-form__textarea {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-inner);
+  transition: all 0.2s var(--ease-out);
+}
+
+.operator-form__input::placeholder,
+.operator-form__textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.operator-form__input:focus,
+.operator-form__textarea:focus {
+  outline: none;
+  border-color: var(--peach-300);
+  background: var(--bg-card);
+  box-shadow:
+    var(--shadow-inner),
+    0 0 0 4px var(--peach-glow);
+}
+
+.operator-form__input.is-invalid,
+.operator-form__textarea.is-invalid {
+  border-color: var(--danger);
+  background: rgba(224, 120, 120, 0.05);
+}
+
+.operator-form__textarea {
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+  line-height: 1.55;
+}
+
+.operator-form__error {
+  display: none;
+  padding: 12px 16px;
+  background: rgba(224, 120, 120, 0.1);
+  border: 1px solid rgba(224, 120, 120, 0.3);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.operator-form__error.is-visible {
+  display: block;
+  animation: operatorFadeIn 0.3s var(--ease-out);
+}
+
+@keyframes operatorFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   КНОПКИ
+   ============================================================ */
+.operator-form__footer {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.operator-form__btn-cancel {
+  padding: 14px 24px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  white-space: nowrap;
+}
+
+.operator-form__btn-cancel:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.operator-form__btn-submit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--peach-300) 0%, var(--peach-500) 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.operator-form__btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-peach);
+}
+
+.operator-form__btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.operator-form__btn-submit svg {
+  transition: transform 0.2s var(--ease-out);
+}
+
+.operator-form__btn-submit:hover:not(:disabled) svg {
+  transform: translateX(4px);
+}
+
+.operator-form__btn-submit.is-loading svg {
+  display: none;
+}
+
+.operator-form__btn-submit.is-loading::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(22, 16, 12, 0.3);
+  border-top-color: var(--text-inverse);
+  border-radius: 50%;
+  animation: operatorSpin 0.7s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes operatorSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   PRIVACY
+   ============================================================ */
+.operator-form__privacy {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.operator-form__privacy a {
+  color: var(--peach-200);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.2s var(--ease-out);
+}
+
+.operator-form__privacy a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ============================================================
+   БЛАГОДАРНОСТЬ
+   ============================================================ */
+.operator-success {
+  padding: 48px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.operator-success__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(107, 191, 135, 0.15);
+  border: 1px solid rgba(107, 191, 135, 0.4);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  box-shadow:
+    0 0 32px rgba(107, 191, 135, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: operatorSuccessPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes operatorSuccessPop {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.operator-success__title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-top: 8px;
+}
+
+.operator-success__text {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 340px;
+}
+
+.operator-success__btn {
+  margin-top: 16px;
+  padding: 14px 32px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  color: var(--gold-100);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.operator-success__btn:hover {
+  background: var(--bg-card);
+  border-color: var(--gold-300);
+  color: var(--peach-200);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--shadow-glow-gold);
+}
+
+/* ============================================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ
+   ============================================================ */
+@media (max-width: 560px) {
+  .operator-modal {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .operator-modal__inner {
+    max-height: 92vh;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  }
+
+  .operator-modal__header {
+    padding: 20px 20px 16px;
+  }
+
+  .operator-modal__title {
+    font-size: 1.25rem;
+  }
+
+  .operator-modal__subtitle {
+    font-size: 0.8rem;
+  }
+
+  .operator-form {
+    padding: 20px 20px 24px;
+  }
+
+  .operator-form__footer {
+    flex-direction: column;
+  }
+
+  .operator-form__btn-cancel {
+    order: 2;
+    width: 100%;
+  }
+
+  .operator-form__btn-submit {
+    order: 1;
+    width: 100%;
+  }
+
+  .operator-success {
+    padding: 40px 24px;
+  }
+
+  .operator-success__title {
+    font-size: 1.5rem;
+  }
+}

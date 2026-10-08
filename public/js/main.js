@@ -21,7 +21,6 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 })();
-
 /* ============================================================
    2. МОБИЛЬНОЕ МЕНЮ
    ============================================================ */
@@ -85,7 +84,7 @@ async function loadCategories() {
     grid.innerHTML = categories.map((cat, i) => `
       <a href="/catalog.html?category=${cat.id}" class="category-card reveal" data-delay="${i + 1}" data-type="${cat.type}">
         <div class="category-card__icon">${iconFor(cat.type)}</div>
-        <h3 class="category-card__title">${cat.name}</h3>
+        <h3 class="category-card__title">${escapeHtml(cat.name)}</h3>
         <span class="category-card__arrow">
           Смотреть
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,18 +95,9 @@ async function loadCategories() {
     `).join('');
 
     // Анимация появления
+    // ✅ ФИКС: сразу показываем
     requestAnimationFrame(() => {
-      grid.querySelectorAll('.reveal').forEach(el => {
-        const obs = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              obs.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.12 });
-        obs.observe(el);
-      });
+      grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
     });
   } catch (err) {
     console.error('Ошибка загрузки категорий:', err);
@@ -129,6 +119,9 @@ async function loadProducts() {
     const cakes = products.filter(p => p.category_type === 'cake').slice(0, 4);
     const coffee = products.filter(p => p.category_type === 'coffee').slice(0, 4);
 
+        // ✅ ФИКС: кэш товаров для проверки остатков
+    window.__PRODUCTS_CACHE = products;
+
     if (bestsellersGrid) {
       bestsellersGrid.className = 'grid grid--4';
       bestsellersGrid.innerHTML = cakes.map((p, i) => renderCard(p, i, false)).join('');
@@ -141,15 +134,7 @@ async function loadProducts() {
 
     requestAnimationFrame(() => {
       document.querySelectorAll('.product-card.reveal').forEach(el => {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.12 });
-        observer.observe(el);
+        el.classList.add('is-visible');
       });
     });
 
@@ -170,7 +155,7 @@ function renderCard(product, index, isCoffee) {
   const cardClass = isCoffee ? 'product-card product-card--coffee reveal' : 'product-card reveal';
 
   const imageHtml = product.image
-    ? `<img src="${product.image}" alt="${product.name}" loading="lazy" />`
+    ? `<img src="${product.image}" alt="${escapeHtml(product.name)}" loading="lazy" />`
     : `<span class="product-card__image-fallback">
         ${isCoffee
           ? `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>`
@@ -185,9 +170,9 @@ function renderCard(product, index, isCoffee) {
         ${imageHtml}
       </div>
       <div class="product-card__body">
-        <span class="product-card__category">${product.category_name}</span>
-        <h3 class="product-card__title">${product.name}</h3>
-        <p class="product-card__desc">${product.description || ''}</p>
+        <span class="product-card__category">${escapeHtml(product.category_name)}</span>
+        <h3 class="product-card__title">${escapeHtml(product.name)}</h3>
+        <p class="product-card__desc">${escapeHtml(product.description || '')}</p>
         <div class="product-card__footer">
           <div>
             <div class="product-card__price">${product.price} ₽</div>
@@ -223,20 +208,52 @@ function saveCart(cart) {
 
 function updateCartBadge() {
   const badge = document.getElementById('cart-badge');
-  if (!badge) return;
-  const cart = getCart();
-  const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-  if (count > 0) {
-    badge.textContent = count;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
+  if (badge) {
+    const cart = getCart();
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // ✅ Бейдж избранного
+  const favBadge = document.getElementById('favorites-badge');
+  if (favBadge) {
+    try {
+      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      if (favs.length > 0) {
+        favBadge.textContent = favs.length;
+        favBadge.style.display = 'flex';
+      } else {
+        favBadge.style.display = 'none';
+      }
+    } catch {
+      favBadge.style.display = 'none';
+    }
   }
 }
 
 function addToCart(productId) {
+  // ✅ ФИКС: проверяем остаток через кэш товаров
+  const product = (window.__PRODUCTS_CACHE || []).find(p => p.id === productId);
+
+  if (product && product.track_stock === 1 && product.stock === 0) {
+    showToast('Товара нет в наличии');
+    return;
+  }
+
   const cart = getCart();
   const existing = cart.find(item => item.productId === productId);
+  const currentQty = existing ? existing.quantity : 0;
+
+  if (product && product.track_stock === 1 && currentQty + 1 > product.stock) {
+    showToast(`На складе только ${product.stock} шт`);
+    return;
+  }
+
   if (existing) {
     existing.quantity += 1;
   } else {
@@ -305,14 +322,19 @@ async function initHeroMedia() {
     videoEl.setAttribute('autoplay', '');
     videoEl.setAttribute('playsinline', '');
 
-    videoEl.addEventListener('loadeddata', () => {
-      videoEl.classList.add('is-ready');
-      if (visualEl) visualEl.style.opacity = '0.15';
+videoEl.addEventListener('loadeddata', () => {
+  videoEl.classList.add('is-ready');
 
-      videoEl.play().catch((err) => {
-        console.warn('Автовоспроизведение заблокировано:', err);
-      });
-    });
+  // ✅ ФИКС: полностью скрываем SVG-иконки, когда видео готово
+  if (visualEl) {
+    visualEl.style.opacity = '0';
+    visualEl.style.pointerEvents = 'none';
+  }
+
+  videoEl.play().catch((err) => {
+    console.warn('Автовоспроизведение заблокировано:', err);
+  });
+});
 
     videoEl.addEventListener('ended', () => {
       videoEl.currentTime = 0;
@@ -374,4 +396,205 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCategories();
   loadProducts();
   initHeroMedia();
+  renderAboutBlock();   // ← добавили
 });
+
+// ============================================================
+// ABOUT-БЛОК — карусель: 3 фото → видео → зацикливание
+// ============================================================
+async function renderAboutBlock() {
+  const wrap = document.getElementById('about-block');
+  if (!wrap) return;
+
+  await waitForSettings();
+
+  const s = window.SITE_SETTINGS || {};
+  const esc = (str) => window.escapeHtml ? window.escapeHtml(str) : String(str || '');
+
+  // Собираем список медиа
+  const media = [];
+  if (s.about_image_1) media.push({ type: 'image', url: s.about_image_1 });
+  if (s.about_image_2) media.push({ type: 'image', url: s.about_image_2 });
+  if (s.about_image_3) media.push({ type: 'image', url: s.about_image_3 });
+  if (s.about_video)   media.push({ type: 'video', url: s.about_video });
+
+  // Если ничего нет — рендерим fallback с SVG
+  const hasData = s.about_title || s.about_text_1 || media.length > 0;
+  if (!hasData) return;
+
+  const title = (s.about_title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/&lt;br&gt;/g, '<br>').replace(/&lt;em&gt;/g, '<em>').replace(/&lt;\/em&gt;/g, '</em>');
+
+  // Слайдер (если медиа есть)
+  const sliderHtml = media.length > 0
+    ? `
+      <div class="about__slider" id="about-slider">
+        ${media.map((m, i) => `
+          <div class="about__slide ${i === 0 ? 'is-active' : ''}" data-index="${i}" data-type="${m.type}">
+            ${m.type === 'video'
+              ? `<video src="${esc(m.url)}" muted loop playsinline preload="metadata"></video>`
+              : `<img src="${esc(m.url)}" alt="" loading="lazy" />`
+            }
+          </div>
+        `).join('')}
+
+        ${media.length > 1 ? `
+          <div class="about__dots">
+            ${media.map((_, i) => `
+              <button class="about__dot ${i === 0 ? 'is-active' : ''}" data-index="${i}" aria-label="Слайд ${i + 1}"></button>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `
+    : `
+      <div class="about__visual">
+        <div class="about__image-wrapper">
+          <div class="about__image about__image--1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/><path d="M10 15h4M10 18h4"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    `;
+
+  wrap.innerHTML = `
+    <div class="about__visual reveal reveal--left">
+      ${sliderHtml}
+    </div>
+
+    <div class="about__content reveal reveal--right">
+      <span class="eyebrow">${esc(s.about_subtitle || 'о нас')}</span>
+      <h2 class="section__title mt-5">${title}</h2>
+
+      ${s.about_text_1 ? `<p class="about__text mt-5">${esc(s.about_text_1)}</p>` : ''}
+      ${s.about_text_2 ? `<p class="about__text">${esc(s.about_text_2)}</p>` : ''}
+
+      <div class="about__features">
+        ${s.about_feature_1_title ? `
+          <div class="about__feature">
+            <div class="about__feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+              </svg>
+            </div>
+            <div>
+              <strong>${esc(s.about_feature_1_title)}</strong>
+              <p>${esc(s.about_feature_1_desc || '')}</p>
+            </div>
+          </div>
+        ` : ''}
+
+        ${s.about_feature_2_title ? `
+          <div class="about__feature">
+            <div class="about__feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="8" x="2" y="3" rx="2"/>
+                <path d="M6 3v8M10 3v8M14 3v8M18 3v8M6 11v10M14 11v10"/>
+              </svg>
+            </div>
+            <div>
+              <strong>${esc(s.about_feature_2_title)}</strong>
+              <p>${esc(s.about_feature_2_desc || '')}</p>
+            </div>
+          </div>
+        ` : ''}
+
+        ${s.about_feature_3_title ? `
+          <div class="about__feature">
+            <div class="about__feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </div>
+            <div>
+              <strong>${esc(s.about_feature_3_title)}</strong>
+              <p>${esc(s.about_feature_3_desc || '')}</p>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  // ✅ Сразу показываем
+  requestAnimationFrame(() => {
+    wrap.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+  });
+
+  // ✅ Запускаем карусель
+  initAboutSlider();
+}
+
+// ============================================================
+// Карусель About: фото → видео → зацикливание
+// ============================================================
+function initAboutSlider() {
+  const slider = document.getElementById('about-slider');
+  if (!slider) return;
+
+  const slides = slider.querySelectorAll('.about__slide');
+  const dots = slider.querySelectorAll('.about__dot');
+  if (slides.length === 0) return;
+
+  let current = 0;
+  let timer = null;
+
+  // Длительность показа фото (мс)
+  const PHOTO_DURATION = 4000;  // 4 сек
+
+  function showSlide(index) {
+    slides.forEach((s, i) => s.classList.toggle('is-active', i === index));
+    dots.forEach((d, i) => d.classList.toggle('is-active', i === index));
+    current = index;
+
+    const slide = slides[index];
+    const isVideo = slide.dataset.type === 'video';
+
+    // Сбрасываем старый таймер
+    clearTimeout(timer);
+
+    if (isVideo) {
+      const video = slide.querySelector('video');
+      if (video) {
+        // ✅ Видео: играем, ждём окончания, потом следующий слайд
+        video.currentTime = 0;
+        video.play().catch(() => {});
+
+        // На всякий случай — если видео не играет (автоплей заблокирован)
+        const fallbackTimer = setTimeout(() => nextSlide(), 10000);  // 10 сек макс
+
+        video.onended = () => {
+          clearTimeout(fallbackTimer);
+          nextSlide();
+        };
+      } else {
+        // Видео нет — переключаем через таймер
+        timer = setTimeout(nextSlide, PHOTO_DURATION);
+      }
+    } else {
+      // ✅ Фото: ждём PHOTO_DURATION и переключаем
+      timer = setTimeout(nextSlide, PHOTO_DURATION);
+    }
+  }
+
+  function nextSlide() {
+    const next = (current + 1) % slides.length;
+    showSlide(next);
+  }
+
+  // Клик по точкам — ручное переключение
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const idx = parseInt(dot.dataset.index, 10);
+      if (idx === current) return;
+      clearTimeout(timer);
+      showSlide(idx);
+    });
+  });
+
+  // Старт
+  showSlide(0);
+}

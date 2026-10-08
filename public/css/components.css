@@ -1,331 +1,253 @@
-/* ============================================
-   КОМПОНЕНТЫ — Кнопки, Карточки, Формы
-   ============================================ */
+/* ============================================================
+   КОМПОНЕНТЫ — дополнение к design-system.css
+   v2.0 — только то, чего нет в design-system (не дублируем!)
+   ============================================================ */
 
-/* ============ КНОПКИ ============ */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 28px;
-  font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: var(--r-full);
-  transition: all var(--t-med) var(--ease);
-  cursor: pointer;
-  border: 2px solid transparent;
-  white-space: nowrap;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s var(--ease), height 0.6s var(--ease);
-}
-
-.btn:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
-/* Primary — розовая */
-.btn-primary {
-  background: linear-gradient(135deg, var(--pink-soft) 0%, var(--pink-hover) 100%);
-  color: var(--white);
-  box-shadow: 0 8px 20px rgba(255, 155, 133, 0.35);
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(255, 155, 133, 0.5);
-}
-
-.btn-primary:active {
-  transform: translateY(-1px);
-}
-
-/* Secondary — обводка */
-.btn-secondary {
-  background: transparent;
-  color: var(--choco);
-  border-color: var(--choco);
-}
-
-.btn-secondary:hover {
-  background: var(--choco);
-  color: var(--white);
-  transform: translateY(-3px);
-}
-
-/* Coffee — для кофейной секции */
-.btn-coffee {
-  background: linear-gradient(135deg, var(--gold) 0%, var(--latte) 100%);
-  color: var(--coffee-dark);
-  box-shadow: 0 8px 20px rgba(212, 165, 116, 0.4);
-  font-weight: 700;
-}
-
-.btn-coffee:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(212, 165, 116, 0.6);
-}
-
-/* Ghost */
-.btn-ghost {
-  background: transparent;
-  color: var(--choco);
-  padding: 12px 20px;
-}
-
-.btn-ghost:hover {
-  color: var(--pink-hover);
-}
-
-/* Размеры */
-.btn-lg {
-  padding: 18px 40px;
-  font-size: 1.1rem;
-}
-
-.btn-sm {
-  padding: 10px 20px;
-  font-size: 0.9rem;
-}
-
-/* ============ КАРТОЧКА ТОВАРА ============ */
+/* ============================================================
+   1. КАРТОЧКА ТОВАРА
+   ============================================================ */
 
 .product-card {
-  background: var(--white);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--t-med) var(--ease);
   position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md), var(--shadow-inner);
+  transition: all var(--t-base) var(--ease-out);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
+  isolation: isolate;
 }
 
-.product-card::after {
+.product-card::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: var(--r-lg);
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(201, 169, 97, 0.45) 0%,
+    rgba(232, 168, 124, 0.2) 40%,
+    transparent 70%,
+    rgba(201, 169, 97, 0.3) 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
   pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(74, 44, 42, 0.04);
-  transition: box-shadow var(--t-med) var(--ease);
+  opacity: 0;
+  transition: opacity var(--t-base) var(--ease-out);
+  z-index: 2;
 }
 
 .product-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl), var(--shadow-inner);
+  background: var(--bg-card-hi);
 }
 
-.product-card:hover::after {
-  box-shadow: inset 0 0 0 1px var(--pink-soft);
+.product-card:hover::before {
+  opacity: 1;
+}
+
+.product-card__link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
 }
 
 .product-card__image {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--peach-light) 0%, var(--cream-dark) 100%);
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .product-card__image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--t-slow) var(--ease);
+  transition: transform var(--t-slow) var(--ease-out);
+  display: block;
 }
 
 .product-card:hover .product-card__image img {
-  transform: scale(1.08);
+  transform: scale(1.06);
+}
+
+.product-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-300);
+  transition: all var(--t-base) var(--ease-out);
+}
+
+.product-card__placeholder svg {
+  width: 42%;
+  height: 42%;
+  opacity: 0.55;
+  transition: all var(--t-base) var(--ease-out);
+}
+
+.product-card:hover .product-card__placeholder svg {
+  opacity: 0.75;
+  transform: scale(1.08) rotate(-4deg);
+  color: var(--peach-200);
 }
 
 .product-card__badge {
   position: absolute;
   top: 16px;
   left: 16px;
-  padding: 6px 14px;
-  background: var(--white);
-  color: var(--pink-hover);
-  font-size: 0.8rem;
-  font-weight: 700;
-  border-radius: var(--r-full);
-  box-shadow: var(--shadow-sm);
-  z-index: 2;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.product-card__badge--hot {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%);
-  color: var(--white);
+  z-index: 3;
 }
 
 .product-card__body {
-  padding: 20px;
+  padding: 22px 22px 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
 }
 
 .product-card__category {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--gold-300);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.18em;
 }
 
 .product-card__title {
   font-family: var(--font-display);
   font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--choco);
-  line-height: 1.3;
-  transition: color var(--t-fast) var(--ease);
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  transition: color var(--t-fast) var(--ease-out);
 }
 
 .product-card:hover .product-card__title {
-  color: var(--pink-hover);
+  color: var(--peach-200);
 }
 
 .product-card__desc {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
   display: -webkit-box;
-    line-clamp: 2;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
+  box-orient: vertical;
   overflow: hidden;
+  margin-top: 4px;
 }
 
 .product-card__footer {
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
 }
 
+.product-card__price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .product-card__price {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--choco);
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: var(--gold-100);
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 .product-card__weight {
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
   color: var(--text-muted);
-  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .product-card__btn {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  background: var(--pink-soft);
-  color: var(--white);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold);
+  color: var(--gold-100);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--t-fast) var(--ease);
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--t-base) var(--ease-out);
+  z-index: 4;
+  overflow: hidden;
+}
+
+.product-card__btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--grad-peach);
+  opacity: 0;
+  transition: opacity var(--t-base) var(--ease-out);
+  z-index: -1;
+}
+
+.product-card__btn svg {
+  transition: transform var(--t-base) var(--ease-spring);
+  position: relative;
+  z-index: 1;
 }
 
 .product-card__btn:hover {
-  background: var(--pink-hover);
+  border-color: var(--peach-300);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-peach);
+}
+
+.product-card__btn:hover::before {
+  opacity: 1;
+}
+
+.product-card__btn:hover svg {
+  color: var(--text-inverse);
   transform: rotate(90deg) scale(1.1);
 }
 
-/* Coffee variant */
-.product-card--coffee .product-card__image {
-  background: linear-gradient(135deg, var(--coffee-light) 0%, var(--coffee) 100%);
+.product-card__btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-.product-card--coffee:hover .product-card__title {
-  color: var(--gold);
-}
-
-.product-card--coffee .product-card__btn {
-  background: var(--gold);
-}
-
-.product-card--coffee .product-card__btn:hover {
-  background: var(--latte);
-}
-
-/* ============ СЕКЦИЯ ============ */
-
-.section {
-  padding: 100px 0;
-  position: relative;
-}
-
-.section--peach {
-  background: linear-gradient(180deg, var(--cream) 0%, var(--peach-light) 100%);
-}
-
-.section--coffee {
-  background: linear-gradient(135deg, var(--coffee-dark) 0%, var(--coffee) 100%);
-  color: var(--cream-on-dark);
-}
-
-.section--coffee h2,
-.section--coffee h3 {
-  color: var(--cream-on-dark);
-}
-
-.section__header {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto 60px;
-}
-
-.section__subtitle {
-  font-family: var(--font-accent);
-  font-size: 1.75rem;
-  color: var(--pink-hover);
-  display: block;
-  margin-bottom: 8px;
-}
-
-.section--coffee .section__subtitle {
-  color: var(--gold);
-}
-
-.section__title {
-  margin-bottom: 16px;
-}
-
-.section__desc {
-  font-size: 1.05rem;
-  color: var(--text-muted);
-}
-
-.section--coffee .section__desc {
-  color: rgba(245, 230, 211, 0.75);
-}
-
-/* ============ СЕТКА ============ */
+/* ============================================================
+   2. СЕТКИ
+   ============================================================ */
 
 .grid {
   display: grid;
@@ -336,32 +258,41 @@
 .grid--3 { grid-template-columns: repeat(3, 1fr); }
 .grid--2 { grid-template-columns: repeat(2, 1fr); }
 
-@media (max-width: 1024px) {
-  .grid--4 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1100px) {
+  .grid--4 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .grid--4,
   .grid--3 { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 560px) {
   .grid--4,
   .grid--3,
   .grid--2 { grid-template-columns: 1fr; }
 }
 
-/* ============ ПЛАШКА «ЗАГРУЗКА» ============ */
+/* ============================================================
+   3. LOADING
+   ============================================================ */
 
 .loading {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   color: var(--text-muted);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
 }
 
 .loading__spinner {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 16px;
-  border: 3px solid var(--peach);
-  border-top-color: var(--pink-hover);
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 18px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--peach-300);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -370,16 +301,127 @@
   to { transform: rotate(360deg); }
 }
 
-/* ============ SKELETON (для будущего) ============ */
+/* ============================================================
+   4. ПУСТОЕ СОСТОЯНИЕ
+   ============================================================ */
 
-.skeleton {
-  background: linear-gradient(90deg, var(--cream-dark) 25%, var(--peach-light) 50%, var(--cream-dark) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: var(--r-md);
+.empty {
+  text-align: center;
+  padding: 80px 20px;
 }
 
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.empty__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  color: var(--gold-300);
+  opacity: 0.4;
+}
+
+.empty__title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  letter-spacing: -0.015em;
+}
+
+.empty__text {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+
+/* ============================================================
+   5. TOAST
+   ============================================================ */
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(24px);
+  padding: 16px 32px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-xl), var(--shadow-glow-gold);
+  opacity: 0;
+  z-index: var(--z-toast);
+  transition: all var(--t-base) var(--ease-out);
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast--error {
+  border-color: rgba(224, 120, 120, 0.4);
+  box-shadow: var(--shadow-xl), 0 0 24px rgba(224, 120, 120, 0.3);
+  color: var(--danger);
+}
+
+.toast--success {
+  border-color: var(--border-gold);
+  color: var(--gold-100);
+}
+/* ============================================================
+   ЕДИНЫЙ TOAST (v2)
+   ============================================================ */
+.toast-v2 {
+  padding: 14px 24px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-xl), var(--shadow-glow-gold);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.35s var(--ease-out);
+  backdrop-filter: blur(20px);
+  pointer-events: none;
+  max-width: 500px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.toast-v2--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-v2--error {
+  border-color: rgba(224, 120, 120, 0.5);
+  color: var(--danger);
+  box-shadow: var(--shadow-xl), 0 0 24px rgba(224, 120, 120, 0.3);
+}
+
+.toast-v2--warning {
+  border-color: rgba(224, 184, 120, 0.5);
+  color: var(--warning);
+  box-shadow: var(--shadow-xl), 0 0 24px rgba(224, 184, 120, 0.3);
+}
+
+.toast-v2--info {
+  border-color: var(--border-gold);
+  color: var(--gold-100);
+}
+
+.toast-v2--success {
+  border-color: rgba(107, 191, 135, 0.5);
+  color: var(--success);
 }

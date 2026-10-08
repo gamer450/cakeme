@@ -1,0 +1,139 @@
+/* ============================================================
+   ЮРИДИЧЕСКИЕ СТРАНИЦЫ (privacy, offer, returns)
+   ============================================================ */
+.legal-page {
+  padding: 60px 0 120px;
+}
+
+.legal-content {
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.legal-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 16px 20px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--gold-300);
+  margin-bottom: 40px;
+}
+
+.legal-content h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 48px 0 16px;
+  letter-spacing: -0.02em;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.legal-content h2:first-of-type {
+  margin-top: 0;
+}
+
+.legal-content h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 24px 0 12px;
+}
+
+.legal-content p {
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.legal-content ul, .legal-content ol {
+  margin: 0 0 20px 0;
+  padding-left: 24px;
+  list-style-position: outside;
+}
+
+.legal-content ul li {
+  list-style-type: none;
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+}
+
+.legal-content ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  background: var(--peach-300);
+  border-radius: 50%;
+}
+
+.legal-content ul li ul {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.legal-content ul li ul li::before {
+  background: var(--gold-300);
+  width: 4px;
+  height: 4px;
+  top: 11px;
+}
+
+.legal-content ol {
+  list-style: decimal;
+}
+
+.legal-content ol li {
+  list-style-position: outside;
+  margin-bottom: 10px;
+  padding-left: 8px;
+}
+
+.legal-content ol li::marker {
+  color: var(--peach-200);
+  font-weight: 600;
+}
+
+.legal-content a {
+  color: var(--peach-200);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: all 0.2s var(--ease-out);
+}
+
+.legal-content a:hover {
+  color: var(--gold-100);
+  text-decoration-color: currentColor;
+}
+
+.legal-content strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .legal-page {
+    padding: 32px 0 80px;
+  }
+
+  .legal-content {
+    font-size: 0.95rem;
+  }
+
+  .legal-content h2 {
+    font-size: 1.25rem;
+    margin-top: 32px;
+  }
+}

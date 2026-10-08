@@ -1,6 +1,30 @@
+# Зависимости
 node_modules/
+
+# Секреты
 .env
+
+# Логи
 *.log
+data/logs/
+
+# База данных
 data/*.db
 data/*.db-journal
+
+# Бэкапы
+data/backups/
+
+# Загрузки пользователей (кроме .gitkeep)
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/products/.gitkeep
+!public/uploads/hero/.gitkeep
+!public/uploads/banners/.gitkeep
+!public/uploads/misc/.gitkeep
+
+# Системное
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/

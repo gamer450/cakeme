@@ -55,10 +55,15 @@ function renderConstructor() {
 
   container.innerHTML = `
     <div class="constructor-layout">
-      <!-- ВИЗУАЛИЗАЦИЯ -->
+      <!-- ВИЗУАЛИЗАЦИЯ 3D -->
       <aside class="constructor-preview reveal reveal--left">
         <div class="constructor-preview__cake">
-          ${renderCakeSvg()}
+          <div class="constructor-preview__3d" id="cake-3d-container">
+            <div class="loading" style="height:100%;display:flex;align-items:center;justify-content:center;">
+              <div class="loading__spinner"></div>
+            </div>
+            <div class="constructor-preview__3d-hint">Потяните, чтобы вращать</div>
+          </div>
         </div>
 
         <div class="constructor-total">
@@ -90,6 +95,109 @@ function renderConstructor() {
   initOptionEvents();
   initCartBtn();
   initReveal();
+  init3D();
+}
+
+// ============================================================
+// Инициализация 3D
+// ============================================================
+function init3D() {
+  // Ждём загрузки Three.js
+  let attempts = 0;
+  const checkInterval = setInterval(() => {
+    attempts++;
+
+    if (window.Cake3D && typeof THREE !== 'undefined') {
+      clearInterval(checkInterval);
+
+      const success = window.Cake3D.init('cake-3d-container');
+
+      if (success) {
+        update3DFromState();
+      } else {
+        fallbackToSvg();
+      }
+    }
+
+    if (attempts > 30) {
+      clearInterval(checkInterval);
+      fallbackToSvg();
+    }
+  }, 100);
+}
+
+// ============================================================
+// Обновление 3D по текущему состоянию
+// ============================================================
+function update3DFromState() {
+  if (!window.Cake3D?.isReady()) return;
+
+  // Находим текущие опции
+  const shapeItem = cState.grouped.shape.find(s => s.id === cState.selected.shape);
+  const fillingItem = cState.grouped.filling.find(f => f.id === cState.selected.filling);
+
+  const shapeName = (shapeItem?.name || '').toLowerCase();
+  const fillingName = (fillingItem?.name || '').toLowerCase();
+    // ✅ Вес
+  const weightItem = cState.grouped.weight.find(w => w.id === cState.selected.weight);
+  const weightName = (weightItem?.name || '2 кг').toLowerCase();
+  let weightKg = 2;
+
+  if (weightName.includes('1 кг') || weightName.includes('1кг')) weightKg = 1;
+  else if (weightName.includes('1.5') || weightName.includes('1,5')) weightKg = 1.5;
+  else if (weightName.includes('2 кг') || weightName.includes('2кг')) weightKg = 2;
+  else if (weightName.includes('3 кг') || weightName.includes('3кг')) weightKg = 3;
+
+  // Определяем форму
+  let shapeKey = 'round';
+  if (shapeName.includes('квадрат')) shapeKey = 'square';
+  else if (shapeName.includes('сердц')) shapeKey = 'heart';
+  else if (shapeName.includes('овал')) shapeKey = 'oval';
+  else if (shapeName.includes('шести') || shapeName.includes('гекс')) shapeKey = 'hexagon';
+  else if (shapeName.includes('цвет') || shapeName.includes('ромаш')) shapeKey = 'flower';
+
+  // Определяем начинку
+  let fillingKey = 'vanilla';
+  if (fillingName.includes('шоколад')) fillingKey = 'chocolate';
+  else if (fillingName.includes('фрукт')) fillingKey = 'fruits';
+  else if (fillingName.includes('орех')) fillingKey = 'nuts';
+  else if (fillingName.includes('карамел')) fillingKey = 'caramel';
+  else if (fillingName.includes('бархат') || fillingName.includes('красн')) fillingKey = 'redvelvet';
+  else if (fillingName.includes('тирамису')) fillingKey = 'tiramisu';
+  else if (fillingName.includes('лимон')) fillingKey = 'lemon';
+  else if (fillingName.includes('кокос')) fillingKey = 'coconut';
+  // Декор
+  const decorKeys = [];
+  cState.selected.decor.forEach(id => {
+    const item = cState.grouped.decor.find(d => d.id === id);
+    if (!item) return;
+    const name = item.name.toLowerCase();
+    if (name.includes('свеч')) decorKeys.push('candles');
+    else if (name.includes('ягод')) decorKeys.push('berries');
+    else if (name.includes('золот')) decorKeys.push('gold');
+    else if (name.includes('фигур')) decorKeys.push('figurines');
+    else if (name.includes('маршмэл') || name.includes('зефир')) decorKeys.push('marshmallows');
+    else if (name.includes('шоколад')) decorKeys.push('chocolate');
+    else if (name.includes('цвет')) decorKeys.push('flowers');
+    else if (name.includes('орех')) decorKeys.push('nuts');
+  });
+
+  window.Cake3D.update({
+    shape: shapeKey,
+    filling: fillingKey,
+    decor: decorKeys,
+    weight: weightKg      // ✅ Передаём вес
+  });
+}
+
+// ============================================================
+// Fallback на SVG, если WebGL не поддерживается
+// ============================================================
+function fallbackToSvg() {
+  const container = document.getElementById('cake-3d-container');
+  if (!container) return;
+
+  container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;">${renderCakeSvg()}</div>`;
 }
 
 // ============================================================
@@ -169,14 +277,8 @@ function initOptionEvents() {
         }
       }
 
-      // Обновляем SVG (для формы)
-      if (groupKey === 'shape' || groupKey === 'filling') {
-        const svgEl = document.querySelector('.constructor-preview__svg');
-        if (svgEl) {
-          svgEl.outerHTML = renderCakeSvg();
-        }
-      }
-
+      // Обновляем 3D
+      update3DFromState();
       recalculate();
     });
   });

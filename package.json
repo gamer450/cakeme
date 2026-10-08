@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "init-db": "node src/init-db.js"
+    "init-db": "node src/init-db.js",
+    "migrate": "npm run migrate:all",
+    "migrate:all": "node src/init-db.js && node src/migrate-constructor.js && node src/migrate-reviews.js && node src/migrate-partners.js && node src/migrate-operator.js && node src/migrate-security.js && node src/migrate-cake-photo.js && node src/migrations/001-wave1-schema.js && node src/migrations/003-add-payment-field.js && node src/migrations/004-wave2-promo-photos.js && node src/migrations/005-2fa.js && node src/migrations/006-faq.js && node src/migrations/007-subscribers.js && node src/migrations/008-portions.js && node src/migrations/009-yookassa.js && node src/migrations/010-delivery-slots.js && node src/migrations/012-custom-items.js && node src/migrations/013-order-items-nullable.js && node src/migrations/015-extras.js && node src/migrations/016-order-notifications.js && node src/migrations/018-constructor-more-options.js && node src/migrations/019-delivery-method.js"
   },
   "keywords": [
     "cakes",
@@ -26,7 +28,13 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.4.0",
-    "node-cron": "^4.6.0"
+    "node-cron": "^4.6.0",
+    "node-telegram-bot-api": "^2.1.0",
+    "nodemailer": "^10.0.15",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0",
+    "three": "^0.150.0",
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

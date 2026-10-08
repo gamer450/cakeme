@@ -461,3 +461,328 @@
     display: none;
   }
 }
+/* ============================================
+   ВЕРХНЯЯ ПАНЕЛЬ ЗАКАЗОВ
+   ============================================ */
+.orders-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.orders-topbar__title {
+  font-family: var(--admin-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+}
+
+.orders-topbar__title small {
+  font-family: var(--admin-font-mono);
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+  font-weight: 400;
+}
+
+.orders-topbar__actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Кнопка экспорта */
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: var(--admin-radius-md);
+  font-family: var(--admin-font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s var(--admin-ease);
+  box-shadow: var(--admin-shadow-md), var(--admin-shadow-inner);
+  white-space: nowrap;
+}
+
+.btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--admin-shadow-lg), 0 0 24px rgba(76, 175, 80, 0.4);
+}
+
+.btn-export:active {
+  transform: translateY(0);
+}
+
+.btn-export svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .orders-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .orders-topbar__actions {
+    width: 100%;
+  }
+
+  .btn-export {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* Кнопка печати в модалке */
+.btn-print-order {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--admin-radius-md);
+  font-family: var(--admin-font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--admin-elevated);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+  transition: all 0.2s var(--admin-ease);
+  white-space: nowrap;
+}
+
+.btn-print-order:hover {
+  background: var(--admin-sidebar);
+  color: var(--admin-gold-bright);
+  border-color: var(--admin-border-gold);
+  transform: translateY(-1px);
+  box-shadow: var(--admin-shadow-md);
+}
+
+.btn-print-order svg {
+  flex-shrink: 0;
+}
+.btn-refund-order {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--admin-radius-md);
+  font-family: var(--admin-font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(224, 120, 120, 0.15);
+  color: var(--admin-danger);
+  border: 1px solid rgba(224, 120, 120, 0.3);
+  cursor: pointer;
+  transition: all 0.2s var(--admin-ease);
+  white-space: nowrap;
+}
+
+.btn-refund-order:hover {
+  background: var(--admin-danger);
+  color: #fff;
+  border-color: var(--admin-danger);
+  transform: translateY(-1px);
+}
+
+.btn-refund-order:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+/* Кастомный торт */
+.modal-item--custom {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(232, 168, 124, 0.08) 0%, rgba(201, 169, 97, 0.08) 100%);
+  border: 1px solid var(--admin-border-gold);
+  border-radius: var(--admin-radius-md);
+  align-items: flex-start !important;
+}
+
+.modal-item--custom strong {
+  color: var(--admin-gold-bright);
+  font-family: var(--admin-font-display);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Надпись */
+.modal-inscription {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--admin-warning-bg);
+  border-left: 3px solid var(--admin-warning);
+  border-radius: var(--admin-radius-sm);
+}
+
+.modal-inscription__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  color: var(--admin-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.modal-inscription__text {
+  font-family: var(--admin-font-display);
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--admin-text);
+  letter-spacing: -0.01em;
+}
+
+/* Доп. услуги */
+.modal-extras {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--admin-elevated);
+  border-radius: var(--admin-radius-sm);
+}
+
+.modal-extras__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.modal-extras__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: var(--admin-text);
+}
+
+.modal-extras__item span:last-child {
+  color: var(--admin-gold-bright);
+  font-family: var(--admin-font-mono);
+  font-weight: 600;
+}
+/* ============================================================
+   КАСТОМНЫЙ ТОРТ В ЗАКАЗЕ
+   ============================================================ */
+.modal-item--custom {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(232, 168, 124, 0.08) 0%, rgba(201, 169, 97, 0.08) 100%);
+  border: 1px solid var(--admin-border-gold);
+  border-radius: var(--admin-radius-md);
+  align-items: flex-start !important;
+}
+
+.modal-item--custom strong {
+  color: var(--admin-gold-bright);
+  font-family: var(--admin-font-display);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Надпись */
+.modal-inscription {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--admin-warning-bg);
+  border-left: 3px solid var(--admin-warning);
+  border-radius: var(--admin-radius-sm);
+}
+
+.modal-inscription__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  color: var(--admin-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.modal-inscription__text {
+  font-family: var(--admin-font-display);
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--admin-text);
+  letter-spacing: -0.01em;
+}
+
+/* Доп. услуги */
+.modal-extras {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--admin-elevated);
+  border-radius: var(--admin-radius-sm);
+}
+
+.modal-extras__label {
+  font-family: var(--admin-font-mono);
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.modal-extras__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: var(--admin-text);
+}
+
+.modal-extras__item span:last-child {
+  color: var(--admin-gold-bright);
+  font-family: var(--admin-font-mono);
+  font-weight: 600;
+}
+/* Способ получения */
+.delivery-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+.delivery-method-badge--pickup {
+  background: rgba(107, 191, 135, 0.12);
+  color: var(--admin-success);
+  border: 1px solid rgba(107, 191, 135, 0.3);
+}
+
+.delivery-method-badge--delivery {
+  background: rgba(120, 168, 216, 0.12);
+  color: var(--admin-info);
+  border: 1px solid rgba(120, 168, 216, 0.3);
+}
+/* ✅ ФИКС: фото в модалке заказа — ограничить размер */
+.modal-photo img {
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--admin-radius-sm);
+}

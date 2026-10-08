@@ -9,18 +9,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Leaflet (карты) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Leaflet — локально -->
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
 
-  <!-- Дизайн-система 2027 -->
   <link rel="stylesheet" href="/css/design-system.css" />
   <link rel="stylesheet" href="/css/premium-effects.css" />
-
-  <!-- Стили проекта -->
   <link rel="stylesheet" href="/css/header-footer.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/animations.css" />
+  <link rel="stylesheet" href="/css/cookie-banner.css" />
   <link rel="stylesheet" href="/css/partners.css" />
+  <link rel="stylesheet" href="/css/operator-form.css" />
 </head>
 <body>
 
@@ -29,12 +28,15 @@
     <div class="container">
       <div class="header__inner">
         <a href="/" class="logo">
-          <span class="logo__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v4M8 6h8v4H8zM6 10h12l-1 10H7L6 10z"/>
-              <path d="M10 15h4M10 18h4"/>
-            </svg>
-          </span>
+<span class="logo__icon">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+    <rect x="4" y="10" width="16" height="11" />
+    <path d="M4 14h16" />
+    <path d="M8 10V6h8v4" />
+    <path d="M12 6V3" />
+    <path d="M10 3h4" />
+  </svg>
+</span>
           <span class="logo__text">
             <span class="logo__name" data-setting="site_name">Cake.Me</span>
             <span class="logo__tagline">торты &amp; кофе</span>
@@ -66,7 +68,7 @@
             <span class="icon-btn__badge" id="cart-badge" style="display:none">0</span>
           </a>
 
-          <a href="/login.html" class="icon-btn" aria-label="Войти">
+          <a href="/account.html" class="icon-btn" aria-label="Войти">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -175,21 +177,52 @@
           <p data-setting="phone">+7 900 000-00-00</p>
           <p data-setting="email">hello@cake.ru</p>
         </div>
+
+        <div class="footer__col footer__col--subscribe">
+          <h4>Скидка 10%</h4>
+          <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:16px;line-height:1.5;">
+            Подпишитесь на новости — получите промокод на первый заказ
+          </p>
+          <form class="subscribe-form" id="subscribe-form">
+            <input type="email" name="email" placeholder="your@email.com" required />
+            <button type="submit">Подписаться</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer__legal">
+        <div class="footer__legal-row">
+          <span data-setting="legal_name"></span>
+          <span data-setting="legal_inn_wrap" data-prefix="ИНН: " data-setting="legal_inn"></span>
+          <span data-setting="legal_ogrn_wrap" data-prefix="ОГРН: " data-setting="legal_ogrn"></span>
+        </div>
+        <div class="footer__legal-row">
+          <span data-setting="legal_address"></span>
+          <span data-setting="working_hours"></span>
+        </div>
       </div>
 
       <div class="footer__bottom">
         <span>© 2026 Cake.Me. Все права защищены.</span>
-        <a href="#">Политика конфиденциальности</a>
+        <div class="footer__bottom-links">
+          <a href="/privacy.html">Политика конфиденциальности</a>
+          <a href="/offer.html">Публичная оферта</a>
+          <a href="/returns.html">Возврат и обмен</a>
+        </div>
       </div>
     </div>
   </footer>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Leaflet JS — локально -->
+  <script src="/vendor/leaflet/leaflet.js"></script>
 
   <script src="/js/premium.js"></script>
   <script src="/js/settings.js"></script>
+  <script src="/js/seo.js"></script>
   <script src="/js/main.js"></script>
+  <script src="/js/cookie-banner.js"></script>
   <script src="/js/partners.js"></script>
+  <script src="/js/subscribe.js"></script>
+  <script src="/js/operator-form.js"></script>
 </body>
 </html>

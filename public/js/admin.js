@@ -68,7 +68,15 @@ function renderShell() {
     <div class="admin-layout">
       <aside class="admin-sidebar">
         <div class="admin-sidebar__logo">
-          <span class="admin-sidebar__logo-icon">🍰</span>
+          <span class="admin-sidebar__logo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+              <rect x="4" y="10" width="16" height="11" />
+              <path d="M4 14h16" />
+              <path d="M8 10V6h8v4" />
+              <path d="M12 6V3" />
+              <path d="M10 3h4" />
+            </svg>
+          </span>
           <div class="admin-sidebar__logo-text">
             <span class="admin-sidebar__logo-name">Cake.Me</span>
             <span class="admin-sidebar__logo-sub">админ-панель</span>
@@ -77,58 +85,181 @@ function renderShell() {
 
         <nav class="admin-menu">
           <button class="admin-menu__item is-active" data-tab="dashboard">
-            <span class="admin-menu__item-icon">📊</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="13" width="5" height="8" />
+                <rect x="10" y="6" width="5" height="15" />
+                <rect x="17" y="10" width="5" height="11" />
+              </svg>
+            </span>
             Дашборд
           </button>
           <button class="admin-menu__item" data-tab="orders">
-            <span class="admin-menu__item-icon">📦</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="6" width="18" height="14" />
+                <path d="M3 6l9-3 9 3" />
+                <path d="M12 10v4" />
+              </svg>
+            </span>
             Заказы
             <span class="admin-menu__item-badge hidden" id="orders-badge">0</span>
           </button>
+          <button class="admin-menu__item" data-tab="kanban">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="3" width="5" height="18" />
+                <rect x="10" y="3" width="5" height="12" />
+                <rect x="17" y="3" width="4" height="8" />
+              </svg>
+            </span>
+            Канбан
+          </button>
           <button class="admin-menu__item" data-tab="products">
-            <span class="admin-menu__item-icon">🎂</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="4" y="10" width="16" height="11" />
+                <path d="M4 14h16" />
+                <path d="M8 10V6h8v4" />
+              </svg>
+            </span>
             Товары
           </button>
           <button class="admin-menu__item" data-tab="categories">
-            <span class="admin-menu__item-icon">🏷️</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="5" width="8" height="8" />
+                <rect x="13" y="5" width="8" height="8" />
+                <rect x="3" y="15" width="8" height="4" />
+                <rect x="13" y="15" width="8" height="4" />
+              </svg>
+            </span>
             Категории
           </button>
           <button class="admin-menu__item" data-tab="constructor">
-            <span class="admin-menu__item-icon">🧁</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="5" y="10" width="14" height="11" />
+                <path d="M5 15h14" />
+                <path d="M12 3v7" />
+              </svg>
+            </span>
             Конструктор
           </button>
           <button class="admin-menu__item" data-tab="partners">
-            <span class="admin-menu__item-icon">🤝</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="5" width="8" height="8" />
+                <rect x="13" y="11" width="8" height="8" />
+                <path d="M11 9h2" />
+                <path d="M12 11v2" />
+              </svg>
+            </span>
             Партнёры
           </button>
           <button class="admin-menu__item" data-tab="media">
-            <span class="admin-menu__item-icon">🖼️</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="5" width="18" height="14" />
+                <path d="M3 14l5-4 4 3 3-2 6 5" />
+                <rect x="7" y="8" width="2" height="2" />
+              </svg>
+            </span>
             Медиа
           </button>
           <button class="admin-menu__item" data-tab="reviews">
-            <span class="admin-menu__item-icon">⭐</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M12 3l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z" />
+              </svg>
+            </span>
             Отзывы
             <span class="admin-menu__item-badge hidden" id="reviews-badge">0</span>
           </button>
-          ${user.role === 'admin' ? `
-            <button class="admin-menu__item" data-tab="users">
-              <span class="admin-menu__item-icon">👥</span>
-              Пользователи
-            </button>
-            <button class="admin-menu__item" data-tab="settings">
-              <span class="admin-menu__item-icon">⚙️</span>
-              Настройки
-            </button>
-          ` : ''}
+          <button class="admin-menu__item" data-tab="logs">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="4" y="3" width="16" height="18" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+              </svg>
+            </span>
+            История действий
+          </button>
+          <button class="admin-menu__item" data-tab="operator">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+            </span>
+            Заявки
+            <span class="admin-menu__item-badge hidden" id="operator-badge">0</span>
+          </button>
+          <button class="admin-menu__item" data-tab="notifications">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M6 17V10a6 6 0 1 1 12 0v7" />
+                <path d="M3 17h18M10 20h4" />
+              </svg>
+            </span>
+            Уведомления
+          </button>
+          <button class="admin-menu__item" data-tab="faq">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="5" y="8" width="14" height="12" />
+                <path d="M9 8V5h6v3M12 12v3" />
+                <rect x="11.5" y="16" width="1" height="1" />
+              </svg>
+            </span>
+            FAQ
+          </button>
+          <button class="admin-menu__item" data-tab="promocodes">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M3 8h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z" />
+                <path d="M9 8v12" />
+              </svg>
+            </span>
+            Промокоды
+          </button>
+          <button class="admin-menu__item" data-tab="users">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="9" width="6" height="6" />
+                <rect x="15" y="9" width="6" height="6" />
+                <path d="M9 12h6M6 15v3h12v-3" />
+              </svg>
+            </span>
+            Пользователи
+          </button>
+          <button class="admin-menu__item" data-tab="settings">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="9" y="9" width="6" height="6" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" />
+              </svg>
+            </span>
+            Настройки
+          </button>
 
           <div class="admin-menu__divider"></div>
 
           <a href="/" class="admin-menu__item admin-menu__item--exit">
-            <span class="admin-menu__item-icon">🌐</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="3" width="18" height="18" />
+                <path d="M3 9h18M9 21V9" />
+              </svg>
+            </span>
             Перейти на сайт
           </a>
           <button class="admin-menu__item admin-menu__item--exit" id="logout-btn">
-            <span class="admin-menu__item-icon">🚪</span>
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M9 3H4v18h5M12 12h9M18 8l4 4-4 4" />
+              </svg>
+            </span>
             Выйти
           </button>
         </nav>
@@ -163,6 +294,7 @@ function renderShell() {
 const tabTitles = {
   dashboard: 'Дашборд',
   orders: 'Заказы',
+  logs: 'История действий',
   products: 'Товары',
   categories: 'Категории',
   constructor: 'Конструктор',
@@ -170,7 +302,12 @@ const tabTitles = {
   media: 'Медиа',
   reviews: 'Отзывы',
   users: 'Пользователи',
-  settings: 'Настройки'
+  settings: 'Настройки',
+  promocodes: 'Промокоды',
+  notifications: 'Уведомления',
+  faq: 'FAQ',
+  kanban: 'Канбан заказов',
+  operator: 'Заявки',
 };
 
 function initTabs() {
@@ -227,6 +364,13 @@ function navigate(tab) {
       renderReviews(content);
       break;
 
+    case 'logs':
+      renderLogs(content);
+      break;
+    case 'operator':
+      renderOperator(content);
+      break;
+
     case 'users':
       renderUsers(content);
       break;
@@ -234,11 +378,22 @@ function navigate(tab) {
     case 'settings':
       renderSettings(content);
       break;
+    case 'promocodes':
+      renderPromocodes(content);
+      break;
+    case 'notifications':
+      renderNotifications(content);
+      break;
+    case 'faq': 
+      renderFAQ(content); 
+      break;
+    case 'kanban':
+      renderKanban(content);
+      break;
 
     default:
       content.innerHTML = `
         <div class="admin-placeholder">
-          <div class="admin-placeholder__icon">🚧</div>
           <h2 class="admin-placeholder__title">${tabTitles[tab] || tab}</h2>
           <p class="admin-placeholder__text">Раздел в разработке</p>
         </div>
@@ -248,6 +403,7 @@ function navigate(tab) {
   if (tab === 'dashboard') {
     updateOrdersBadge();
     updateReviewsBadge();
+    if (typeof updateOperatorBadge === 'function') updateOperatorBadge();
   }
 }
 
@@ -310,191 +466,8 @@ function initLogout() {
 // ============================================================
 // 6. ДАШБОРД
 // ============================================================
-async function renderDashboard(container) {
-  container.innerHTML = `
-    <div class="admin-loading" style="min-height:200px">
-      <div class="admin-loading__spinner"></div>
-      <span>Считаем цифры...</span>
-    </div>
-  `;
-
-  try {
-    const res = await fetch('/api/admin/stats', {
-      headers: { Authorization: `Bearer ${state.token}` }
-    });
-
-    if (!res.ok) throw new Error('Ошибка загрузки');
-    const stats = await res.json();
-
-    container.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--orders">📦</div>
-          <div class="stat-card__label">Всего заказов</div>
-          <div class="stat-card__value">${stats.totalOrders}</div>
-          <div class="stat-card__hint">за всё время</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--new">🔔</div>
-          <div class="stat-card__label">Новых заказов</div>
-          <div class="stat-card__value">${stats.newOrders}</div>
-          <div class="stat-card__hint">требуют обработки</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--revenue">💰</div>
-          <div class="stat-card__label">Выручка</div>
-          <div class="stat-card__value">${formatMoney(stats.totalRevenue)}</div>
-          <div class="stat-card__hint">без отменённых</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--users">👥</div>
-          <div class="stat-card__label">Покупателей</div>
-          <div class="stat-card__value">${stats.totalUsers}</div>
-          <div class="stat-card__hint">в базе</div>
-        </div>
-      </div>
-
-      <div class="dashboard-row">
-        <div class="dashboard-panel">
-          <div class="dashboard-panel__header">
-            <h3 class="dashboard-panel__title">📈 Продажи за 7 дней</h3>
-          </div>
-          ${renderChart(stats.salesByDay)}
-        </div>
-
-        <div class="dashboard-panel">
-          <div class="dashboard-panel__header">
-            <h3 class="dashboard-panel__title">🏆 Топ товаров</h3>
-          </div>
-          ${renderTopProducts(stats.topProducts)}
-        </div>
-      </div>
-
-      <div class="dashboard-panel">
-        <div class="dashboard-panel__header">
-          <h3 class="dashboard-panel__title">📋 Последние заказы</h3>
-          <a href="#" class="dashboard-panel__link" id="go-orders">Все заказы →</a>
-        </div>
-        ${renderRecentOrders(stats.recentOrders)}
-      </div>
-    `;
-
-    document.getElementById('go-orders')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigate('orders');
-    });
-
-    document.querySelectorAll('.recent-order').forEach(el => {
-      el.addEventListener('click', () => navigate('orders'));
-    });
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = `
-      <div class="admin-placeholder">
-        <div class="admin-placeholder__icon">😕</div>
-        <h2 class="admin-placeholder__title">Не удалось загрузить статистику</h2>
-        <p class="admin-placeholder__text">Обновите страницу или попробуйте позже</p>
-      </div>
-    `;
-  }
-}
-
-function renderChart(salesByDay) {
-  if (!salesByDay || salesByDay.length === 0) {
-    return `<div class="chart__empty">Пока нет продаж 📉</div>`;
-  }
-
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    const found = salesByDay.find(s => s.day === key);
-    days.push({
-      day: key,
-      label: d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
-      revenue: found ? found.revenue : 0,
-      orders: found ? found.orders : 0
-    });
-  }
-
-  const maxRevenue = Math.max(...days.map(d => d.revenue), 1);
-
-  return `
-    <div class="chart">
-      ${days.map(d => {
-        const height = d.revenue === 0 ? 4 : Math.max(8, (d.revenue / maxRevenue) * 100);
-        return `
-          <div class="chart__bar-wrap">
-            <div class="chart__bar" style="height:${height}%">
-              <span class="chart__bar-value">${formatMoney(d.revenue)} ₽</span>
-            </div>
-            <span class="chart__label">${d.label}</span>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
-function renderTopProducts(products) {
-  if (!products || products.length === 0) {
-    return `<div class="top-list__empty">Пока нет продаж</div>`;
-  }
-
-  return `
-    <div class="top-list">
-      ${products.map((p, i) => `
-        <div class="top-item">
-          <div class="top-item__rank">${i + 1}</div>
-          <div class="top-item__info">
-            <div class="top-item__name">${p.product_name}</div>
-            <div class="top-item__meta">Продано: ${p.sold} шт</div>
-          </div>
-          <div class="top-item__revenue">${formatMoney(p.revenue)} ₽</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function renderRecentOrders(orders) {
-  if (!orders || orders.length === 0) {
-    return `<div class="recent-orders__empty">Заказов пока нет 📭</div>`;
-  }
-
-  const statusLabels = {
-    new: 'Новый',
-    confirmed: 'Подтверждён',
-    baking: 'Готовится',
-    delivering: 'В доставке',
-    done: 'Выполнен',
-    cancelled: 'Отменён'
-  };
-
-  return `
-    <div class="recent-orders">
-      ${orders.map(o => `
-        <div class="recent-order">
-          <div class="recent-order__id">№${o.id}</div>
-          <div>
-            <div class="recent-order__customer">${o.customer_name}</div>
-            <div class="recent-order__phone">${o.phone || ''}</div>
-          </div>
-          <span class="order-badge order-badge--${o.status}">${statusLabels[o.status] || o.status}</span>
-          <div class="recent-order__total">${formatMoney(o.total)} ₽</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function formatMoney(n) {
-  return Math.round(n).toLocaleString('ru-RU');
-}
+// Функция renderDashboard теперь в admin-dashboard.js
+// (загружается через <script> в admin/index.html)
 
 // ============================================================
 // 7. СТАРТ

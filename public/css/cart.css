@@ -457,3 +457,151 @@
     font-size: 1.75rem;
   }
 }
+/* Промокод */
+.cart-summary__promo {
+  padding: 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin-top: 8px;
+}
+
+.cart-summary__promo-row {
+  display: flex;
+  gap: 8px;
+}
+
+.cart-summary__promo-row input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: all 0.2s var(--ease-out);
+}
+
+.cart-summary__promo-row input:focus {
+  outline: none;
+  border-color: var(--peach-300);
+  box-shadow: 0 0 0 3px var(--peach-glow);
+}
+
+.cart-summary__promo-apply {
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  color: var(--gold-100);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  white-space: nowrap;
+}
+
+.cart-summary__promo-apply:hover {
+  background: var(--bg-elevated);
+  border-color: var(--gold-300);
+  color: var(--peach-200);
+}
+
+.cart-summary__promo-apply:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.cart-summary__promo-result {
+  margin-top: 10px;
+}
+
+.cart-summary__promo-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(107, 191, 135, 0.1);
+  border: 1px solid rgba(107, 191, 135, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--success);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cart-summary__promo-remove {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  transition: all 0.2s var(--ease-out);
+}
+
+.cart-summary__promo-remove:hover {
+  background: rgba(224, 120, 120, 0.15);
+}
+
+.cart-summary__promo-error {
+  padding: 10px 14px;
+  background: rgba(224, 120, 120, 0.1);
+  border: 1px solid rgba(224, 120, 120, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.cart-summary__row--discount {
+  color: var(--success);
+}
+
+.cart-summary__discount-value {
+  color: var(--success) !important;
+  font-weight: 700;
+}
+/* ============================================================
+   UPSELL — «Часто берут вместе»
+   ============================================================ */
+.cart-upsell {
+  margin-top: 80px;
+  padding-top: 60px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.cart-upsell__header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.cart-upsell__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 300;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-top: 12px;
+}
+
+.cart-upsell__title em {
+  font-style: italic;
+  color: var(--peach-200);
+}
+
+.product-card--compact .product-card__body {
+  padding: 16px;
+}
+
+.product-card--compact .product-card__btn {
+  right: 12px;
+  bottom: 12px;
+  width: 38px;
+  height: 38px;
+}
