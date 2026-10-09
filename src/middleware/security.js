@@ -1,6 +1,6 @@
 /* ============================================================
    БЕЗОПАСНОСТЬ — Helmet, Rate limit, Валидация
-   v2.1 — Leaflet локально, unpkg.com убран из whitelist
+   v2.2 — CORS через SITE_URL + Яндекс.Карты в CSP
    ============================================================ */
 
 const helmet = require('helmet');
@@ -15,59 +15,69 @@ const path = require('path');
 // ============================================================
 // ВАЖНО: dotenv.config() должен быть вызван ДО require этого файла!
 const isProduction = process.env.NODE_ENV === 'production';
+const SITE_URL = process.env.SITE_URL || 'http://localhost:3000';
 
 // ============================================================
 // 1. CSP — правильные whitelist'ы
 // ============================================================
 const cspReportDir = path.join(__dirname, '..', '..', 'data', 'logs');
-if (!fs.existsSync(cspReportDir)) {
-  fs.mkdirSync(cspReportDir, { recursive: true });
+try {
+  if (!fs.existsSync(cspReportDir)) {
+    fs.mkdirSync(cspReportDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn('⚠️  Не удалось создать папку для CSP-логов:', e.message);
 }
 const cspReportFile = path.join(cspReportDir, 'csp-violations.log');
 
 const cspDirectives = {
   defaultSrc: ["'self'"],
 
-scriptSrc: [
-  "'self'",
-  "'unsafe-inline'",
-  "https://api-maps.yandex.ru"
-],
+  // Скрипты: свои + инлайн + Яндекс.Карты
+  scriptSrc: [
+    "'self'",
+    "'unsafe-inline'",
+    "https://api-maps.yandex.ru",
+    "https://yastatic.net"
+  ],
 
-  // Стили: свои + Google Fonts + inline
+  // Стили: свои + Google Fonts + inline + Яндекс.Карты
   styleSrc: [
     "'self'",
     "'unsafe-inline'",
-    "https://fonts.googleapis.com"
+    "https://fonts.googleapis.com",
+    "https://yastatic.net"
   ],
 
-  // Шрифты: свои + Google Fonts + data: (base64)
+  // Шрифты: свои + Google Fonts + data:
   fontSrc: [
     "'self'",
     "data:",
     "https://fonts.gstatic.com"
   ],
 
-  // Картинки: свои + data: + blob: + тайлы карт
+  // Картинки: свои + data: + blob: + тайлы карт + Яндекс
   imgSrc: [
     "'self'",
     "data:",
     "blob:",
     "https://*.tile.openstreetmap.org",
     "https://*.basemaps.cartocdn.com",
-    "https://*.maps.yandex.net",           // ← добавить
-    "https://*.yandex.ru"                  // ← добавить
+    "https://*.maps.yandex.net",
+    "https://yastatic.net"
   ],
 
-  // AJAX/fetch: свои + OSM API + tile-серверы
+  // AJAX/fetch: свои + OSM API + Яндекс.Карты
   connectSrc: [
     "'self'",
     "https://*.tile.openstreetmap.org",
     "https://*.basemaps.cartocdn.com",
     "https://nominatim.openstreetmap.org",
-    "https://api-maps.yandex.ru"
+    "https://api-maps.yandex.ru",
+    "https://yastatic.net"
   ],
-  // Медиа: свои + blob
+
+  // Медиа: свои + blob + data
   mediaSrc: ["'self'", "blob:", "data:"],
 
   // Фреймы: только свои
@@ -78,8 +88,9 @@ scriptSrc: [
   baseUri: ["'self'"],
   formAction: ["'self'"],
 
-  // Апгрейд http → https (только в проде)
-upgradeInsecureRequests: null,
+  // ✅ ФИКС: Отключено принудительное перенаправление на HTTPS
+  // (сайт работает по HTTP, пока не настроен SSL-сертификат)
+  upgradeInsecureRequests: null,
 
   // Куда репортить нарушения
   reportUri: isProduction ? ['/api/csp-report'] : null
@@ -117,6 +128,7 @@ function cspReportHandler(req, res) {
 
 // ============================================================
 // 2. CORS
+// ✅ ФИКС: подтягиваем SITE_URL из .env (для работы по IP сервера)
 // ============================================================
 const corsConfig = cors({
   origin: (origin, callback) => {
@@ -126,7 +138,11 @@ const corsConfig = cors({
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       'http://localhost:3001',
-      'http://127.0.0.1:3001'
+      'http://127.0.0.1:3001',
+      // ✅ Сервер по IP (без домена)
+      'http://129.101.115.219',
+      // ✅ SITE_URL из .env
+      SITE_URL
     ];
 
     if (isProduction) {
@@ -134,7 +150,10 @@ const corsConfig = cors({
       allowed.push('https://www.cakeme-shop.ru');
     }
 
-    if (allowed.includes(origin)) {
+    // Убираем дубликаты
+    const uniqueAllowed = [...new Set(allowed)];
+
+    if (uniqueAllowed.includes(origin)) {
       callback(null, true);
     } else {
       console.warn(`⚠️  CORS блокировка: ${origin}`);
