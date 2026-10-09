@@ -1,6 +1,6 @@
 /* ============================================================
    БЕЗОПАСНОСТЬ — Helmet, Rate limit, Валидация
-   v2.2 — CORS через SITE_URL + Яндекс.Карты в CSP
+   v2.3 — CORS SITE_URL + Яндекс.Карты + CDN jsdelivr
    ============================================================ */
 
 const helmet = require('helmet');
@@ -13,7 +13,6 @@ const path = require('path');
 // ============================================================
 // 0. ОПРЕДЕЛЕНИЕ РЕЖИМА
 // ============================================================
-// ВАЖНО: dotenv.config() должен быть вызван ДО require этого файла!
 const isProduction = process.env.NODE_ENV === 'production';
 const SITE_URL = process.env.SITE_URL || 'http://localhost:3000';
 
@@ -33,15 +32,16 @@ const cspReportFile = path.join(cspReportDir, 'csp-violations.log');
 const cspDirectives = {
   defaultSrc: ["'self'"],
 
-  // Скрипты: свои + инлайн + Яндекс.Карты
-scriptSrc: [
-  "'self'",
-  "'unsafe-inline'",
-  "https://api-maps.yandex.ru",
-  "https://yastatic.net",
-  "https://cdn.jsdelivr.net"
-],
-  // Стили: свои + Google Fonts + inline + Яндекс.Карты
+  // ✅ Скрипты: свои + инлайн + Яндекс.Карты + CDN jsdelivr (Chart.js, SheetJS)
+  scriptSrc: [
+    "'self'",
+    "'unsafe-inline'",
+    "https://api-maps.yandex.ru",
+    "https://yastatic.net",
+    "https://cdn.jsdelivr.net"
+  ],
+
+  // ✅ Стили: свои + Google Fonts + inline + Яндекс
   styleSrc: [
     "'self'",
     "'unsafe-inline'",
@@ -49,56 +49,58 @@ scriptSrc: [
     "https://yastatic.net"
   ],
 
-  // Шрифты: свои + Google Fonts + data:
+  // ✅ Шрифты
   fontSrc: [
     "'self'",
     "data:",
     "https://fonts.gstatic.com"
   ],
 
-  // Картинки: свои + data: + blob: + тайлы карт + Яндекс
-imgSrc: [
-  "'self'",
-  "data:",
-  "blob:",
-  "https://*.tile.openstreetmap.org",
-  "https://*.basemaps.cartocdn.com",
-  "https://*.maps.yandex.net",
-  "https://*.maps.yandex.ru",      // ← добавили
-  "https://yastatic.net"
-],
+  // ✅ Картинки: свои + data: + blob: + OSM + Яндекс (все поддомены)
+  imgSrc: [
+    "'self'",
+    "data:",
+    "blob:",
+    "https://*.tile.openstreetmap.org",
+    "https://*.basemaps.cartocdn.com",
+    "https://*.maps.yandex.net",
+    "https://*.maps.yandex.ru",
+    "https://*.yandex.ru",
+    "https://yastatic.net"
+  ],
 
-  // AJAX/fetch: свои + OSM API + Яндекс.Карты
-connectSrc: [
-  "'self'",
-  "https://*.tile.openstreetmap.org",
-  "https://*.basemaps.cartocdn.com",
-  "https://nominatim.openstreetmap.org",
-  "https://api-maps.yandex.ru",
-  "https://*.maps.yandex.ru",       // ← добавили
-  "https://yastatic.net"
-],
+  // ✅ AJAX/fetch: свои + OSM + Яндекс + CDN
+  connectSrc: [
+    "'self'",
+    "https://*.tile.openstreetmap.org",
+    "https://*.basemaps.cartocdn.com",
+    "https://nominatim.openstreetmap.org",
+    "https://api-maps.yandex.ru",
+    "https://*.maps.yandex.ru",
+    "https://*.yandex.ru",
+    "https://yastatic.net",
+    "https://cdn.jsdelivr.net"
+  ],
 
-  // Медиа: свои + blob + data
+  // Медиа
   mediaSrc: ["'self'", "blob:", "data:"],
 
-  // Фреймы: только свои
+  // Фреймы
   frameSrc: ["'self'"],
 
-  // Отключаем опасные источники
+  // Отключаем опасные
   objectSrc: ["'none'"],
   baseUri: ["'self'"],
   formAction: ["'self'"],
 
-  // ✅ ФИКС: Отключено принудительное перенаправление на HTTPS
-  // (сайт работает по HTTP, пока не настроен SSL-сертификат)
+  // ✅ Отключено принудительное перенаправление на HTTPS
   upgradeInsecureRequests: null,
 
-  // Куда репортить нарушения
+  // Отчёты
   reportUri: isProduction ? ['/api/csp-report'] : null
 };
 
-// В dev-режиме разрешаем локальные подключения для hot-reload
+// В dev-режиме — localhost
 if (!isProduction) {
   cspDirectives.connectSrc.push("ws://localhost:*", "http://localhost:*", "ws://127.0.0.1:*");
 }
@@ -130,7 +132,6 @@ function cspReportHandler(req, res) {
 
 // ============================================================
 // 2. CORS
-// ✅ ФИКС: подтягиваем SITE_URL из .env (для работы по IP сервера)
 // ============================================================
 const corsConfig = cors({
   origin: (origin, callback) => {
@@ -141,9 +142,7 @@ const corsConfig = cors({
       'http://127.0.0.1:3000',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
-      // ✅ Сервер по IP (без домена)
       'http://129.101.115.219',
-      // ✅ SITE_URL из .env
       SITE_URL
     ];
 
@@ -152,7 +151,6 @@ const corsConfig = cors({
       allowed.push('https://www.cakeme-shop.ru');
     }
 
-    // Убираем дубликаты
     const uniqueAllowed = [...new Set(allowed)];
 
     if (uniqueAllowed.includes(origin)) {
@@ -170,7 +168,6 @@ const corsConfig = cors({
 // ============================================================
 // 3. RATE LIMITING
 // ============================================================
-// В dev-режиме множитель 100, чтобы не мешать разработке
 const devMultiplier = isProduction ? 1 : 100;
 
 const generalLimiter = rateLimit({
@@ -263,13 +260,11 @@ const validateOrder = [
   body('comment').optional({ checkFalsy: true }).trim()
     .isLength({ max: 1000 }),
 
-  // ✅ Корзина: либо обычные товары, либо кастомные, либо оба
   body('items').optional({ nullable: true })
     .isArray({ max: 50 }).withMessage('Слишком много товаров в корзине'),
   body('custom_items').optional({ nullable: true })
     .isArray({ max: 20 }).withMessage('Слишком много кастомных тортов'),
 
-  // ✅ Проверка, что корзина не пуста (учитываем оба массива)
   body().custom((value, { req }) => {
     const itemsCount = Array.isArray(req.body.items) ? req.body.items.length : 0;
     const customCount = Array.isArray(req.body.custom_items) ? req.body.custom_items.length : 0;
