@@ -54,7 +54,9 @@ scriptSrc: [
     "data:",
     "blob:",
     "https://*.tile.openstreetmap.org",
-    "https://*.basemaps.cartocdn.com"
+    "https://*.basemaps.cartocdn.com",
+    "https://*.maps.yandex.net",           // ← добавить
+    "https://*.yandex.ru"                  // ← добавить
   ],
 
   // AJAX/fetch: свои + OSM API + tile-серверы
@@ -62,9 +64,9 @@ scriptSrc: [
     "'self'",
     "https://*.tile.openstreetmap.org",
     "https://*.basemaps.cartocdn.com",
-    "https://nominatim.openstreetmap.org"
+    "https://nominatim.openstreetmap.org",
+    "https://api-maps.yandex.ru"
   ],
-
   // Медиа: свои + blob
   mediaSrc: ["'self'", "blob:", "data:"],
 
@@ -77,7 +79,7 @@ scriptSrc: [
   formAction: ["'self'"],
 
   // Апгрейд http → https (только в проде)
-  upgradeInsecureRequests: isProduction ? [] : null,
+upgradeInsecureRequests: null,
 
   // Куда репортить нарушения
   reportUri: isProduction ? ['/api/csp-report'] : null
