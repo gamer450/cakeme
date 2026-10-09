@@ -34,13 +34,13 @@ const cspDirectives = {
   defaultSrc: ["'self'"],
 
   // Скрипты: свои + инлайн + Яндекс.Карты
-  scriptSrc: [
-    "'self'",
-    "'unsafe-inline'",
-    "https://api-maps.yandex.ru",
-    "https://yastatic.net"
-  ],
-
+scriptSrc: [
+  "'self'",
+  "'unsafe-inline'",
+  "https://api-maps.yandex.ru",
+  "https://yastatic.net",
+  "https://cdn.jsdelivr.net"
+],
   // Стили: свои + Google Fonts + inline + Яндекс.Карты
   styleSrc: [
     "'self'",
@@ -57,25 +57,27 @@ const cspDirectives = {
   ],
 
   // Картинки: свои + data: + blob: + тайлы карт + Яндекс
-  imgSrc: [
-    "'self'",
-    "data:",
-    "blob:",
-    "https://*.tile.openstreetmap.org",
-    "https://*.basemaps.cartocdn.com",
-    "https://*.maps.yandex.net",
-    "https://yastatic.net"
-  ],
+imgSrc: [
+  "'self'",
+  "data:",
+  "blob:",
+  "https://*.tile.openstreetmap.org",
+  "https://*.basemaps.cartocdn.com",
+  "https://*.maps.yandex.net",
+  "https://*.maps.yandex.ru",      // ← добавили
+  "https://yastatic.net"
+],
 
   // AJAX/fetch: свои + OSM API + Яндекс.Карты
-  connectSrc: [
-    "'self'",
-    "https://*.tile.openstreetmap.org",
-    "https://*.basemaps.cartocdn.com",
-    "https://nominatim.openstreetmap.org",
-    "https://api-maps.yandex.ru",
-    "https://yastatic.net"
-  ],
+connectSrc: [
+  "'self'",
+  "https://*.tile.openstreetmap.org",
+  "https://*.basemaps.cartocdn.com",
+  "https://nominatim.openstreetmap.org",
+  "https://api-maps.yandex.ru",
+  "https://*.maps.yandex.ru",       // ← добавили
+  "https://yastatic.net"
+],
 
   // Медиа: свои + blob + data
   mediaSrc: ["'self'", "blob:", "data:"],
