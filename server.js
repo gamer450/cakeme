@@ -271,6 +271,18 @@ const cakeUploadLimiter = rateLimit({
   legacyHeaders: false
 });
 
+app.patch('/api/orders/:id/attach-receipt', async (req, res) => {
+  try {
+    const { payment_receipt } = req.body;
+    if (!payment_receipt) return res.status(400).json({ error: 'Чек не передан' });
+    
+    db.prepare(`UPDATE orders SET payment_receipt = ? WHERE id = ?`).run(payment_receipt, req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
 app.post('/api/upload/cake-photo',
   cakeUploadLimiter,
   (req, res, next) => {

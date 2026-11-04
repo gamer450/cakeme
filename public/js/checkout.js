@@ -131,6 +131,9 @@ function renderCheckout() {
   const pickupHours = (window.SITE_SETTINGS && window.SITE_SETTINGS.working_hours)
     || 'Ежедневно 10:00 – 21:00';
 
+  const paymentMode = window.SITE_SETTINGS?.payment_mode || 'yookassa';
+  const isManual = paymentMode === 'manual';
+
   container.innerHTML = `
     <div class="checkout-layout">
       <form class="checkout-form" id="order-form" novalidate>
@@ -299,32 +302,10 @@ function renderCheckout() {
               <input type="radio" name="payment" value="card" />
               <span class="payment-option__icon">💳</span>
               <span class="payment-option__text">
-                <span class="payment-option__title">Перевод по реквизитам</span>
-                <span class="payment-option__desc">Покажем реквизиты после оформления</span>
+                <span class="payment-option__title">${isManual ? 'Перевод по реквизитам' : 'Онлайн (карта)'}</span>
+                <span class="payment-option__desc">${isManual ? 'Покажем реквизиты после оформления' : 'Переход на защищённую страницу ЮKassa'}</span>
               </span>
             </label>
-          </div>
-          <div id="manual-payment-block" style="display:none; margin-top: 24px;">
-            <div style="background: var(--bg-elevated); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-gold);">
-              <h4 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 12px; color: var(--gold-100);">Реквизиты для перевода</h4>
-              <pre id="manual-payment-details" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 16px;">Загрузка реквизитов...</pre>
-              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;" id="manual-payment-instructions"></p>
-              <div class="checkout-form__field">
-                <label class="checkout-form__label">Прикрепите чек об оплате <span class="req">*</span></label>
-                <div class="cake-photo-upload" id="receipt-upload" style="border: 2px dashed var(--border); padding: 20px; text-align: center; cursor: pointer;">
-                  <div id="receipt-placeholder" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <span style="font-size: 2rem;">📸</span>
-                    <span style="font-size: 0.9rem; color: var(--text-muted);">Нажмите, чтобы загрузить скриншот</span>
-                  </div>
-                  <div id="receipt-preview" style="display: none; text-align: center;">
-                    <img id="receipt-img" src="" style="max-height: 200px; border-radius: var(--radius-md); margin-bottom: 8px;" />
-                    <button type="button" class="btn btn-ghost" id="receipt-remove" style="font-size: 0.8rem; color: var(--danger);">Удалить</button>
-                  </div>
-                  <input type="file" id="receipt-input" accept="image/*" style="display: none;" />
-                  <input type="hidden" id="f-receipt-url" />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -347,7 +328,7 @@ function renderCheckout() {
         <div class="checkout-summary__row" id="delivery-summary-row"><span id="delivery-summary-label">Доставка:</span>${delivery === 0 ? '<span class="checkout-summary__free">Бесплатно</span>' : `<strong>${delivery} ₽</strong>`}</div>
         ${appliedPromo ? `<div class="checkout-summary__row checkout-summary__row--discount"><span>Промокод (${appliedPromo.code}):</span><strong class="checkout-summary__discount-value">−${discount.toLocaleString('ru-RU')} ₽</strong></div>` : ''}
         <div class="checkout-summary__total"><span class="checkout-summary__total-label">Итого</span><span class="checkout-summary__total-value">${total.toLocaleString('ru-RU')} ₽</span></div>
-        <button type="submit" form="order-form" class="btn btn-primary btn-lg checkout-summary__btn magnetic" id="submit-btn">Подтвердить заказ</button>
+        <button type="submit" form="order-form" class="btn btn-primary btn-lg checkout-summary__btn magnetic" id="submit-btn">Оформить заказ</button>
         <a href="/cart.html" class="checkout-summary__back">← Вернуться в корзину</a>
       </aside>
     </div>
@@ -380,11 +361,6 @@ function initPaymentOptions() {
       paymentOptions.forEach(o => o.classList.remove('is-selected'));
       opt.classList.add('is-selected');
       state.paymentMethod = opt.dataset.payment;
-      
-      const manualBlock = document.getElementById('manual-payment-block');
-      if (manualBlock) {
-        manualBlock.style.display = (paymentMode === 'manual' && state.paymentMethod === 'card') ? 'block' : 'none';
-      }
     });
   });
 }
@@ -456,12 +432,6 @@ function initFormSubmit(total) {
     const uploadedPhoto = state.uploadedCakePhoto || null;
     if (photoChecked && !uploadedPhoto) return showError('Загрузите фото для печати или отключите опцию');
 
-    const receiptUrl = document.getElementById('f-receipt-url')?.value || null;
-    const paymentMode = window.SITE_SETTINGS?.payment_mode || 'yookassa';
-    if (paymentMode === 'manual' && state.paymentMethod === 'card' && !receiptUrl) {
-      return showError('Прикрепите чек об оплате', null);
-    }
-
     submitBtn.classList.add('is-loading');
     submitBtn.disabled = true;
 
@@ -471,7 +441,6 @@ function initFormSubmit(total) {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const appliedPromo = JSON.parse(localStorage.getItem('applied_promo') || 'null');
-
       const itemsSubtotal = state.items.reduce((s, i) => s + i.subtotal, 0);
       const customSubtotal = state.customItems.reduce((s, i) => s + i.price * i.quantity, 0);
       const subtotal = itemsSubtotal + customSubtotal;
@@ -492,7 +461,6 @@ function initFormSubmit(total) {
           cake_photo: photoChecked ? uploadedPhoto : null,
           cake_photo_price: photoChecked ? (parseInt(window.SITE_SETTINGS?.cake_photo_price, 10) || 300) : 0,
           extras: Array.from(document.querySelectorAll('.checkout-extra input:checked')).map(cb => ({ id: parseInt(cb.dataset.extraId, 10), name: cb.dataset.extraName, price: parseFloat(cb.dataset.extraPrice), quantity: 1 })),
-          payment_receipt: receiptUrl,
           items: state.items.map(i => ({ productId: i.id, quantity: i.quantity })),
           custom_items: state.customItems.map(c => ({ name: c.name || 'Индивидуальный торт', description: c.description || '', price: c.price, quantity: c.quantity, params: c.params || {} }))
         })
@@ -503,6 +471,12 @@ function initFormSubmit(total) {
 
       localStorage.removeItem('cart');
       localStorage.removeItem('applied_promo');
+
+      const paymentMode = window.SITE_SETTINGS?.payment_mode || 'yookassa';
+      if (paymentMode === 'manual' && state.paymentMethod === 'card') {
+        showManualPaymentModal(data.orderId, data.total);
+        return;
+      }
 
       if (data.payment === 'card' && data.payment_url) {
         window.location.href = data.payment_url;
@@ -526,6 +500,82 @@ function initFormSubmit(total) {
       submitBtn.classList.remove('is-loading');
       submitBtn.disabled = false;
       return false;
+    }
+  });
+}
+
+// ============================================
+// МОДАЛКА РУЧНОЙ ОПЛАТЫ
+// ============================================
+function showManualPaymentModal(orderId, totalAmount) {
+  const paymentDetails = window.SITE_SETTINGS?.payment_details || 'Реквизиты не заданы';
+  const instructions = window.SITE_SETTINGS?.payment_manual_instructions || '';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal__inner" style="max-width: 520px;">
+      <div class="modal__header">
+        <div class="modal__title">Заказ №${orderId} оформлен! 🎉</div>
+      </div>
+      <div class="modal__body" style="text-align:center;">
+        <p style="font-size: 1.1rem; margin-bottom: 16px;">Итого к оплате: <strong style="color: var(--gold-100);">${totalAmount.toLocaleString('ru-RU')} ₽</strong></p>
+        
+        <div style="background: var(--bg-elevated); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-gold); margin-bottom: 20px;">
+          <h4 style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 12px; color: var(--gold-100);">Реквизиты для перевода</h4>
+          <pre style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; margin: 0;">${escapeHtml(paymentDetails)}</pre>
+        </div>
+        
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">${escapeHtml(instructions)}</p>
+
+        <label class="btn btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+          📸 Загрузить чек об оплате
+          <input type="file" id="modal-receipt-input" accept="image/*" style="display:none;" />
+        </label>
+        <div id="modal-receipt-status" style="margin-top: 12px; font-size: 0.9rem;"></div>
+        
+        <div style="margin-top: 24px; display:flex; gap: 12px;">
+          <a href="/thanks.html?orderId=${orderId}" class="btn btn-primary" style="flex:1; text-decoration:none; justify-content:center;">Завершить</a>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('is-open'));
+
+  const input = modal.querySelector('#modal-receipt-input');
+  input.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Файл больше 10 МБ', 'error');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('receipt', file);
+    
+    const status = modal.querySelector('#modal-receipt-status');
+    status.textContent = 'Загрузка...';
+    status.style.color = 'var(--text-muted)';
+    
+    try {
+      const res = await fetch('/api/upload/payment-receipt', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      await fetch(`/api/orders/${orderId}/attach-receipt`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_receipt: data.url })
+      });
+      
+      status.textContent = '✅ Чек загружен! Менеджер проверит его.';
+      status.style.color = 'var(--success)';
+    } catch (err) {
+      status.textContent = '❌ Ошибка: ' + err.message;
+      status.style.color = 'var(--danger)';
     }
   });
 }
@@ -741,67 +791,5 @@ function initDeliveryMethod() {
     if (pickupEl) pickupEl.click();
   }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const receiptUpload = document.getElementById('receipt-upload');
-  if (!receiptUpload) return;
-
-  const waitSettings = setInterval(() => {
-    if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
-      clearInterval(waitSettings);
-      const detailsEl = document.getElementById('manual-payment-details');
-      const instructionsEl = document.getElementById('manual-payment-instructions');
-      const s = window.SITE_SETTINGS;
-      if (detailsEl) detailsEl.textContent = s.payment_details || 'Реквизиты не заданы';
-      if (instructionsEl) instructionsEl.textContent = s.payment_manual_instructions || 'Оплатите и прикрепите чек';
-    }
-  }, 100);
-
-  const receiptInput = document.getElementById('receipt-input');
-  const receiptPlaceholder = document.getElementById('receipt-placeholder');
-  const receiptPreview = document.getElementById('receipt-preview');
-  const receiptImg = document.getElementById('receipt-img');
-  const receiptRemove = document.getElementById('receipt-remove');
-  const receiptUrlInput = document.getElementById('f-receipt-url');
-
-  receiptUpload.addEventListener('click', (e) => {
-    if (e.target === receiptRemove) return;
-    receiptInput.click();
-  });
-
-  receiptInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) return showToast('Файл больше 10 МБ', 'error');
-
-    const formData = new FormData();
-    formData.append('receipt', file);
-    receiptPlaceholder.style.display = 'none';
-    receiptPreview.style.display = 'block';
-    receiptImg.src = URL.createObjectURL(file);
-
-    try {
-      const res = await fetch('/api/upload/payment-receipt', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      receiptUrlInput.value = data.url;
-      showToast('Чек загружен');
-    } catch (err) {
-      showToast(err.message, 'error');
-      receiptPlaceholder.style.display = 'flex';
-      receiptPreview.style.display = 'none';
-      receiptUrlInput.value = '';
-    }
-  });
-
-  receiptRemove.addEventListener('click', (e) => {
-    e.stopPropagation();
-    receiptPlaceholder.style.display = 'flex';
-    receiptPreview.style.display = 'none';
-    receiptImg.src = '';
-    receiptUrlInput.value = '';
-    receiptInput.value = '';
-  });
-});
 
 document.addEventListener('DOMContentLoaded', init);
