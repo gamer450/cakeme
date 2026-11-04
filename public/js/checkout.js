@@ -792,4 +792,77 @@ function initDeliveryMethod() {
   }
 }
 
+function showManualPaymentModal(orderId, totalAmount) {
+  const paymentDetails = window.SITE_SETTINGS?.payment_details || 'Реквизиты не заданы';
+  const instructions = window.SITE_SETTINGS?.payment_manual_instructions || '';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal__inner" style="max-width: 520px;">
+      <div class="modal__header">
+        <div class="modal__title">Заказ №${orderId} оформлен! 🎉</div>
+      </div>
+      <div class="modal__body" style="text-align:center;">
+        <p style="font-size: 1.1rem; margin-bottom: 16px;">Итого к оплате: <strong style="color: var(--gold-100);">${totalAmount.toLocaleString('ru-RU')} ₽</strong></p>
+        
+        <div style="background: var(--bg-elevated); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-gold); margin-bottom: 20px;">
+          <h4 style="font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 12px; color: var(--gold-100);">Реквизиты для перевода</h4>
+          <pre style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; margin: 0;">${escapeHtml(paymentDetails)}</pre>
+        </div>
+        
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">${escapeHtml(instructions)}</p>
+
+        <label class="btn btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+          📸 Загрузить чек об оплате
+          <input type="file" id="modal-receipt-input" accept="image/*" style="display:none;" />
+        </label>
+        <div id="modal-receipt-status" style="margin-top: 12px; font-size: 0.9rem;"></div>
+        
+        <div style="margin-top: 24px; display:flex; gap: 12px;">
+          <a href="/thanks.html?orderId=${orderId}" class="btn btn-primary" style="flex:1; text-decoration:none; justify-content:center;">Завершить</a>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('is-open'));
+
+  const input = modal.querySelector('#modal-receipt-input');
+  input.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Файл больше 10 МБ', 'error');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('receipt', file);
+    
+    const status = modal.querySelector('#modal-receipt-status');
+    status.textContent = 'Загрузка...';
+    status.style.color = 'var(--text-muted)';
+    
+    try {
+      const res = await fetch('/api/upload/payment-receipt', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      await fetch(`/api/orders/${orderId}/attach-receipt`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_receipt: data.url })
+      });
+      
+      status.textContent = '✅ Чек загружен! Менеджер проверит его.';
+      status.style.color = 'var(--success)';
+    } catch (err) {
+      status.textContent = '❌ Ошибка: ' + err.message;
+      status.style.color = 'var(--danger)';
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', init);
