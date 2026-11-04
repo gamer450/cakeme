@@ -4066,7 +4066,7 @@ app.patch('/api/admin/settings',
         'about_feature_2_title', // «Доставка 24/7»
         'about_feature_2_desc',
         'about_feature_3_title', // «Индивидуальный подход»
-        'about_feature_3_desc'
+        'about_feature_3_desc',
         'payment_mode', 'payment_details', 'payment_manual_instructions',
       ];
       const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
