@@ -296,6 +296,35 @@ function renderForm() {
       </div>
     </div>
 
+        <!-- ОПЛАТА -->
+    <div class="settings-section">
+      <div class="settings-section__header">
+        <div class="settings-section__icon">💳</div>
+        <div>
+          <div class="settings-section__title">Система оплаты</div>
+          <div class="settings-section__desc">Выберите, как клиенты будут оплачивать заказы</div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label">Режим оплаты</label>
+          <select id="s-payment_mode" class="settings-field__input" data-setting="payment_mode">
+            <option value="yookassa" ${s.payment_mode === 'yookassa' ? 'selected' : ''}>ЮKassa (онлайн-оплата)</option>
+            <option value="manual" ${s.payment_mode === 'manual' ? 'selected' : ''}>Ручной перевод (реквизиты + чек)</option>
+          </select>
+        </div>
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label">Реквизиты для перевода</label>
+          <textarea id="s-payment_details" class="settings-field__input" data-setting="payment_details" rows="4">${escapeHtml(s.payment_details || '')}</textarea>
+        </div>
+        <div class="settings-field settings-field--full">
+          <label class="settings-field__label">Инструкция для клиента</label>
+          <textarea id="s-payment_manual_instructions" class="settings-field__input" data-setting="payment_manual_instructions" rows="2">${escapeHtml(s.payment_manual_instructions || '')}</textarea>
+        </div>
+      </div>
+    </div>
+
     <!-- ДОСТАВКА -->
     <div class="settings-section">
       <div class="settings-section__header">

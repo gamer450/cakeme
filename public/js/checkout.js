@@ -1119,8 +1119,8 @@ function initDeliveryMethod() {
   if (state.deliveryMethod === 'pickup') {
     const pickupEl = document.querySelector('.delivery-method[data-method="pickup"]');
     if (pickupEl) pickupEl.click();
-  }
-}
+  } // <- закрывает if (state.deliveryMethod)
+} // <- закрывает function initDeliveryMethod
 
 document.addEventListener('DOMContentLoaded', () => {
   const receiptUpload = document.getElementById('receipt-upload');
@@ -1141,11 +1141,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (instructionsEl) instructionsEl.textContent = s.payment_manual_instructions || 'Оплатите и прикрепите чек';
   }
 
+ document.addEventListener('DOMContentLoaded', () => {
+  const receiptUpload = document.getElementById('receipt-upload');
+  if (!receiptUpload) return;
+
+  // Ждём, пока настройки загрузятся (проверка каждые 100 мс)
+  const waitSettings = setInterval(() => {
+    if (window.SITE_SETTINGS && window.SITE_SETTINGS.loaded) {
+      clearInterval(waitSettings);
+
+      const detailsEl = document.getElementById('manual-payment-details');
+      const instructionsEl = document.getElementById('manual-payment-instructions');
+      const s = window.SITE_SETTINGS;
+
+      if (detailsEl) detailsEl.textContent = s.payment_details || 'Реквизиты не заданы';
+      if (instructionsEl) instructionsEl.textContent = s.payment_manual_instructions || 'Оплатите и прикрепите чек';
+    }
+  }, 100);
+
+  const receiptInput = document.getElementById('receipt-input');
+  const receiptPlaceholder = document.getElementById('receipt-placeholder');
+  const receiptPreview = document.getElementById('receipt-preview');
+  const receiptImg = document.getElementById('receipt-img');
+  const receiptRemove = document.getElementById('receipt-remove');
+  const receiptUrlInput = document.getElementById('f-receipt-url');
+
+  // Обработчик клика по области
   receiptUpload.addEventListener('click', (e) => {
     if (e.target === receiptRemove) return;
     receiptInput.click();
   });
 
+  // Загрузка файла
   receiptInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1179,6 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Удаление
   receiptRemove.addEventListener('click', (e) => {
     e.stopPropagation();
     receiptPlaceholder.style.display = 'flex';
@@ -1188,8 +1216,5 @@ document.addEventListener('DOMContentLoaded', () => {
     receiptInput.value = '';
   });
 });
+});
 
-// ============================================
-// 13. СТАРТ
-// ============================================
-document.addEventListener('DOMContentLoaded', init);
