@@ -419,6 +419,30 @@ function renderCheckout() {
               </span>
             </label>
           </div>
+        <!-- БЛОК РУЧНОЙ ОПЛАТЫ -->
+        <div id="manual-payment-block" style="display:none; margin-top: 24px;">
+          <div style="background: var(--bg-elevated); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-gold);">
+            <h4 style="font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 12px; color: var(--gold-100);">Реквизиты для перевода</h4>
+            <pre id="manual-payment-details" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 16px;">Загрузка реквизитов...</pre>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;" id="manual-payment-instructions"></p>
+            
+            <div class="checkout-form__field">
+              <label class="checkout-form__label">Прикрепите чек об оплате <span class="req">*</span></label>
+              <div class="cake-photo-upload" id="receipt-upload" style="border: 2px dashed var(--border); padding: 20px; text-align: center; cursor: pointer;">
+                <div id="receipt-placeholder" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                  <span style="font-size: 2rem;">📸</span>
+                  <span style="font-size: 0.9rem; color: var(--text-muted);">Нажмите, чтобы загрузить скриншот</span>
+                </div>
+                <div id="receipt-preview" style="display: none; text-align: center;">
+                  <img id="receipt-img" src="" style="max-height: 200px; border-radius: var(--radius-md); margin-bottom: 8px;" />
+                  <button type="button" class="btn btn-ghost" id="receipt-remove" style="font-size: 0.8rem; color: var(--danger);">Удалить</button>
+                </div>
+                <input type="file" id="receipt-input" accept="image/*" style="display: none;" />
+                <input type="hidden" id="f-receipt-url" />
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
 
         <!-- === СОГЛАСИЯ === -->
@@ -529,11 +553,27 @@ function renderCheckout() {
 // 3. Оплата
 // ============================================
 function initPaymentOptions() {
-  document.querySelectorAll('.payment-option').forEach(opt => {
+  const paymentMode = window.SITE_SETTINGS?.payment_mode || 'yookassa';
+  const paymentOptions = document.querySelectorAll('.payment-option');
+
+  if (paymentMode === 'manual') {
+    const cardOption = document.querySelector('.payment-option[data-payment="card"]');
+    if (cardOption) {
+      cardOption.querySelector('.payment-option__title').textContent = 'Перевод по реквизитам';
+      cardOption.querySelector('.payment-option__desc').textContent = 'Покажем реквизиты после оформления';
+    }
+  }
+
+  paymentOptions.forEach(opt => {
     opt.addEventListener('click', () => {
-      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('is-selected'));
+      paymentOptions.forEach(o => o.classList.remove('is-selected'));
       opt.classList.add('is-selected');
       state.paymentMethod = opt.dataset.payment;
+      
+      const manualBlock = document.getElementById('manual-payment-block');
+      if (manualBlock) {
+        manualBlock.style.display = (paymentMode === 'manual' && state.paymentMethod === 'card') ? 'block' : 'none';
+      }
     });
   });
 }
@@ -648,6 +688,13 @@ function initFormSubmit(total) {
         ? 0
         : (subtotal >= FREE_DELIVERY_FROM ? 0 : DELIVERY_PRICE);
 
+            const receiptUrl = document.getElementById('f-receipt-url')?.value || null;
+      const paymentMode = window.SITE_SETTINGS?.payment_mode || 'yookassa';
+      
+      if (paymentMode === 'manual' && state.paymentMethod === 'card' && !receiptUrl) {
+        return showError('Прикрепите чек об оплате', null);
+      }
+
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers,
@@ -677,6 +724,7 @@ function initFormSubmit(total) {
               price: parseFloat(cb.dataset.extraPrice),
               quantity: 1
             })),
+          payment_receipt: receiptUrl,
           items: state.items.map(i => ({ productId: i.id, quantity: i.quantity })),
           custom_items: state.customItems.map(c => ({
             name: c.name || 'Индивидуальный торт',
@@ -1073,6 +1121,73 @@ function initDeliveryMethod() {
     if (pickupEl) pickupEl.click();
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const receiptUpload = document.getElementById('receipt-upload');
+  if (!receiptUpload) return;
+
+  const receiptInput = document.getElementById('receipt-input');
+  const receiptPlaceholder = document.getElementById('receipt-placeholder');
+  const receiptPreview = document.getElementById('receipt-preview');
+  const receiptImg = document.getElementById('receipt-img');
+  const receiptRemove = document.getElementById('receipt-remove');
+  const receiptUrlInput = document.getElementById('f-receipt-url');
+  const detailsEl = document.getElementById('manual-payment-details');
+  const instructionsEl = document.getElementById('manual-payment-instructions');
+
+  const s = window.SITE_SETTINGS;
+  if (s) {
+    if (detailsEl) detailsEl.textContent = s.payment_details || 'Реквизиты не заданы';
+    if (instructionsEl) instructionsEl.textContent = s.payment_manual_instructions || 'Оплатите и прикрепите чек';
+  }
+
+  receiptUpload.addEventListener('click', (e) => {
+    if (e.target === receiptRemove) return;
+    receiptInput.click();
+  });
+
+  receiptInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Файл больше 10 МБ', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('receipt', file);
+
+    receiptPlaceholder.style.display = 'none';
+    receiptPreview.style.display = 'block';
+    receiptImg.src = URL.createObjectURL(file);
+
+    try {
+      const res = await fetch('/api/upload/payment-receipt', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      receiptUrlInput.value = data.url;
+      showToast('Чек загружен');
+    } catch (err) {
+      showToast(err.message, 'error');
+      receiptPlaceholder.style.display = 'flex';
+      receiptPreview.style.display = 'none';
+      receiptUrlInput.value = '';
+    }
+  });
+
+  receiptRemove.addEventListener('click', (e) => {
+    e.stopPropagation();
+    receiptPlaceholder.style.display = 'flex';
+    receiptPreview.style.display = 'none';
+    receiptImg.src = '';
+    receiptUrlInput.value = '';
+    receiptInput.value = '';
+  });
+});
 
 // ============================================
 // 13. СТАРТ

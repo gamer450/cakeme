@@ -105,6 +105,15 @@ function renderShell() {
             Заказы
             <span class="admin-menu__item-badge hidden" id="orders-badge">0</span>
           </button>
+                    <button class="admin-menu__item" data-tab="payments">
+            <span class="admin-menu__item-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <path d="M2 10h20M7 15h3" />
+              </svg>
+            </span>
+            Платежи
+          </button>
           <button class="admin-menu__item" data-tab="kanban">
             <span class="admin-menu__item-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square" stroke-linejoin="miter">
@@ -308,6 +317,7 @@ const tabTitles = {
   faq: 'FAQ',
   kanban: 'Канбан заказов',
   operator: 'Заявки',
+  payments: 'Платежи',
 };
 
 function initTabs() {
@@ -390,6 +400,7 @@ function navigate(tab) {
     case 'kanban':
       renderKanban(content);
       break;
+    case 'payments': renderPayments(content); break;
 
     default:
       content.innerHTML = `

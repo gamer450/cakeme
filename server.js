@@ -115,7 +115,7 @@ app.post('/api/csp-report',
    ============================================================ */
 const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
 
-['products', 'hero', 'banners', 'misc', 'reviews', 'cakes'].forEach(dir => {
+['products', 'hero', 'banners', 'misc', 'reviews', 'cakes', 'receipts'].forEach(dir => {
   const fullPath = path.join(UPLOAD_DIR, dir);
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });
@@ -314,6 +314,68 @@ app.post('/api/upload/cake-photo',
     } catch (err) {
       console.error('Ошибка загрузки фото на торт:', err);
       res.status(500).json({ error: 'Не удалось загрузить фото' });
+    }
+  }
+);
+
+/* ============================================================
+   ЗАГРУЗКА ЧЕКА ОБ ОПЛАТЕ (Ручной перевод)
+   ============================================================ */
+const receiptUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: 'Слишком много загрузок. Попробуйте позже.' }
+});
+
+app.post('/api/upload/payment-receipt',
+  receiptUploadLimiter,
+  (req, res, next) => {
+    req.query.folder = 'receipts';
+    next();
+  },
+  upload.single('receipt'),
+  (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'Файл не получен' });
+      if (!req.file.mimetype.startsWith('image/')) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+        return res.status(400).json({ error: 'Только изображения' });
+      }
+      if (req.file.size > 10 * 1024 * 1024) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+        return res.status(400).json({ error: 'Файл больше 10 МБ' });
+      }
+      res.json({ success: true, url: `/uploads/receipts/${req.file.filename}`, filename: req.file.filename });
+    } catch (err) {
+      res.status(500).json({ error: 'Не удалось загрузить чек' });
+    }
+  }
+);
+
+app.patch('/api/admin/orders/:id/confirm-payment', 
+  authRequired, 
+  requireRole('admin', 'manager'),
+  (req, res) => {
+    try {
+      db.prepare(`UPDATE orders SET payment_status = 'succeeded', payment_confirmed_by_admin = 1, paid_at = datetime('now') WHERE id = ?`).run(req.params.id);
+      const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+      notifications.notifyOrderPaid(updatedOrder).catch(e => console.error(e));
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Ошибка подтверждения' });
+    }
+  }
+);
+
+app.patch('/api/admin/orders/:id/reject-payment',
+  authRequired,
+  requireRole('admin', 'manager'),
+  (req, res) => {
+    try {
+      db.prepare(`UPDATE orders SET payment_status = 'canceled', payment_confirmed_by_admin = 0 WHERE id = ?`).run(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Ошибка отклонения' });
     }
   }
 );
@@ -623,8 +685,9 @@ app.post('/api/orders',
         extras,
         custom_items,
         delivery_method,  // ✅ Новое — delivery | pickup
-        cake_photo,         // ✅ URL фото на торт
-        cake_photo_price    // ✅ Цена фотопечати
+        cake_photo,
+        cake_photo_price,
+        payment_receipt
       } = req.body;
 const payment = ['card', 'cash'].includes(req.body.payment) ? req.body.payment : 'cash';
 
@@ -847,9 +910,10 @@ const finalTotal = totalAfterDiscount + extrasTotal + serverInscriptionPrice + s
             cake_inscription, inscription_price,
             extras, extras_total,
             delivery_method,
-            cake_photo, cake_photo_price
+            cake_photo, cake_photo_price,
+            payment_receipt
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         // Для оплаты «при получении» — статус «ожидает оплаты курьеру»
@@ -876,7 +940,8 @@ const finalTotal = totalAfterDiscount + extrasTotal + serverInscriptionPrice + s
           extrasTotal,
           ['delivery', 'pickup'].includes(delivery_method) ? delivery_method : 'delivery',
           (cake_photo || '').trim() || null,
-          serverCakePhotoPrice      // ← пересчитанная
+          serverCakePhotoPrice, 
+          (payment_receipt || '').trim() || null     
         );
 
         const orderId = result.lastInsertRowid;
@@ -4002,6 +4067,7 @@ app.patch('/api/admin/settings',
         'about_feature_2_desc',
         'about_feature_3_title', // «Индивидуальный подход»
         'about_feature_3_desc'
+        'payment_mode', 'payment_details', 'payment_manual_instructions',
       ];
       const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
 

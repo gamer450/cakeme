@@ -351,6 +351,11 @@ async function notifyOrderConfirmed(order) {
   }
 }
 
+async function notifyOrderPaid(order) {
+  if (order.phone) await sendSMS(order.phone, `Cake.Me: Оплата по заказу №${order.id} подтверждена! Мы начали готовить.`);
+  if (order.email) await sendEmail(order.email, `Оплата подтверждена — Cake.Me`, emailTemplate('Оплата подтверждена!', `<p>Ваш заказ №${order.id} оплачен. Мы уже готовим!</p>`));
+}
+
 // Статус изменён — универсальный
 async function notifyOrderStatusChange(order, newStatus, previousStatus = null) {
   const statusText = {
@@ -393,5 +398,6 @@ module.exports = {
   notifyOrderCompleted,
   notifyOrderCancelled,
   notifyOrderConfirmed,
-  notifyOrderStatusChange
+  notifyOrderStatusChange,
+  notifyOrderPaid
 };
