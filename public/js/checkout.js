@@ -1122,25 +1122,6 @@ function initDeliveryMethod() {
   } // <- закрывает if (state.deliveryMethod)
 } // <- закрывает function initDeliveryMethod
 
-document.addEventListener('DOMContentLoaded', () => {
-  const receiptUpload = document.getElementById('receipt-upload');
-  if (!receiptUpload) return;
-
-  const receiptInput = document.getElementById('receipt-input');
-  const receiptPlaceholder = document.getElementById('receipt-placeholder');
-  const receiptPreview = document.getElementById('receipt-preview');
-  const receiptImg = document.getElementById('receipt-img');
-  const receiptRemove = document.getElementById('receipt-remove');
-  const receiptUrlInput = document.getElementById('f-receipt-url');
-  const detailsEl = document.getElementById('manual-payment-details');
-  const instructionsEl = document.getElementById('manual-payment-instructions');
-
-  const s = window.SITE_SETTINGS;
-  if (s) {
-    if (detailsEl) detailsEl.textContent = s.payment_details || 'Реквизиты не заданы';
-    if (instructionsEl) instructionsEl.textContent = s.payment_manual_instructions || 'Оплатите и прикрепите чек';
-  }
-
  document.addEventListener('DOMContentLoaded', () => {
   const receiptUpload = document.getElementById('receipt-upload');
   if (!receiptUpload) return;
@@ -1216,5 +1197,5 @@ document.addEventListener('DOMContentLoaded', () => {
     receiptInput.value = '';
   });
 });
-});
+
 
